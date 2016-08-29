@@ -1,0 +1,18 @@
+[package]
+name = "webserver"
+version = "0.1.0"
+authors = ["Markus <marwes91@gmail.com>"]
+
+[[bin]]
+name = "main"
+
+[dependencies]
+iron = "0.3.0"
+persistent = "0.1.0"
+staticfile = "0.2.0"
+mount = "0.1.0"
+urlencoded = "0.3.0"
+serde_json = "0.7.0"
+
+[dependencies.gluon]
+git = "https://github.com/Marwes/gluon.git"
