@@ -11,8 +11,9 @@ iron = "0.3.0"
 persistent = "0.1.0"
 staticfile = "0.2.0"
 mount = "0.1.0"
-urlencoded = "0.3.0"
+urlencoded = "0.3.0"    
 serde_json = "0.7.0"
+log = "0.3.6"
+env_logger = "0.3.4"
 
-[dependencies.gluon]
-git = "https://github.com/Marwes/gluon.git"
+gluon = { git = "https://github.com/Marwes/gluon", branch = "0.2" }
