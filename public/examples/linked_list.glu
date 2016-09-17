@@ -1,0 +1,13 @@
+
+type List a = | Cons a | Nil a
+
+let map f xs =
+    match xs with
+    | Cons y ys -> Cons (f xs) (map f xs)
+    | Nil -> Nil
+
+let foldl f a xs =
+    | Cons y ys -> foldl f (f a y) ys
+    | Nil -> a
+
+foldl (\x y -> x + y) 0 (map (\x -> x + 1) (Cons 1 (Cons 2 (Cons 3 Nil))))
