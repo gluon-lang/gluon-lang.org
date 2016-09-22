@@ -25,6 +25,7 @@ use gluon::vm::Error;
 use gluon::vm::api::Generic;
 use gluon::vm::api::generic::A;
 use gluon::{Compiler, new_vm};
+use gluon::import::Import;
 
 pub struct VMKey;
 impl Key for VMKey {
@@ -73,6 +74,19 @@ fn main() {
 
     let mut middleware = Chain::new(eval);
     let vm = new_vm();
+
+    // Ensure the import macro cannot be abused to to open files
+    {
+        // Ensure the lock to `paths` are released
+        let mac = vm.get_macros().get("import").expect("import");
+        let mut import = mac.downcast_ref::<Import>()
+            .expect("Import macro")
+            .paths
+            .write()
+            .unwrap();
+        import.clear();
+    }
+
     middleware.link(persistent::Read::<VMKey>::both(vm));
     mount.mount("/eval", middleware);
 
