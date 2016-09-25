@@ -20,12 +20,11 @@ use staticfile::Static;
 
 use mount::Mount;
 
-use gluon::vm::thread::{RootedThread, ThreadInternal};
+use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
 use gluon::vm::Error;
-use gluon::vm::api::Generic;
-use gluon::vm::api::generic::A;
-use gluon::{Compiler, new_vm};
-use gluon::import::Import;
+use gluon::vm::api::{Hole, OpaqueValue};
+use gluon::Compiler;
+use gluon::import::{DefaultImporter, Import};
 
 pub struct VMKey;
 impl Key for VMKey {
@@ -59,7 +58,8 @@ fn eval_(req: &mut Request) -> IronResult<String> {
         }
     })));
 
-    let (value, typ) = match Compiler::new().run_expr::<Generic<A>>(&vm, "<top>", &body) {
+    let (value, typ) = match Compiler::new()
+        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "<top>", &body) {
         Ok(value) => value,
         Err(err) => return Ok(format!("{}", err)),
     };
@@ -73,19 +73,22 @@ fn main() {
     mount.mount("/", Static::new("public"));
 
     let mut middleware = Chain::new(eval);
-    let vm = new_vm();
+    let vm = RootedThread::new();
 
     // Ensure the import macro cannot be abused to to open files
     {
         // Ensure the lock to `paths` are released
-        let mac = vm.get_macros().get("import").expect("import");
-        let mut import = mac.downcast_ref::<Import>()
-            .expect("Import macro")
-            .paths
-            .write()
-            .unwrap();
-        import.clear();
+        let import = Import::new(DefaultImporter);
+        import.paths.write().unwrap().clear();
+        vm.get_macros()
+            .insert(String::from("import"), import);
     }
+    Compiler::new()
+        .implicit_prelude(false)
+        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import "std/types.glu" "#)
+        .unwrap();
+    gluon::vm::primitives::load(&vm).expect("Loaded primitives library");
+    gluon::io::load(&vm).expect("Loaded IO library");
 
     middleware.link(persistent::Read::<VMKey>::both(vm));
     mount.mount("/eval", middleware);
