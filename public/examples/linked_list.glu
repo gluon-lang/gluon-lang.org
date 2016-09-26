@@ -1,12 +1,13 @@
 
-type List a = | Cons a | Nil a
+type List a = | Cons a (List a) | Nil
 
 let map f xs =
     match xs with
-    | Cons y ys -> Cons (f xs) (map f xs)
+    | Cons y ys -> Cons (f y) (map f ys)
     | Nil -> Nil
 
 let foldl f a xs =
+    match xs with
     | Cons y ys -> foldl f (f a y) ys
     | Nil -> a
 

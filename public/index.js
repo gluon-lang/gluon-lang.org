@@ -69,7 +69,6 @@ var Examples = React.createClass({
         this.forceUpdate();
     },
     changeHandler: function(e) {
-        console.log("ads")
         this.props.updateExample(e.target.value);
     },
     render: function() {
