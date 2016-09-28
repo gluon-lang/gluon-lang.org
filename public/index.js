@@ -25,14 +25,21 @@ var Eval = React.createClass({
     },
     render: function() {
         return (
-            <div>
-                <Examples url="examples" updateExample={this.updateExample} />
-                <form url="eval" onSubmit={this.handleSubmit}>
-                    <textarea value={this.state.text} onChange={this.handleTextChange} name="expr" cols="100" rows="30">
-                    </textarea>
-                    <br/>
-                    <input type="submit" value="Eval"/>
-                </form>
+            <div className="col-lg-12">
+                <div className="row">
+                    <Examples url="examples" updateExample={this.updateExample} />
+                </div>
+                <div className="row">
+                    <form className="navbar-form navbar-left" url="eval" onSubmit={this.handleSubmit}>
+                        <div className="row">
+                            <div className="form-group"></div>
+                                <textarea className="form-control" value={this.state.text} onChange={this.handleTextChange} name="expr" cols="100" rows="30">
+                                </textarea>
+                            <br/>
+                        </div>
+                        <button type="submit" className="btn btn-primary">Eval</button>
+                    </form>
+                </div>
                 <h3>Result</h3>
                 <pre>{this.state.result}</pre>
             </div>
@@ -72,7 +79,9 @@ var Examples = React.createClass({
         this.props.updateExample(e.target.value);
     },
     render: function() {
-        return <select onChange={this.changeHandler}>{this.state.options}</select>;
+        return <div className="col-sm-3">
+                <select className="form-control" onChange={this.changeHandler}>{this.state.options}</select>
+            </div>;
     }
 });
 
