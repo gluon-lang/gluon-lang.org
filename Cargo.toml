@@ -3,8 +3,11 @@ name = "webserver"
 version = "0.1.0"
 authors = ["Markus <marwes91@gmail.com>"]
 
+license = "MIT"
+
 [[bin]]
 name = "main"
+path = "src/app/main.rs"
 
 [dependencies]
 iron = "0.3.0"

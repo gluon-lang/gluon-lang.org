@@ -1,0 +1,33 @@
+{
+  "name": "gluon-webserver",
+  "version": "0.1.0",
+  "description": "",
+  "main": "src/client/index.js",
+  "dependencies": {
+    "bootstrap": "^4.0.0-alpha.4",
+    "closure-compiler-webpack-plugin": "^0.1.8",
+    "css-loader": "^0.25.0",
+    "elm-webpack-loader": "^3.0.6",
+    "file-loader": "^0.9.0",
+    "node-sass": "^3.10.1",
+    "sass-loader": "^4.0.2",
+    "style-loader": "^0.13.1",
+    "url-loader": "^0.5.7",
+    "webpack": "^1.13.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marwes/try_gluon.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Marwes/try_gluon/issues"
+  },
+  "homepage": "https://github.com/Marwes/try_gluon#readme"
+}

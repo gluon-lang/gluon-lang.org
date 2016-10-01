@@ -1,0 +1,8 @@
+$font-size-root: 14px;
+
+@import '~bootstrap/scss/bootstrap';
+
+.editor {
+  font-size: $code-font-size;
+  font-family: $font-family-monospace;
+}
