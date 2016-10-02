@@ -62,14 +62,20 @@ fn eval_(req: &mut Request) -> IronResult<String> {
     vm.set_memory_limit(2_000_000);
 
     // Prevent infinite loops from running forever
-    let start = Instant::now();
-    vm.context().set_hook(Some(Box::new(move |_| {
-        if start.elapsed().as_secs() < 10 {
-            Ok(())
-        } else {
-            Err(Error::Message("Thread has exceeded the allowed exection time".into()))
-        }
-    })));
+    {
+        let mut context = vm.context();
+
+        context.set_stack_size_limit(10000);
+
+        let start = Instant::now();
+        context.set_hook(Some(Box::new(move |_| {
+            if start.elapsed().as_secs() < 10 {
+                Ok(())
+            } else {
+                Err(Error::Message("Thread has exceeded the allowed exection time".into()))
+            }
+        })));
+    }
 
     let (value, typ) = match Compiler::new()
         .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "<top>", &body) {

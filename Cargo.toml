@@ -19,4 +19,4 @@ serde_json = "0.7.0"
 log = "0.3.6"
 env_logger = "0.3.4"
 
-gluon = "0.2.0"
+gluon = { git ="https://github.com/Marwes/gluon", rev = "1af85f024b58c1863d7deec7a7c3a66027f358f4" }
