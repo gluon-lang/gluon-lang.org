@@ -93,7 +93,7 @@ setSource src model =
 
 
 type Msg
-    = Eval
+    = EvalRequested
     | EvalSucceed String
     | EvalFail Http.Error
     | ExamplesSucceed (List Example)
@@ -109,14 +109,15 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Eval ->
-            ( model, postEval model )
+        EvalRequested ->
+            -- TODO: Disable the eval button
+            ( { model | evalResult = "Compiling..." }, postEval model )
 
         EvalSucceed result ->
             ( { model | evalResult = result }, Cmd.none )
 
         EvalFail _ ->
-            ( model, Cmd.none )
+            ( { model | evalResult = "HTTP failure" }, Cmd.none )
 
         ExamplesSucceed examples ->
             ( initExamples examples model, Cmd.none )
@@ -166,7 +167,7 @@ evalResult model =
         [ div [ class "card-header" ]
             [ nav [ class "nav" ]
                 [ text "Result"
-                , button [ class "btn btn-primary pull-xs-right", onClick Eval ]
+                , button [ class "btn btn-primary pull-xs-right", onClick EvalRequested ]
                     [ text "Eval" ]
                 ]
             ]
