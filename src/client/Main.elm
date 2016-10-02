@@ -1,8 +1,8 @@
 module Main exposing (main)
 
-import Html exposing (Html, button, div, form, h2, nav, option, pre, select, text, textarea)
+import Html exposing (Html, a, button, div, form, h2, nav, option, pre, select, text, textarea)
 import Html.App
-import Html.Attributes exposing (class, name, rows, selected)
+import Html.Attributes exposing (class, href, name, rows, selected)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Json exposing ((:=))
@@ -167,6 +167,11 @@ view model =
                 [ editor model
                 , Html.br [] []
                 , evalResult model
+                ]
+            , div [ class "card-footer text-muted text-xs-center" ]
+                [ a [ href "https://github.com/Marwes/gluon" ] [ text "Gluon on Github" ]
+                , text " | "
+                , a [ href "https://github.com/Marwes/try_gluon" ] [ text "Fork this site" ]
                 ]
             ]
         ]
