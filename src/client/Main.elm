@@ -67,6 +67,11 @@ setExample name model =
         { model | selectedExample = selectedExample, src = src }
 
 
+setSource : String -> Model -> Model
+setSource src model =
+    { model | src = src, selectedExample = Nothing }
+
+
 
 -- MESSAGES
 
@@ -95,19 +100,19 @@ update msg model =
             ( { model | evalResult = result }, Cmd.none )
 
         EvalFail _ ->
-            ( { model | evalResult = "" }, Cmd.none )
+            ( model, Cmd.none )
 
         ExamplesSucceed examples ->
             ( initExamples examples model, Cmd.none )
 
         ExamplesFail _ ->
-            ( { model | examples = [] }, Cmd.none )
+            ( model, Cmd.none )
 
         SelectExample name ->
             ( setExample name model, Cmd.none )
 
         EditSource src ->
-            ( { model | src = src, selectedExample = Nothing }, Cmd.none )
+            ( setSource src model, Cmd.none )
 
 
 
