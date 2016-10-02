@@ -7,7 +7,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Json exposing ((:=))
 import List exposing ((::))
-import ListMap exposing (ListMap)
+import List.Extra as List
 import Task exposing (Task)
 
 
@@ -20,9 +20,15 @@ type alias Urls =
     }
 
 
+type alias Example =
+    { name : String
+    , src : String
+    }
+
+
 type alias Model =
     { urls : Urls
-    , examples : ListMap String String
+    , examples : List Example
     , selectedExample : Maybe String
     , src : String
     , evalResult : String
@@ -46,18 +52,28 @@ init =
         ( model, getExamples model )
 
 
-initExamples : ListMap String String -> Model -> Model
+initExamples : List Example -> Model -> Model
 initExamples examples model =
-    List.head examples
-        |> Maybe.map (\( name, _ ) -> setExample name { model | examples = examples })
-        |> Maybe.withDefault model
+    case List.head examples of
+        Just example ->
+            setExample example.name { model | examples = examples }
+
+        Nothing ->
+            model
+
+
+getExample : String -> Model -> Maybe String
+getExample name model =
+    model.examples
+        |> List.find (\example -> example.name == name)
+        |> Maybe.map (.src)
 
 
 setExample : String -> Model -> Model
 setExample name model =
     let
         ( selectedExample, src ) =
-            case ListMap.get name model.examples of
+            case getExample name model of
                 Just src ->
                     ( Just name, src )
 
@@ -80,7 +96,7 @@ type Msg
     = Eval
     | EvalSucceed String
     | EvalFail Http.Error
-    | ExamplesSucceed (ListMap String String)
+    | ExamplesSucceed (List Example)
     | ExamplesFail Http.Error
     | SelectExample String
     | EditSource String
@@ -125,8 +141,9 @@ exampleSelect model =
         selectedAttr key =
             selected (model.selectedExample == key)
 
-        exampleOption ( key, value ) =
-            option [ name key, selectedAttr (Just key) ] [ text key ]
+        exampleOption example =
+            option [ name example.name, selectedAttr (Just example.name) ]
+                [ text example.name ]
 
         defaultOption =
             option [ selectedAttr Nothing ] [ text "Select example…" ]
@@ -199,7 +216,7 @@ getExamples : Model -> Cmd Msg
 getExamples model =
     let
         exampleOption =
-            Json.object2 (,)
+            Json.object2 (\name value -> { name = name, src = value })
                 ("name" := Json.string)
                 ("value" := Json.string)
 
