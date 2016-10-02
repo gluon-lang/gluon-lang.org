@@ -13,6 +13,7 @@ use std::fs::{File, read_dir};
 use std::io::{self, Read};
 use std::time::Instant;
 
+use iron::mime::Mime;
 use iron::prelude::*;
 use iron::status;
 use iron::typemap::Key;
@@ -30,18 +31,27 @@ use gluon::Compiler;
 use gluon::import::{DefaultImporter, Import};
 
 pub struct VMKey;
+
 impl Key for VMKey {
     type Value = RootedThread;
 }
 
 fn eval(req: &mut Request) -> IronResult<Response> {
-    eval_(req).map(|s| Response::with((status::Ok, ::serde_json::to_string(&s).unwrap())))
+    eval_(req).map(|s| {
+        let mime: Mime = "text/plain".parse().unwrap();
+
+        Response::with((status::Ok, mime, serde_json::to_string(&s).unwrap()))
+    })
 }
+
 fn eval_(req: &mut Request) -> IronResult<String> {
     let mut body = String::new();
+
     itry!(req.body.read_to_string(&mut body));
     info!("Eval: `{}`", body);
+
     body.push(' ');
+
     let global_vm = req.get::<persistent::Read<VMKey>>().unwrap();
     let vm = match global_vm.new_thread() {
         Ok(vm) => vm,
@@ -66,6 +76,7 @@ fn eval_(req: &mut Request) -> IronResult<String> {
         Ok(value) => value,
         Err(err) => return Ok(format!("{}", err)),
     };
+
     Ok(format!("{:?} : {}", value, typ))
 }
 
@@ -88,14 +99,17 @@ fn load_examples() -> Value {
             let name = String::from(path.file_stem().unwrap().to_str().unwrap());
             let mut file = try!(File::open(path));
             let mut contents = String::new();
+
             try!(file.read_to_string(&mut contents));
-            Ok(Value::Object(vec![("name".into(), Value::String(name)),
-                                  ("value".into(), Value::String(contents))]
-                .into_iter()
-                .collect()))
+
+            let value = vec![("name".into(), Value::String(name)),
+                             ("value".into(), Value::String(contents))];
+
+            Ok(Value::Object(value.into_iter().collect()))
         })
         .collect::<io::Result<_>>()
         .unwrap();
+
     Value::Array(vec)
 }
 
@@ -103,7 +117,7 @@ fn main() {
     env_logger::init().unwrap();
     let mut mount = Mount::new();
 
-    mount.mount("/", Static::new("public"));
+    mount.mount("/", Static::new("dist"));
 
     {
         let mut middleware = Chain::new(eval);
@@ -117,24 +131,29 @@ fn main() {
             vm.get_macros()
                 .insert(String::from("import"), import);
         }
+
         Compiler::new()
             .implicit_prelude(false)
             .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import "std/types.glu" "#)
             .unwrap();
+
         gluon::vm::primitives::load(&vm).expect("Loaded primitives library");
         gluon::io::load(&vm).expect("Loaded IO library");
 
         middleware.link(persistent::Read::<VMKey>::both(vm));
         mount.mount("/eval", middleware);
     }
+
     {
         let mut middleware = Chain::new(examples);
         let examples_string = serde_json::to_string(&load_examples()).unwrap();
+
         middleware.link(persistent::Read::<Examples>::both(examples_string));
         mount.mount("/examples", middleware);
     }
 
     let address = "0.0.0.0:8080";
     let _server = Iron::new(mount).http(address).unwrap();
+
     println!("Server started at `{}`", address);
 }
