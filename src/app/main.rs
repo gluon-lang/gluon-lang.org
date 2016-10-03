@@ -50,8 +50,6 @@ fn eval_(req: &mut Request) -> IronResult<String> {
     itry!(req.body.read_to_string(&mut body));
     info!("Eval: `{}`", body);
 
-    body.push(' ');
-
     let global_vm = req.get::<persistent::Read<VMKey>>().unwrap();
     let vm = match global_vm.new_thread() {
         Ok(vm) => vm,
@@ -61,15 +59,22 @@ fn eval_(req: &mut Request) -> IronResult<String> {
     // Prevent a single thread from allocating to much memory
     vm.set_memory_limit(2_000_000);
 
-    // Prevent infinite loops from running forever
-    let start = Instant::now();
-    vm.context().set_hook(Some(Box::new(move |_| {
-        if start.elapsed().as_secs() < 10 {
-            Ok(())
-        } else {
-            Err(Error::Message("Thread has exceeded the allowed exection time".into()))
-        }
-    })));
+    {
+        let mut context = vm.context();
+
+        // Prevent the stack from consuming to much memory
+        context.set_stack_size_limit(10000);
+
+        // Prevent infinite loops from running forever
+        let start = Instant::now();
+        context.set_hook(Some(Box::new(move |_| {
+            if start.elapsed().as_secs() < 10 {
+                Ok(())
+            } else {
+                Err(Error::Message("Thread has exceeded the allowed exection time".into()))
+            }
+        })));
+    }
 
     let (value, typ) = match Compiler::new()
         .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "<top>", &body) {
@@ -91,6 +96,7 @@ fn examples(req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, (*s).clone())))
 }
 
+/// Load all examples into a JSON array `[{ name: .., value: .. }, ..]`
 fn load_examples() -> Value {
     let vec = read_dir("public/examples")
         .unwrap()
@@ -113,6 +119,32 @@ fn load_examples() -> Value {
     Value::Array(vec)
 }
 
+fn make_eval_vm() -> RootedThread {
+    let vm = RootedThread::new();
+
+    // Ensure the import macro cannot be abused to to open files
+    {
+        // Ensure the lock to `paths` are released
+        let import = Import::new(DefaultImporter);
+        import.paths.write().unwrap().clear();
+        vm.get_macros()
+            .insert(String::from("import"), import);
+    }
+
+    // Initialize the basic types such as `Bool` and `Option` so they are available when loading
+    // other modules
+    Compiler::new()
+        .implicit_prelude(false)
+        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import "std/types.glu" "#)
+        .unwrap();
+
+    gluon::vm::primitives::load(&vm).expect("Loaded primitives library");
+    // Load the io library so the prelude can be loaded (`IO` actions won't actually execute however)
+    gluon::io::load(&vm).expect("Loaded IO library");
+
+    vm
+}
+
 fn main() {
     env_logger::init().unwrap();
     let mut mount = Mount::new();
@@ -121,26 +153,10 @@ fn main() {
 
     {
         let mut middleware = Chain::new(eval);
-        let vm = RootedThread::new();
 
-        // Ensure the import macro cannot be abused to to open files
-        {
-            // Ensure the lock to `paths` are released
-            let import = Import::new(DefaultImporter);
-            import.paths.write().unwrap().clear();
-            vm.get_macros()
-                .insert(String::from("import"), import);
-        }
-
-        Compiler::new()
-            .implicit_prelude(false)
-            .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import "std/types.glu" "#)
-            .unwrap();
-
-        gluon::vm::primitives::load(&vm).expect("Loaded primitives library");
-        gluon::io::load(&vm).expect("Loaded IO library");
-
+        let vm = make_eval_vm();
         middleware.link(persistent::Read::<VMKey>::both(vm));
+
         mount.mount("/eval", middleware);
     }
 
@@ -153,6 +169,8 @@ fn main() {
     }
 
     let address = "0.0.0.0:8080";
+
+    // Dropping `server` causes it to block so keep it alive until the end of scope
     let _server = Iron::new(mount).http(address).unwrap();
 
     println!("Server started at `{}`", address);
