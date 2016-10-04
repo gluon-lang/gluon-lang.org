@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Html exposing (Html, a, button, div, form, h2, nav, option, pre, select, text, textarea)
 import Html.App
-import Html.Attributes exposing (class, href, name, rows, selected)
+import Html.Attributes exposing (class, disabled, href, name, rows, selected)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Json exposing ((:=))
@@ -12,6 +12,12 @@ import Task exposing (Task)
 
 
 -- MODEL
+
+
+type Response value
+    = Pending
+    | Fail
+    | Succeed value
 
 
 type alias Urls =
@@ -31,7 +37,7 @@ type alias Model =
     , examples : List Example
     , selectedExample : Maybe String
     , src : String
-    , evalResult : String
+    , evalResult : Response String
     }
 
 
@@ -46,7 +52,7 @@ init =
             , examples = []
             , selectedExample = Nothing
             , src = ""
-            , evalResult = ""
+            , evalResult = Succeed ""
             }
     in
         ( model, getExamples model )
@@ -110,14 +116,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         EvalRequested ->
-            -- TODO: Disable the eval button
-            ( { model | evalResult = "Compiling..." }, postEval model )
+            ( { model | evalResult = Pending }, postEval model )
 
         EvalSucceed result ->
-            ( { model | evalResult = result }, Cmd.none )
+            ( { model | evalResult = Succeed result }, Cmd.none )
 
         EvalFail _ ->
-            ( { model | evalResult = "HTTP failure" }, Cmd.none )
+            ( { model | evalResult = Fail }, Cmd.none )
 
         ExamplesSucceed examples ->
             ( initExamples examples model, Cmd.none )
@@ -163,16 +168,32 @@ editor model =
 
 evalResult : Model -> Html Msg
 evalResult model =
-    div [ class "card" ]
-        [ div [ class "card-header" ]
-            [ nav [ class "nav" ]
-                [ text "Result"
-                , button [ class "btn btn-primary pull-xs-right", onClick EvalRequested ]
-                    [ text "Eval" ]
+    let
+        evalResult =
+            case model.evalResult of
+                Pending ->
+                    "Waiting..."
+
+                Fail ->
+                    "Http error."
+
+                Succeed output ->
+                    output
+    in
+        div [ class "card" ]
+            [ div [ class "card-header" ]
+                [ nav [ class "nav" ]
+                    [ text "Result"
+                    , button
+                        [ class "btn btn-primary pull-xs-right"
+                        , onClick EvalRequested
+                        , disabled (model.evalResult == Pending)
+                        ]
+                        [ text "Eval" ]
+                    ]
                 ]
+            , div [ class "card-block" ] [ pre [] [ text evalResult ] ]
             ]
-        , div [ class "card-block" ] [ pre [] [ text model.evalResult ] ]
-        ]
 
 
 view : Model -> Html Msg
