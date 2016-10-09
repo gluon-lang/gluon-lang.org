@@ -213,9 +213,9 @@ view model =
                 , evalResult model
                 ]
             , div [ class "card-footer text-muted text-xs-center" ]
-                [ a [ href "https://github.com/Marwes/gluon" ] [ text "Gluon on Github" ]
+                [ a [ href "https://github.com/gluon-lang/gluon" ] [ text "Gluon on Github" ]
                 , text " | "
-                , a [ href "https://github.com/Marwes/try_gluon" ] [ text "Fork this site" ]
+                , a [ href "https://github.com/gluon-lang/try_gluon" ] [ text "Fork this site" ]
                 ]
             ]
         ]

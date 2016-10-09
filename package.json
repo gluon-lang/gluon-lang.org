@@ -22,12 +22,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Marwes/try_gluon.git"
+    "url": "git+https://github.com/gluon-lang/try_gluon.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Marwes/try_gluon/issues"
+    "url": "https://github.com/gluon-lang/try_gluon/issues"
   },
-  "homepage": "https://github.com/Marwes/try_gluon#readme"
+  "homepage": "https://github.com/gluon-lang/try_gluon#readme"
 }
