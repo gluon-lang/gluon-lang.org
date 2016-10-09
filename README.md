@@ -1,6 +1,6 @@
 # try_gluon
 
-A webserver for experimenting with the [Gluon](https://github.com/Marwes/gluon)
+A webserver for experimenting with the [Gluon](https://github.com/gluon-lang/gluon)
 programming language.
 
 To run the server:

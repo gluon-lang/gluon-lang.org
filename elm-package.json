@@ -1,7 +1,7 @@
 {
     "version": "0.1.0",
-    "summary": "helpful summary of your project, less than 80 characters",
-    "repository": "https://github.com/Marwes/ugh.git",
+    "summary": "Client for experimenting with the Gluon programming language.",
+    "repository": "https://github.com/gluon-lang/try_gluon.git",
     "license": "MIT",
     "source-directories": [
         "./src/public"
