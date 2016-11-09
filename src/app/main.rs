@@ -63,7 +63,7 @@ fn eval_(req: &mut Request) -> IronResult<String> {
         let mut context = vm.context();
 
         // Prevent the stack from consuming to much memory
-        context.set_stack_size_limit(10000);
+        context.set_max_stack_size(10000);
 
         // Prevent infinite loops from running forever
         let start = Instant::now();

@@ -3,7 +3,7 @@ name = "webserver"
 version = "0.1.0"
 dependencies = [
  "env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
+ "gluon 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "mount 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -131,15 +131,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "gluon"
-version = "0.2.0"
-source = "git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4#1af85f024b58c1863d7deec7a7c3a66027f358f4"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "clap 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_base 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
- "gluon_check 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
- "gluon_parser 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
- "gluon_vm 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
+ "gluon_base 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_check 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_parser 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_vm 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -148,8 +148,8 @@ dependencies = [
 
 [[package]]
 name = "gluon_base"
-version = "0.2.0"
-source = "git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4#1af85f024b58c1863d7deec7a7c3a66027f358f4"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "fnv 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -159,31 +159,31 @@ dependencies = [
 
 [[package]]
 name = "gluon_check"
-version = "0.2.0"
-source = "git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4#1af85f024b58c1863d7deec7a7c3a66027f358f4"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "gluon_base 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
+ "gluon_base 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "union-find 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "gluon_parser"
-version = "0.2.0"
-source = "git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4#1af85f024b58c1863d7deec7a7c3a66027f358f4"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "combine 2.0.0-beta3 (registry+https://github.com/rust-lang/crates.io-index)",
  "combine-language 2.0.0-beta4 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_base 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
+ "gluon_base 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "gluon_vm"
-version = "0.2.0"
-source = "git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4#1af85f024b58c1863d7deec7a7c3a66027f358f4"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "gluon_base 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)",
+ "gluon_base 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "mopa 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -686,11 +686,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)" = "15abd780e45b3ea4f76b4e9a26ff4843258dd8a3eed2775a0e7368c2e7936c2f"
 "checksum error 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "a6e606f14042bb87cc02ef6a14db6c90ab92ed6f62d87e69377bc759fd7987cc"
 "checksum fnv 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "6cc484842f1e2884faf56f529f960cc12ad8c71ce96cc7abba0a067c98fee344"
-"checksum gluon 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)" = "<none>"
-"checksum gluon_base 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)" = "<none>"
-"checksum gluon_check 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)" = "<none>"
-"checksum gluon_parser 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)" = "<none>"
-"checksum gluon_vm 0.2.0 (git+https://github.com/gluon-lang/gluon?rev=1af85f024b58c1863d7deec7a7c3a66027f358f4)" = "<none>"
+"checksum gluon 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8d18de46558c8d7a42349a5b68bd4cb43896ba0ff388f807facdefe6a57e21df"
+"checksum gluon_base 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ca4cdf723c28ca488e7730ab626f165305d076396b93708ff3198c6ac297a461"
+"checksum gluon_check 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "4f985a019a32cc3e7ce11d9b27635ffe7da71e6ef4b7b74b5c6c35ce2bd971c6"
+"checksum gluon_parser 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "5f22255484c0bdea537e2dbef4136d7897b28e385807ea2216bcf8b1e9d14c88"
+"checksum gluon_vm 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c33d83666ce9532d2b362c67bec13fa32f07bd03bc31b6b256dabd7521502bb3"
 "checksum hpack 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3d2da7d3a34cf6406d9d700111b8eafafe9a251de41ae71d8052748259343b58"
 "checksum httparse 1.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "46534074dbb80b070d60a5cb8ecadd8963a00a438ae1a95268850a7ef73b67ae"
 "checksum hyper 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "bb0f4d00bb781e559b6e66ae4b5479df0fdf9ab15949f52fa2f1f5de16d4cc07"
