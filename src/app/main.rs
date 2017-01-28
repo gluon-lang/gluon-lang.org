@@ -1,3 +1,4 @@
+extern crate futures;
 #[macro_use]
 extern crate iron;
 extern crate persistent;
@@ -12,6 +13,8 @@ extern crate env_logger;
 use std::fs::{File, read_dir};
 use std::io::{self, Read};
 use std::time::Instant;
+
+use futures::Async;
 
 use iron::mime::Mime;
 use iron::prelude::*;
@@ -67,12 +70,10 @@ fn eval_(req: &mut Request) -> IronResult<String> {
 
         // Prevent infinite loops from running forever
         let start = Instant::now();
-        context.set_hook(Some(Box::new(move |_| {
-            if start.elapsed().as_secs() < 10 {
-                Ok(())
-            } else {
-                Err(Error::Message("Thread has exceeded the allowed exection time".into()))
-            }
+        context.set_hook(Some(Box::new(move |_, _| if start.elapsed().as_secs() < 10 {
+            Ok(Async::Ready(()))
+        } else {
+            Err(Error::Message("Thread has exceeded the allowed exection time".into()))
         })));
     }
 
