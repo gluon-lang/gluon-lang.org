@@ -20,4 +20,4 @@ serde_json = "0.7.0"
 log = "0.3.6"
 env_logger = "0.3.4"
 
-gluon = { version = "0.2.2", git = "https://github.com/gluon-lang/gluon" }
+gluon = "0.3.0"
