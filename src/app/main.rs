@@ -1,3 +1,4 @@
+extern crate futures;
 #[macro_use]
 extern crate iron;
 extern crate persistent;
@@ -13,6 +14,8 @@ use std::fs::{File, read_dir};
 use std::io::{self, Read};
 use std::time::Instant;
 
+use futures::Async;
+
 use iron::mime::Mime;
 use iron::prelude::*;
 use iron::status;
@@ -24,11 +27,35 @@ use staticfile::Static;
 
 use mount::Mount;
 
+use gluon::base::symbol::{Symbol, SymbolRef};
+use gluon::base::kind::{ArcKind, KindEnv};
+use gluon::base::types::{Alias, ArcType, TypeEnv};
 use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
 use gluon::vm::Error;
+use gluon::vm::internal::ValuePrinter;
 use gluon::vm::api::{Hole, OpaqueValue};
 use gluon::Compiler;
 use gluon::import::{DefaultImporter, Import};
+
+pub struct EmptyEnv;
+
+impl KindEnv for EmptyEnv {
+    fn find_kind(&self, _type_name: &SymbolRef) -> Option<ArcKind> {
+        None
+    }
+}
+
+impl TypeEnv for EmptyEnv {
+    fn find_type(&self, _id: &SymbolRef) -> Option<&ArcType> {
+        None
+    }
+    fn find_type_info(&self, _id: &SymbolRef) -> Option<&Alias<Symbol, ArcType>> {
+        None
+    }
+    fn find_record(&self, _fields: &[Symbol]) -> Option<(ArcType, ArcType)> {
+        None
+    }
+}
 
 pub struct VMKey;
 
@@ -67,12 +94,10 @@ fn eval_(req: &mut Request) -> IronResult<String> {
 
         // Prevent infinite loops from running forever
         let start = Instant::now();
-        context.set_hook(Some(Box::new(move |_| {
-            if start.elapsed().as_secs() < 10 {
-                Ok(())
-            } else {
-                Err(Error::Message("Thread has exceeded the allowed exection time".into()))
-            }
+        context.set_hook(Some(Box::new(move |_, _| if start.elapsed().as_secs() < 10 {
+            Ok(Async::Ready(()))
+        } else {
+            Err(Error::Message("Thread has exceeded the allowed exection time".into()))
         })));
     }
 
@@ -82,7 +107,11 @@ fn eval_(req: &mut Request) -> IronResult<String> {
         Err(err) => return Ok(format!("{}", err)),
     };
 
-    Ok(format!("{:?} : {}", value, typ))
+    unsafe {
+        Ok(format!("{} : {}",
+                   ValuePrinter::new(&EmptyEnv, &typ, value.get_value()).max_level(6),
+                   typ))
+    }
 }
 
 pub struct Examples;
