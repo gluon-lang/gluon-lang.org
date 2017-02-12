@@ -6,7 +6,7 @@ authors = ["Markus <marwes91@gmail.com>"]
 license = "MIT"
 
 [[bin]]
-name = "main"
+name = "server"
 path = "src/app/main.rs"
 
 [dependencies]

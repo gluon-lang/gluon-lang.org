@@ -164,7 +164,7 @@ fn make_eval_vm() -> RootedThread {
     // other modules
     Compiler::new()
         .implicit_prelude(false)
-        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import "std/types.glu" "#)
+        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)
         .unwrap();
 
     gluon::vm::primitives::load(&vm).expect("Loaded primitives library");
