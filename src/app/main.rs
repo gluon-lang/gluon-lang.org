@@ -94,11 +94,15 @@ fn eval_(req: &mut Request) -> IronResult<String> {
 
         // Prevent infinite loops from running forever
         let start = Instant::now();
-        context.set_hook(Some(Box::new(move |_, _| if start.elapsed().as_secs() < 10 {
-            Ok(Async::Ready(()))
-        } else {
-            Err(Error::Message("Thread has exceeded the allowed exection time".into()))
-        })));
+        context.set_hook(Some(
+            Box::new(move |_, _| if start.elapsed().as_secs() < 10 {
+                Ok(Async::Ready(()))
+            } else {
+                Err(Error::Message(
+                    "Thread has exceeded the allowed exection time".into(),
+                ))
+            }),
+        ));
     }
 
     let (value, typ) = match Compiler::new()
@@ -108,9 +112,11 @@ fn eval_(req: &mut Request) -> IronResult<String> {
     };
 
     unsafe {
-        Ok(format!("{} : {}",
-                   ValuePrinter::new(&EmptyEnv, &typ, value.get_value()).max_level(6),
-                   typ))
+        Ok(format!(
+            "{} : {}",
+            ValuePrinter::new(&EmptyEnv, &typ, value.get_value()).max_level(6),
+            typ
+        ))
     }
 }
 
@@ -137,8 +143,10 @@ fn load_examples() -> Value {
 
             try!(file.read_to_string(&mut contents));
 
-            let value = vec![("name".into(), Value::String(name)),
-                             ("value".into(), Value::String(contents))];
+            let value = vec![
+                ("name".into(), Value::String(name)),
+                ("value".into(), Value::String(contents)),
+            ];
 
             Ok(Value::Object(value.into_iter().collect()))
         })
@@ -156,8 +164,7 @@ fn make_eval_vm() -> RootedThread {
         // Ensure the lock to `paths` are released
         let import = Import::new(DefaultImporter);
         import.paths.write().unwrap().clear();
-        vm.get_macros()
-            .insert(String::from("import"), import);
+        vm.get_macros().insert(String::from("import"), import);
     }
 
     // Initialize the basic types such as `Bool` and `Option` so they are available when loading
@@ -168,7 +175,8 @@ fn make_eval_vm() -> RootedThread {
         .unwrap();
 
     gluon::vm::primitives::load(&vm).expect("Loaded primitives library");
-    // Load the io library so the prelude can be loaded (`IO` actions won't actually execute however)
+    // Load the io library so the prelude can be loaded
+    // (`IO` actions won't actually execute however)
     gluon::io::load(&vm).expect("Loaded IO library");
 
     vm
