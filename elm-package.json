@@ -1,7 +1,7 @@
 {
     "version": "0.1.0",
     "summary": "Client for experimenting with the Gluon programming language.",
-    "repository": "https://github.com/gluon-lang/try_gluon.git",
+    "repository": "https://github.com/gluon-lang/gluon-lang.git",
     "license": "MIT",
     "source-directories": [
         "./src/public"

@@ -29,7 +29,8 @@ use mount::Mount;
 
 use gluon::base::symbol::{Symbol, SymbolRef};
 use gluon::base::kind::{ArcKind, KindEnv};
-use gluon::base::types::{Alias, ArcType, TypeEnv};
+use gluon::base::types::{Alias, ArcType, TypeEnv, RecordSelector};
+use gluon::parser::format_expr;
 use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
 use gluon::vm::Error;
 use gluon::vm::internal::ValuePrinter;
@@ -52,7 +53,7 @@ impl TypeEnv for EmptyEnv {
     fn find_type_info(&self, _id: &SymbolRef) -> Option<&Alias<Symbol, ArcType>> {
         None
     }
-    fn find_record(&self, _fields: &[Symbol]) -> Option<(ArcType, ArcType)> {
+    fn find_record(&self, _fields: &[Symbol], _: RecordSelector) -> Option<(ArcType, ArcType)> {
         None
     }
 }
@@ -117,6 +118,28 @@ fn eval_(req: &mut Request) -> IronResult<String> {
             ValuePrinter::new(&EmptyEnv, &typ, value.get_value()).max_level(6),
             typ
         ))
+    }
+}
+
+fn format(req: &mut Request) -> IronResult<Response> {
+    let mut body = String::new();
+
+    itry!(req.body.read_to_string(&mut body));
+    info!("Format: `{}`", body);
+    let mime: Mime = "text/plain".parse().unwrap();
+    match format_expr(&body) {
+        Ok(formatted) => {
+            Ok(Response::with(
+                (status::Ok, mime, serde_json::to_string(&formatted).unwrap()),
+            ))
+        }
+        Err(err) => {
+            Ok(Response::with((
+                status::NotAcceptable,
+                mime,
+                serde_json::to_string(&err.to_string()).unwrap(),
+            )))
+        }
     }
 }
 
@@ -196,6 +219,8 @@ fn main() {
 
         mount.mount("/eval", middleware);
     }
+
+    mount.mount("/format", format);
 
     {
         let mut middleware = Chain::new(examples);

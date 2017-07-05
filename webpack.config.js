@@ -24,14 +24,14 @@ module.exports = {
         ]
       },
       {
-        test:    /\.html$/,
+        test: /\.html$/,
         exclude: /node_modules/,
-        loader:  'file?name=[name].[ext]',
+        loader: 'file?name=[name].[ext]',
       },
       {
-        test:    /\.elm$/,
+        test: /\.elm$/,
         exclude: [/elm-stuff/, /node_modules/],
-        loader:  'elm-webpack',
+        loader: 'elm-webpack',
       },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
