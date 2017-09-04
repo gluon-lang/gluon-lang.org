@@ -1,14 +1,12 @@
 module Main exposing (main)
 
-import Html exposing (Html, a, button, div, form, h2, nav, option, pre, select, text, textarea, ul, li)
-import Html.App
+import Html exposing (Html, a, button, div, form, h2, li, nav, option, pre, select, text, textarea, ul)
 import Html.Attributes exposing (class, disabled, href, name, rows, selected)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode as Json exposing ((:=))
+import Json.Decode as Json
 import List exposing ((::))
 import List.Extra as List
-import Task exposing (Task)
 
 
 -- MODEL
@@ -74,7 +72,7 @@ getExample : String -> Model -> Maybe String
 getExample name model =
     model.examples
         |> List.find (\example -> example.name == name)
-        |> Maybe.map (.src)
+        |> Maybe.map .src
 
 
 setExample : String -> Model -> Model
@@ -102,15 +100,12 @@ setSource src model =
 
 type Msg
     = EvalRequested
-    | EvalSucceed String
-    | EvalFail Http.Error
-    | ExamplesSucceed (List Example)
-    | ExamplesFail Http.Error
+    | EvalDone (Result Http.Error String)
+    | ExamplesDone (Result Http.Error (List Example))
     | SelectExample String
     | EditSource String
     | FormatRequested
-    | FormatSucceed String
-    | FormatFail Http.Error
+    | FormatDone (Result Http.Error String)
 
 
 
@@ -123,16 +118,16 @@ update msg model =
         EvalRequested ->
             ( { model | evalResult = Pending }, postEval model )
 
-        EvalSucceed result ->
+        EvalDone (Ok result) ->
             ( { model | evalResult = Succeed result }, Cmd.none )
 
-        EvalFail err ->
+        EvalDone (Err err) ->
             ( { model | evalResult = Fail "Http Error." }, Cmd.none )
 
-        ExamplesSucceed examples ->
+        ExamplesDone (Ok examples) ->
             ( initExamples examples model, Cmd.none )
 
-        ExamplesFail _ ->
+        ExamplesDone (Err _) ->
             ( model, Cmd.none )
 
         SelectExample name ->
@@ -142,12 +137,12 @@ update msg model =
             ( setSource src model, Cmd.none )
 
         FormatRequested ->
-            ({ model | evalResult = Pending }, postFormat model )
+            ( { model | evalResult = Pending }, postFormat model )
 
-        FormatSucceed result ->
+        FormatDone (Ok result) ->
             ( { model | src = result, evalResult = Succeed "Formatted!" }, Cmd.none )
 
-        FormatFail err ->
+        FormatDone (Err err) ->
             ( { model | evalResult = Fail "Unable to format source" }, Cmd.none )
 
 
@@ -197,11 +192,11 @@ evalResult model =
         div [ class "card" ]
             [ div [ class "card-header" ]
                 [ nav [ class "nav" ]
-                    [ ul [ class "nav navbar-nav mr-auto"]
+                    [ ul [ class "nav navbar-nav mr-auto" ]
                         [ text "Result"
                         ]
                     , ul [ class "nav navbar-nav" ]
-                        [ li [ class "nav-item"]
+                        [ li [ class "nav-item" ]
                             [ button
                                 [ class "btn btn-secondary float-xs-right"
                                 , onClick FormatRequested
@@ -211,7 +206,7 @@ evalResult model =
                             ]
                         ]
                     , ul [ class "nav navbar-nav" ]
-                        [ li [ class "nav-item"]
+                        [ li [ class "nav-item" ]
                             [ button
                                 [ class "btn btn-primary float-xs-right"
                                 , onClick EvalRequested
@@ -257,36 +252,29 @@ view model =
 
 postEval : Model -> Cmd Msg
 postEval model =
-    let
-        evalTask =
-            Http.post Json.string model.urls.eval (Http.string model.src)
-    in
-        Task.perform EvalFail EvalSucceed evalTask
+    Http.send EvalDone <|
+        Http.post model.urls.eval (Http.stringBody "text/plain" model.src) Json.string
+
 
 postFormat : Model -> Cmd Msg
 postFormat model =
-    let
-        evalTask =
-            Http.post Json.string model.urls.format (Http.string model.src)
-    in
-        Task.perform FormatFail FormatSucceed evalTask
+    Http.send FormatDone <|
+        Http.post model.urls.format (Http.stringBody "text/plain" model.src) Json.string
 
 
 getExamples : Model -> Cmd Msg
 getExamples model =
     let
         exampleOption =
-            Json.object2 (\name value -> { name = name, src = value })
-                ("name" := Json.string)
-                ("value" := Json.string)
+            Json.map2 (\name value -> { name = name, src = value })
+                (Json.field "name" Json.string)
+                (Json.field "value" Json.string)
 
         decodeExamples =
             Json.list exampleOption
-
-        examplesTask =
-            Http.get decodeExamples model.urls.examples
     in
-        Task.perform ExamplesFail ExamplesSucceed examplesTask
+        Http.send ExamplesDone <|
+            Http.get model.urls.examples decodeExamples
 
 
 
@@ -302,9 +290,9 @@ subscriptions model =
 -- MAIN
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.App.program
+    Html.program
         { init = init
         , update = update
         , view = view
