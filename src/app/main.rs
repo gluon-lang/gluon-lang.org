@@ -5,6 +5,7 @@ extern crate persistent;
 extern crate staticfile;
 extern crate mount;
 extern crate gluon;
+extern crate gluon_format;
 extern crate serde_json;
 #[macro_use]
 extern crate log;
@@ -30,13 +31,14 @@ use mount::Mount;
 use gluon::base::symbol::{Symbol, SymbolRef};
 use gluon::base::kind::{ArcKind, KindEnv};
 use gluon::base::types::{Alias, ArcType, TypeEnv, RecordSelector};
-use gluon::parser::format_expr;
 use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
 use gluon::vm::Error;
 use gluon::vm::internal::ValuePrinter;
 use gluon::vm::api::{Hole, OpaqueValue};
 use gluon::Compiler;
 use gluon::import::{DefaultImporter, Import};
+
+use gluon_format::format_expr;
 
 pub struct EmptyEnv;
 

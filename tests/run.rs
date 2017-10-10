@@ -11,7 +11,7 @@ fn test() {
         .join("server");
     let mut child = Command::new(exe).stdout(Stdio::piped()).spawn().unwrap();
     {
-        let mut stdout = child.stdout.as_mut().expect("stdout missing");
+        let stdout = child.stdout.as_mut().expect("stdout missing");
         let mut buffer = [0; 256];
         let n = stdout.read(&mut buffer).unwrap();
         if n == 0 {
