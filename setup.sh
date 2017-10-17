@@ -10,5 +10,5 @@ echo "${SWAP}  none  swap  sw 0  0"
 swapon -s
 
 iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
-iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8 080
+iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 sh -c "iptables-save > /etc/iptables.rules"
