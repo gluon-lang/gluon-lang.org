@@ -1,3 +1,4 @@
+#!/bin/bash
 SWAP=/mnt/1GB.swap
 
 fallocate -l 1G ${SWAP}
