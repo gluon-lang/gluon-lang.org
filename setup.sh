@@ -5,7 +5,7 @@ fallocate -l 1G ${SWAP}
 mkswap ${SWAP}
 swapon ${SWAP}
 
-echo "${SWAP}  none  swap  sw 0  0"
+echo "${SWAP}  none  swap  sw 0  0" >> /etc/fstab
 
 swapon -s
 
