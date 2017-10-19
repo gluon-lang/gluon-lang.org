@@ -20,6 +20,6 @@ serde_json = "0.7.0"
 log = "0.3.6"
 env_logger = "0.3.4"
 
-gluon = "0.6.0"
-gluon_format = "0.6.0"
+gluon = "0.6.2"
+gluon_format = "0.6.2"
 

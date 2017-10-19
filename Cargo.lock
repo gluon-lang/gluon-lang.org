@@ -4,8 +4,8 @@ version = "0.4.0"
 dependencies = [
  "env_logger 0.3.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_format 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_format 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "mount 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -188,17 +188,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "gluon"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "either 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_base 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_check 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_format 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_parser 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_vm 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_check 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_parser 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_vm 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -206,7 +205,7 @@ dependencies = [
 
 [[package]]
 name = "gluon_base"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "anymap 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -221,10 +220,10 @@ dependencies = [
 
 [[package]]
 name = "gluon_check"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "gluon_base 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "pretty 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -234,11 +233,11 @@ dependencies = [
 
 [[package]]
 name = "gluon_format"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "gluon_base 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_parser 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_parser 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.5.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "pretty 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -246,11 +245,11 @@ dependencies = [
 
 [[package]]
 name = "gluon_parser"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_base 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -261,15 +260,15 @@ dependencies = [
 
 [[package]]
 name = "gluon_vm"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "frunk_core 0.0.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_base 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_check 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_check 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "mopa 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -907,12 +906,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum fuchsia-zircon 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "f6c0581a4e363262e52b87f59ee2afe3415361c6ec35e665924eb08afe8ff159"
 "checksum fuchsia-zircon-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "43f3795b4bae048dc6123a6b972cadde2e676f9ded08aef6bb77f5f157684a82"
 "checksum futures 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)" = "05a23db7bd162d4e8265968602930c476f688f0c180b44bdaf55e0cb2c687558"
-"checksum gluon 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d726866aca3546f1e7d8c16d014de454329e4ac1fa79423fd8b99068201f2b73"
-"checksum gluon_base 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4148a61d49287a96a9c9b3c6ac544b6e97a2457de83dabd1b4feb0835a15ded3"
-"checksum gluon_check 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8e2e5d004f9ffe10d8cac3e17f415bfa9dcc08250676cb820b43b9f018f7ba20"
-"checksum gluon_format 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8c3d38498092f67d85f6da15f63dfc816051e29c80cf3442d78088843b61668f"
-"checksum gluon_parser 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1f3a531fc54a6650e39dcdbde0dca9b2f8c4eeb5a4f95e23528a352fcf7224c7"
-"checksum gluon_vm 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ed738bd9cc6231052fc99b16725ab46547f50b5eac4796817d29a443936db1da"
+"checksum gluon 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f86a1b5cbc8581acba8e1602a7a404b61046e3ea8dcb759ec0a70ff1752cbe54"
+"checksum gluon_base 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f730934e9448205e10b02c473607f523249392f5eebb43055c6aed7e923b2722"
+"checksum gluon_check 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "b5119d10b101372a15a245235321c1875370b2892e321080b03e4a48d926e538"
+"checksum gluon_format 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "05ccb1eed5d0b06ebdf9137454fca7c25d219bd4d737639a283905bb679ee22e"
+"checksum gluon_parser 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "0db15d4952952127f4b085d2d10da76c2c1f5c5d5e42adb21c879334f9984230"
+"checksum gluon_vm 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ab2393ab9abd0b63b1d122d8135d0713644ac040722234b47764990f9f436b79"
 "checksum hpack 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3d2da7d3a34cf6406d9d700111b8eafafe9a251de41ae71d8052748259343b58"
 "checksum httparse 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "af2f2dd97457e8fb1ae7c5a420db346af389926e36f43768b96f101546b04a07"
 "checksum hyper 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "bb0f4d00bb781e559b6e66ae4b5479df0fdf9ab15949f52fa2f1f5de16d4cc07"
