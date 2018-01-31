@@ -32,11 +32,11 @@ use gluon::base::symbol::{Symbol, SymbolRef};
 use gluon::base::kind::{ArcKind, KindEnv};
 use gluon::base::types::{Alias, ArcType, TypeEnv, RecordSelector};
 use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
-use gluon::vm::Error;
+use gluon::vm::{self, Error};
 use gluon::vm::internal::ValuePrinter;
 use gluon::vm::api::{Hole, OpaqueValue};
 use gluon::Compiler;
-use gluon::import::{DefaultImporter, Import};
+use gluon::import::{DefaultImporter, Import, add_extern_module};
 
 use gluon_format::format_expr;
 
@@ -199,10 +199,19 @@ fn make_eval_vm() -> RootedThread {
         .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)
         .unwrap();
 
-    gluon::vm::primitives::load(&vm).expect("Loaded primitives library");
+    add_extern_module(&vm, "std.prim", vm::primitives::load);
+    add_extern_module(&vm, "std.int.prim", vm::primitives::load_int);
+    add_extern_module(&vm, "std.float.prim", vm::primitives::load_float);
+    add_extern_module(&vm, "std.string.prim", vm::primitives::load_string);
+    add_extern_module(&vm, "std.char.prim", vm::primitives::load_char);
+    add_extern_module(&vm, "std.array.prim", vm::primitives::load_array);
+
+    add_extern_module(&vm, "std.lazy", vm::lazy::load);
+    add_extern_module(&vm, "std.reference", vm::reference::load);
+
     // Load the io library so the prelude can be loaded
     // (`IO` actions won't actually execute however)
-    gluon::io::load(&vm).expect("Loaded IO library");
+    add_extern_module(&vm, "std.io.prim", gluon::io::load);
 
     vm
 }
