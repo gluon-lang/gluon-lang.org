@@ -8,7 +8,7 @@ fn test() {
     let exe = path.parent()
         .and_then(|path| path.parent())
         .expect("debugger executable")
-        .join("server");
+        .join(env!("CARGO_PKG_NAME"));
     let mut child = Command::new(exe).stdout(Stdio::piped()).spawn().unwrap();
     {
         let stdout = child.stdout.as_mut().expect("stdout missing");
