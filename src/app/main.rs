@@ -249,7 +249,13 @@ fn main() {
     mount.mount("/", |req: &mut Request| -> IronResult<Response> {
         Ok(Response::with((
             status::TemporaryRedirect,
-            RedirectRaw(format!("/try/?{}", req.url.query().unwrap_or(""))),
+            RedirectRaw(format!(
+                "/try/{}",
+                req.url
+                    .query()
+                    .map(|q| format!("?{}", q))
+                    .unwrap_or(String::new())
+            )),
         )))
     });
 
