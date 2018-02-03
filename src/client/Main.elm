@@ -3,10 +3,14 @@ module Main exposing (main)
 import Html exposing (Html, a, button, div, form, h2, li, nav, option, pre, select, text, textarea, ul)
 import Html.Attributes exposing (class, disabled, href, name, rows, selected)
 import Html.Events exposing (onClick, onInput)
+import Navigation exposing (Location)
 import Http
 import Json.Decode as Json
+import Json.Encode as JsonEncode
 import List exposing ((::))
 import List.Extra as List
+import Dict
+import UrlParser exposing (parsePath, stringParam, (<?>), top)
 
 
 -- MODEL
@@ -16,12 +20,14 @@ type Response value
     = Pending
     | Fail String
     | Succeed value
+    | GistReceived PostGist
 
 
 type alias Urls =
     { examples : String
     , eval : String
     , format : String
+    , currentOrigin : String
     }
 
 
@@ -40,14 +46,15 @@ type alias Model =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
+init : Location -> ( Model, Cmd Msg )
+init location =
     let
         model =
             { urls =
                 { examples = "examples"
                 , eval = "eval"
                 , format = "format"
+                , currentOrigin = location.origin
                 }
             , examples = []
             , selectedExample = Nothing
@@ -55,7 +62,14 @@ init =
             , evalResult = Succeed ""
             }
     in
-        ( model, getExamples model )
+        ( model
+        , case parsePath (top <?> stringParam "gist") location of
+            Just (Just gistId) ->
+                Cmd.batch [ getExamples model, loadGist gistId ]
+
+            _ ->
+                getExamples model
+        )
 
 
 initExamples : List Example -> Model -> Model
@@ -106,6 +120,10 @@ type Msg
     | EditSource String
     | FormatRequested
     | FormatDone (Result Http.Error String)
+    | GistGetDone (Result Http.Error Gist)
+    | Share
+    | GistPostDone (Result Http.Error PostGist)
+    | NoOp
 
 
 
@@ -145,6 +163,24 @@ update msg model =
         FormatDone (Err err) ->
             ( { model | evalResult = Fail "Unable to format source" }, Cmd.none )
 
+        GistGetDone (Ok gist) ->
+            ( { model | src = gist.code }, Cmd.none )
+
+        GistGetDone (Err err) ->
+            ( { model | evalResult = Fail ("Unable to load gist: " ++ toString err) }, Cmd.none )
+
+        Share ->
+            ( { model | evalResult = Pending }, postGist model )
+
+        GistPostDone (Ok gist) ->
+            ( { model | evalResult = GistReceived gist }, Cmd.none )
+
+        GistPostDone (Err err) ->
+            ( { model | evalResult = Fail ("Unable to make gist: " ++ toString err) }, Cmd.none )
+
+        NoOp ->
+            ( model, Cmd.none )
+
 
 
 -- VIEW
@@ -181,13 +217,20 @@ evalResult model =
         evalResult =
             case model.evalResult of
                 Pending ->
-                    "Waiting..."
+                    pre [] [ text "Waiting..." ]
 
                 Fail err ->
-                    err
+                    pre [] [ text err ]
 
                 Succeed output ->
-                    output
+                    pre [] [ text output ]
+
+                GistReceived gist ->
+                    div []
+                        [ a [ href (model.urls.currentOrigin ++ "/?gist=" ++ gist.id) ] [ text "Link to try_gluon" ]
+                        , Html.br [] []
+                        , a [ href gist.url ] [ text "Link to gist" ]
+                        ]
     in
         div [ class "card" ]
             [ div [ class "card-header" ]
@@ -199,10 +242,20 @@ evalResult model =
                         [ li [ class "nav-item" ]
                             [ button
                                 [ class "btn btn-secondary float-xs-right"
+                                , onClick Share
+                                , disabled (model.evalResult == Pending)
+                                ]
+                                [ text "Share" ]
+                            ]
+                        ]
+                    , ul [ class "nav navbar-nav" ]
+                        [ li [ class "nav-item" ]
+                            [ button
+                                [ class "btn btn-secondary float-xs-right"
                                 , onClick FormatRequested
                                 , disabled (model.evalResult == Pending)
                                 ]
-                                [ text "Format (WIP)" ]
+                                [ text "Format" ]
                             ]
                         ]
                     , ul [ class "nav navbar-nav" ]
@@ -217,7 +270,7 @@ evalResult model =
                         ]
                     ]
                 ]
-            , div [ class "card-block" ] [ pre [] [ text evalResult ] ]
+            , div [ class "card-block" ] [ evalResult ]
             ]
 
 
@@ -277,6 +330,73 @@ getExamples model =
             Http.get model.urls.examples decodeExamples
 
 
+type alias Gist =
+    { id : String, url : String, code : String }
+
+
+type alias PostGist =
+    { id : String, url : String }
+
+
+baseGistString : String
+baseGistString =
+    "https://api.github.com/gists"
+
+
+loadGist : String -> Cmd Msg
+loadGist tag =
+    let
+        files =
+            Json.andThen
+                (\dict ->
+                    case List.head <| Dict.values dict of
+                        Nothing ->
+                            Json.fail "No files found in gist"
+
+                        Just content ->
+                            Json.succeed content
+                )
+                (Json.dict
+                    (Json.field "content" Json.string)
+                )
+
+        gistOption =
+            Json.map3 (\id url code -> { id = id, url = url, code = code })
+                (Json.field "id" Json.string)
+                (Json.field "html_url" Json.string)
+                (Json.field "files" files)
+    in
+        Http.send GistGetDone <|
+            Http.get (baseGistString ++ "/" ++ tag) gistOption
+
+
+postGist : Model -> Cmd Msg
+postGist model =
+    let
+        body =
+            JsonEncode.object
+                [ ( "description", JsonEncode.string "Gluon code shared from try_gluon" )
+                , ( "public", JsonEncode.bool True )
+                , ( "files"
+                  , JsonEncode.object
+                        [ ( "try_gluon.glu"
+                          , JsonEncode.object
+                                [ ( "content", JsonEncode.string model.src )
+                                ]
+                          )
+                        ]
+                  )
+                ]
+
+        responseDecoder =
+            Json.map2 (\id url -> { id = id, url = url })
+                (Json.field "id" Json.string)
+                (Json.field "html_url" Json.string)
+    in
+        Http.send GistPostDone <|
+            Http.post baseGistString (Http.jsonBody body) responseDecoder
+
+
 
 -- SUBSCRIPTIONS
 
@@ -292,7 +412,8 @@ subscriptions model =
 
 main : Program Never Model Msg
 main =
-    Html.program
+    Navigation.program
+        (\location -> NoOp)
         { init = init
         , update = update
         , view = view
