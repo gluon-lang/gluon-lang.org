@@ -10,7 +10,7 @@ import Json.Encode as JsonEncode
 import List exposing ((::))
 import List.Extra as List
 import Dict
-import UrlParser exposing (parsePath, stringParam, (<?>), top)
+import UrlParser exposing (s, parsePath, stringParam, (<?>), top)
 
 
 -- MODEL
@@ -63,7 +63,7 @@ init location =
             }
     in
         ( model
-        , case parsePath (top <?> stringParam "gist") location of
+        , case parsePath (s "try" <?> stringParam "gist") location of
             Just (Just gistId) ->
                 Cmd.batch [ getExamples model, loadGist gistId ]
 

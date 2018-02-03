@@ -1,23 +1,24 @@
+extern crate env_logger;
 extern crate futures;
-#[macro_use]
-extern crate iron;
-extern crate persistent;
-extern crate staticfile;
-extern crate mount;
 extern crate gluon;
 extern crate gluon_format;
-extern crate serde_json;
+#[macro_use]
+extern crate iron;
 #[macro_use]
 extern crate log;
-extern crate env_logger;
+extern crate mount;
+extern crate persistent;
+extern crate serde_json;
+extern crate staticfile;
 
-use std::fs::{File, read_dir};
+use std::fs::{read_dir, File};
 use std::io::{self, Read};
 use std::time::Instant;
 
 use futures::Async;
 
 use iron::mime::Mime;
+use iron::modifiers::RedirectRaw;
 use iron::prelude::*;
 use iron::status;
 use iron::typemap::Key;
@@ -30,13 +31,13 @@ use mount::Mount;
 
 use gluon::base::symbol::{Symbol, SymbolRef};
 use gluon::base::kind::{ArcKind, KindEnv};
-use gluon::base::types::{Alias, ArcType, TypeEnv, RecordSelector};
+use gluon::base::types::{Alias, ArcType, RecordSelector, TypeEnv};
 use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
 use gluon::vm::{self, Error};
 use gluon::vm::internal::ValuePrinter;
 use gluon::vm::api::{Hole, OpaqueValue};
 use gluon::Compiler;
-use gluon::import::{DefaultImporter, Import, add_extern_module};
+use gluon::import::{add_extern_module, DefaultImporter, Import};
 
 use gluon_format::format_expr;
 
@@ -97,22 +98,22 @@ fn eval_(req: &mut Request) -> IronResult<String> {
 
         // Prevent infinite loops from running forever
         let start = Instant::now();
-        context.set_hook(Some(
-            Box::new(move |_, _| if start.elapsed().as_secs() < 10 {
+        context.set_hook(Some(Box::new(move |_, _| {
+            if start.elapsed().as_secs() < 10 {
                 Ok(Async::Ready(()))
             } else {
                 Err(Error::Message(
                     "Thread has exceeded the allowed exection time".into(),
                 ))
-            }),
-        ));
+            }
+        })));
     }
 
-    let (value, typ) = match Compiler::new()
-        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "<top>", &body) {
-        Ok(value) => value,
-        Err(err) => return Ok(format!("{}", err)),
-    };
+    let (value, typ) =
+        match Compiler::new().run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "<top>", &body) {
+            Ok(value) => value,
+            Err(err) => return Ok(format!("{}", err)),
+        };
 
     unsafe {
         Ok(format!(
@@ -130,18 +131,16 @@ fn format(req: &mut Request) -> IronResult<Response> {
     info!("Format: `{}`", body);
     let mime: Mime = "text/plain".parse().unwrap();
     match format_expr(&body) {
-        Ok(formatted) => {
-            Ok(Response::with(
-                (status::Ok, mime, serde_json::to_string(&formatted).unwrap()),
-            ))
-        }
-        Err(err) => {
-            Ok(Response::with((
-                status::NotAcceptable,
-                mime,
-                serde_json::to_string(&err.to_string()).unwrap(),
-            )))
-        }
+        Ok(formatted) => Ok(Response::with((
+            status::Ok,
+            mime,
+            serde_json::to_string(&formatted).unwrap(),
+        ))),
+        Err(err) => Ok(Response::with((
+            status::NotAcceptable,
+            mime,
+            serde_json::to_string(&err.to_string()).unwrap(),
+        ))),
     }
 }
 
@@ -218,28 +217,41 @@ fn make_eval_vm() -> RootedThread {
 
 fn main() {
     env_logger::init().unwrap();
+
+    let try_mount = {
+        let mut mount = Mount::new();
+
+        mount.mount("/", Static::new("dist/try"));
+
+        {
+            let mut middleware = Chain::new(eval);
+
+            let vm = make_eval_vm();
+            middleware.link(persistent::Read::<VMKey>::both(vm));
+
+            mount.mount("/eval", middleware);
+        }
+
+        mount.mount("/format", format);
+
+        {
+            let mut middleware = Chain::new(examples);
+            let examples_string = serde_json::to_string(&load_examples()).unwrap();
+
+            middleware.link(persistent::Read::<Examples>::both(examples_string));
+            mount.mount("/examples", middleware);
+        }
+        mount
+    };
+
     let mut mount = Mount::new();
-
-    mount.mount("/", Static::new("dist"));
-
-    {
-        let mut middleware = Chain::new(eval);
-
-        let vm = make_eval_vm();
-        middleware.link(persistent::Read::<VMKey>::both(vm));
-
-        mount.mount("/eval", middleware);
-    }
-
-    mount.mount("/format", format);
-
-    {
-        let mut middleware = Chain::new(examples);
-        let examples_string = serde_json::to_string(&load_examples()).unwrap();
-
-        middleware.link(persistent::Read::<Examples>::both(examples_string));
-        mount.mount("/examples", middleware);
-    }
+    mount.mount("/try", try_mount);
+    mount.mount("/", |req: &mut Request| -> IronResult<Response> {
+        Ok(Response::with((
+            status::TemporaryRedirect,
+            RedirectRaw(format!("/try/?{}", req.url.query().unwrap_or(""))),
+        )))
+    });
 
     let address = "0.0.0.0:8080";
 
