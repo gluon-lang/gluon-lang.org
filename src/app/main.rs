@@ -20,7 +20,7 @@ use futures::Async;
 use iron::mime::Mime;
 use iron::modifiers::RedirectRaw;
 use iron::prelude::*;
-use iron::status;
+use iron::{status, Handler};
 use iron::typemap::Key;
 
 use serde_json::Value;
@@ -241,11 +241,12 @@ fn main() {
             middleware.link(persistent::Read::<Examples>::both(examples_string));
             mount.mount("/examples", middleware);
         }
+
         mount
     };
 
     let mut mount = Mount::new();
-    mount.mount("/try", try_mount);
+    mount.mount("/try/", try_mount);
     mount.mount("/", |req: &mut Request| -> IronResult<Response> {
         Ok(Response::with((
             status::TemporaryRedirect,
@@ -262,7 +263,25 @@ fn main() {
     let address = "0.0.0.0:8080";
 
     // Dropping `server` causes it to block so keep it alive until the end of scope
-    let _server = Iron::new(mount).http(address).unwrap();
+    let _server = Iron::new(move |req: &mut Request| {
+        // Redirect `try` to `try/` to make relative paths work
+        // Need to hack it in here since `Mount` strips trailing `/` ...
+        if req.url.path() == ["try"] {
+            Ok(Response::with((
+                status::PermanentRedirect,
+                RedirectRaw(format!(
+                    "/try/{}",
+                    req.url
+                        .query()
+                        .map(|q| format!("?{}", q))
+                        .unwrap_or(String::new())
+                )),
+            )))
+        } else {
+            mount.handle(req)
+        }
+    }).http(address)
+        .unwrap();
 
     println!("Server started at `{}`", address);
 }
