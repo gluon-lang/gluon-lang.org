@@ -2,6 +2,7 @@
 set -x
 
 webpack
+cargo update -p gluon_master
 cargo build --release
 
 OLD_GROUP_ID=$(ps x -o  "%p %r %y %x %c " | grep try_gluon | awk  '{print $2}')
