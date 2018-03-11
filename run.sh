@@ -1,6 +1,7 @@
 #!/bin/bash
 set -x
 
+npm install
 webpack
 cargo update -p gluon_master
 cargo build --release
