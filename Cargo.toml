@@ -5,6 +5,10 @@ authors = ["Markus <marwes91@gmail.com>"]
 
 license = "MIT"
 
+
+[workspace]
+members = ["gluon_master"]
+
 [[bin]]
 name = "try_gluon"
 path = "src/app/main.rs"
@@ -19,6 +23,8 @@ urlencoded = "0.6.0"
 serde_json = "0.7.0"
 log = "0.3.6"
 env_logger = "0.3.4"
+regex = "0.2.7"
 
 gluon = "0.7.0"
 gluon_format = "0.7.0"
+gluon_master = { path = "gluon_master" }

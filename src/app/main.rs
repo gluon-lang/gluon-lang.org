@@ -2,12 +2,14 @@ extern crate env_logger;
 extern crate futures;
 extern crate gluon;
 extern crate gluon_format;
+extern crate gluon_master;
 #[macro_use]
 extern crate iron;
 #[macro_use]
 extern crate log;
 extern crate mount;
 extern crate persistent;
+extern crate regex;
 extern crate serde_json;
 extern crate staticfile;
 
@@ -16,6 +18,8 @@ use std::io::{self, Read};
 use std::time::Instant;
 
 use futures::Async;
+
+use regex::Regex;
 
 use iron::mime::Mime;
 use iron::modifiers::RedirectRaw;
@@ -61,27 +65,7 @@ impl TypeEnv for EmptyEnv {
     }
 }
 
-pub struct VMKey;
-
-impl Key for VMKey {
-    type Value = RootedThread;
-}
-
-fn eval(req: &mut Request) -> IronResult<Response> {
-    eval_(req).map(|s| {
-        let mime: Mime = "text/plain".parse().unwrap();
-
-        Response::with((status::Ok, mime, serde_json::to_string(&s).unwrap()))
-    })
-}
-
-fn eval_(req: &mut Request) -> IronResult<String> {
-    let mut body = String::new();
-
-    itry!(req.body.read_to_string(&mut body));
-    info!("Eval: `{}`", body);
-
-    let global_vm = req.get::<persistent::Read<VMKey>>().unwrap();
+pub fn eval_stable(global_vm: &Thread, body: &str) -> IronResult<String> {
     let vm = match global_vm.new_thread() {
         Ok(vm) => vm,
         Err(err) => return Ok(format!("{}", err)),
@@ -124,7 +108,11 @@ fn eval_(req: &mut Request) -> IronResult<String> {
     }
 }
 
-fn format(req: &mut Request) -> IronResult<Response> {
+fn format<F, E>(req: &mut Request, format_expr: F) -> IronResult<Response>
+where
+    F: Fn(&str) -> Result<String, E>,
+    E: ::std::fmt::Display,
+{
     let mut body = String::new();
 
     itry!(req.body.read_to_string(&mut body));
@@ -144,19 +132,18 @@ fn format(req: &mut Request) -> IronResult<Response> {
     }
 }
 
-pub struct Examples;
+struct Config;
 
-impl Key for Examples {
+impl Key for Config {
     type Value = String;
 }
 
-fn examples(req: &mut Request) -> IronResult<Response> {
-    let s = req.get::<persistent::Read<Examples>>().unwrap();
+fn config(req: &mut Request) -> IronResult<Response> {
+    let s = req.get::<persistent::Read<Config>>().unwrap();
     Ok(Response::with((status::Ok, (*s).clone())))
 }
 
-/// Load all examples into a JSON array `[{ name: .., value: .. }, ..]`
-fn load_examples() -> Value {
+fn load_config() -> Value {
     let vec = read_dir("public/examples")
         .unwrap()
         .map(|entry| {
@@ -177,7 +164,37 @@ fn load_examples() -> Value {
         .collect::<io::Result<_>>()
         .unwrap();
 
-    Value::Array(vec)
+    let lock_file = include_str!("../../Cargo.lock");
+
+    let crates_io_version = Regex::new("checksum gluon ([^ ]+).+registry")
+        .unwrap()
+        .captures(lock_file)
+        .expect("crates.io version")
+        .get(1)
+        .unwrap()
+        .as_str();
+    let git_master_version = &Regex::new("git\\+[^#]+gluon#([^\"]+)")
+        .unwrap()
+        .captures(lock_file)
+        .expect("gluon master version")
+        .get(1)
+        .unwrap()
+        .as_str()[0..6];
+
+    Value::Object(
+        vec![
+            (
+                "last_release".to_string(),
+                Value::String(crates_io_version.to_string()),
+            ),
+            (
+                "git_master".to_string(),
+                Value::String(git_master_version.to_string()),
+            ),
+            ("examples".to_string(), Value::Array(vec)),
+        ].into_iter()
+            .collect(),
+    )
 }
 
 fn make_eval_vm() -> RootedThread {
@@ -215,35 +232,59 @@ fn make_eval_vm() -> RootedThread {
     vm
 }
 
+fn mount_eval<M>(mount: &mut Mount, prefix: &str, eval: M)
+where
+    M: Fn(&str) -> IronResult<String> + Send + Sync + 'static,
+{
+    let middleware = Chain::new(move |req: &mut Request| {
+        let mut body = String::new();
+
+        itry!(req.body.read_to_string(&mut body));
+        info!("Eval: `{}`", body);
+
+        eval(&body).map(|s| {
+            let mime: Mime = "text/plain".parse().unwrap();
+
+            Response::with((status::Ok, mime, serde_json::to_string(&s).unwrap()))
+        })
+    });
+
+    mount.mount(&format!("{}/eval", prefix), middleware);
+}
+
 fn main() {
     env_logger::init().unwrap();
 
-    let try_mount = {
-        let mut mount = Mount::new();
+    let mut try_mount = Mount::new();
+    try_mount.mount("/", Static::new("dist/try"));
+    {
+        let mut middleware = Chain::new(config);
+        let config_string = serde_json::to_string(&load_config()).unwrap();
 
-        mount.mount("/", Static::new("dist/try"));
+        middleware.link(persistent::Read::<Config>::both(config_string));
+        try_mount.mount("/config", middleware);
+    }
 
-        {
-            let mut middleware = Chain::new(eval);
+    {
+        let vm = make_eval_vm();
+        mount_eval(&mut try_mount, "", move |body| eval_stable(&vm, body));
 
-            let vm = make_eval_vm();
-            middleware.link(persistent::Read::<VMKey>::both(vm));
+        try_mount.mount("/format", move |req: &mut Request| format(req, format_expr));
+    }
 
-            mount.mount("/eval", middleware);
-        }
+    {
+        let vm = gluon_master::make_eval_vm();
+        mount_eval(&mut try_mount, "/master", move |body| {
+            Ok(match gluon_master::eval(&vm, body) {
+                Ok(x) => x,
+                Err(err) => err.to_string(),
+            })
+        });
 
-        mount.mount("/format", format);
-
-        {
-            let mut middleware = Chain::new(examples);
-            let examples_string = serde_json::to_string(&load_examples()).unwrap();
-
-            middleware.link(persistent::Read::<Examples>::both(examples_string));
-            mount.mount("/examples", middleware);
-        }
-
-        mount
-    };
+        try_mount.mount("/master/format", |req: &mut Request| {
+            format(req, gluon_master::format::format_expr)
+        });
+    }
 
     let mut mount = Mount::new();
     mount.mount("/try/", try_mount);
