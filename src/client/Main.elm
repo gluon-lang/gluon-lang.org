@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Html exposing (Html, a, button, div, form, h2, li, nav, option, pre, select, text, textarea, ul)
-import Html.Attributes exposing (class, disabled, href, name, rows, selected)
+import Html.Attributes exposing (class, disabled, href, name, rows, selected, id)
 import Html.Events exposing (onClick, onInput)
 import Navigation exposing (Location)
 import Http
@@ -24,7 +24,7 @@ type Response value
 
 
 type alias Urls =
-    { examples : String
+    { config : String
     , eval : String
     , format : String
     , currentOrigin : String
@@ -36,11 +36,40 @@ type alias Example =
     , src : String
     }
 
+type alias Config =
+    { lastRelease : String
+    , gitMaster : String
+    , examples : List Example
+    }
+
+type Version = LastRelease | GitMaster
+
+lastReleaseString : Config -> String
+lastReleaseString config = "Release: " ++ config.lastRelease
+
+versionsMap : Config -> List (Version, String)
+versionsMap config = [
+        (LastRelease, lastReleaseString config),
+        (GitMaster, "Revision: " ++ config.gitMaster)
+    ]
+
+humanReadableVersion : Config -> Version -> String
+humanReadableVersion config version =
+    List.filterMap (\(v, s) -> if version == v then Just s else Nothing) (versionsMap config)
+        |> List.head
+        |> Maybe.withDefault (lastReleaseString config)
+
+versionFromString : Config -> String -> Version
+versionFromString config stringVersion =
+    List.filterMap (\(v, s) -> if stringVersion == s then Just v else Nothing) (versionsMap config)
+        |> List.head
+        |> Maybe.withDefault LastRelease
 
 type alias Model =
     { urls : Urls
-    , examples : List Example
+    , config : Config
     , selectedExample : Maybe String
+    , selectedVersion : Version
     , src : String
     , evalResult : Response String
     }
@@ -51,13 +80,14 @@ init location =
     let
         model =
             { urls =
-                { examples = "examples"
+                { config = "config"
                 , eval = "eval"
                 , format = "format"
                 , currentOrigin = location.origin
                 }
-            , examples = []
+            , config = { gitMaster = "Git master", lastRelease = "Last crates.io release", examples = [] }
             , selectedExample = Nothing
+            , selectedVersion = LastRelease
             , src = ""
             , evalResult = Succeed ""
             }
@@ -65,26 +95,28 @@ init location =
         ( model
         , case parsePath (s "try" <?> stringParam "gist") location of
             Just (Just gistId) ->
-                Cmd.batch [ getExamples model, loadGist gistId ]
+                Cmd.batch [ getConfig model, loadGist gistId ]
 
             _ ->
-                getExamples model
+                getConfig model
         )
 
 
-initExamples : List Example -> Model -> Model
-initExamples examples model =
-    case List.head examples of
+initConfig : Config -> Model -> Model
+initConfig config model =
+    let
+        newModel = { model | config = config }
+    in case List.head config.examples of
         Just example ->
-            setExample example.name { model | examples = examples }
+            setExample example.name newModel
 
         Nothing ->
-            model
+            newModel
 
 
 getExample : String -> Model -> Maybe String
 getExample name model =
-    model.examples
+    model.config.examples
         |> List.find (\example -> example.name == name)
         |> Maybe.map .src
 
@@ -115,8 +147,9 @@ setSource src model =
 type Msg
     = EvalRequested
     | EvalDone (Result Http.Error String)
-    | ExamplesDone (Result Http.Error (List Example))
+    | ConfigDone (Result Http.Error Config)
     | SelectExample String
+    | SelectVersion Version
     | EditSource String
     | FormatRequested
     | FormatDone (Result Http.Error String)
@@ -142,14 +175,17 @@ update msg model =
         EvalDone (Err err) ->
             ( { model | evalResult = Fail "Http Error." }, Cmd.none )
 
-        ExamplesDone (Ok examples) ->
-            ( initExamples examples model, Cmd.none )
+        ConfigDone (Ok config) ->
+            ( initConfig config model, Cmd.none )
 
-        ExamplesDone (Err _) ->
+        ConfigDone (Err _) ->
             ( model, Cmd.none )
 
         SelectExample name ->
             ( setExample name model, Cmd.none )
+
+        SelectVersion version ->
+            ( { model | selectedVersion = version }, Cmd.none )
 
         EditSource src ->
             ( setSource src model, Cmd.none )
@@ -201,7 +237,7 @@ exampleSelect model =
     in
         div [ class "form pull-xs-right" ]
             [ select [ class "form-control custom-select", onInput SelectExample ]
-                (defaultOption :: List.map exampleOption model.examples)
+                (defaultOption :: List.map exampleOption model.config.examples)
             ]
 
 
@@ -209,6 +245,26 @@ editor : Model -> Html Msg
 editor model =
     textarea [ class "editor form-control", rows 25, onInput EditSource ]
         [ text model.src ]
+
+
+versionSelect : Model -> Html Msg
+versionSelect model =
+    let
+        selectedAttr key =
+            selected (model.selectedVersion == key)
+
+        exampleOption version =
+            option [ id (toString version), selectedAttr version ]
+                [ text (humanReadableVersion model.config version) ]
+
+        defaultOption =
+            option [ id (toString LastRelease), selectedAttr LastRelease ] [ text (humanReadableVersion model.config LastRelease) ]
+    in
+        div [ class "form float-xs-right" ]
+            [ select [ class "form-control custom-select", onInput (SelectVersion << versionFromString model.config) ]
+                (List.map exampleOption [LastRelease, GitMaster])
+            ]
+
 
 
 evalResult : Model -> Html Msg
@@ -237,6 +293,11 @@ evalResult model =
                 [ nav [ class "nav" ]
                     [ ul [ class "nav navbar-nav mr-auto" ]
                         [ text "Result"
+                        ]
+                    , ul [ class "nav navbar-nav" ]
+                        [ li [ class "nav-item" ]
+                            [ versionSelect model
+                            ]
                         ]
                     , ul [ class "nav navbar-nav" ]
                         [ li [ class "nav-item" ]
@@ -303,20 +364,26 @@ view model =
 -- HTTP
 
 
+prefixVersion : Model -> String -> String
+prefixVersion model path =
+    case model.selectedVersion of
+        GitMaster -> "master/" ++ path
+        LastRelease -> path
+
 postEval : Model -> Cmd Msg
 postEval model =
     Http.send EvalDone <|
-        Http.post model.urls.eval (Http.stringBody "text/plain" model.src) Json.string
+        Http.post (prefixVersion model model.urls.eval) (Http.stringBody "text/plain" model.src) Json.string
 
 
 postFormat : Model -> Cmd Msg
 postFormat model =
     Http.send FormatDone <|
-        Http.post model.urls.format (Http.stringBody "text/plain" model.src) Json.string
+        Http.post (prefixVersion model model.urls.format) (Http.stringBody "text/plain" model.src) Json.string
 
 
-getExamples : Model -> Cmd Msg
-getExamples model =
+getConfig : Model -> Cmd Msg
+getConfig model =
     let
         exampleOption =
             Json.map2 (\name value -> { name = name, src = value })
@@ -325,9 +392,15 @@ getExamples model =
 
         decodeExamples =
             Json.list exampleOption
+        
+        decodeConfig =
+            Json.map3 (\git last examples -> { gitMaster = git, lastRelease = last, examples = examples })
+                (Json.field "git_master" Json.string)
+                (Json.field "last_release" Json.string)
+                (Json.field "examples" decodeExamples)
     in
-        Http.send ExamplesDone <|
-            Http.get model.urls.examples decodeExamples
+        Http.send ConfigDone <|
+            Http.get model.urls.config decodeConfig
 
 
 type alias Gist =

@@ -14,10 +14,10 @@ module.exports = {
   },
 
   module: {
-    loaders: [
+    rules: [
       {
         test: /\.(css|scss)$/,
-        loaders: [
+        use: [
           'style-loader',
           'css-loader',
           'sass-loader',
@@ -26,20 +26,20 @@ module.exports = {
       {
         test: /\.html$/,
         exclude: /node_modules/,
-        loader: 'file-loader?name=[name].[ext]',
+        use: 'file-loader?name=[name].[ext]',
       },
       {
         test: /\.elm$/,
         exclude: [/elm-stuff/, /node_modules/],
-        loader: 'elm-webpack-loader',
+        use: 'elm-webpack-loader',
       },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: 'url-loader?limit=10000&mimetype=application/font-woff',
+        use: 'url-loader?limit=10000&mimetype=application/font-woff',
       },
       {
         test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: 'file-loader',
+        use: 'file-loader',
       },
     ],
 
