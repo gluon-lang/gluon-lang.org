@@ -1,7 +1,7 @@
 #!/bin/bash
 set -x
 
-npm install
+yarn install
 webpack
 cargo update -p gluon_master
 cargo build --release

@@ -1,5 +1,5 @@
 const path = require("path");
-const ClosureCompilerPlugin = require('closure-compiler-webpack-plugin');
+const ClosureCompilerPlugin = require('webpack-closure-compiler');
 
 module.exports = {
   entry: {
@@ -53,9 +53,11 @@ module.exports = {
 
   plugins: [
     new ClosureCompilerPlugin({
-      compilation_level: 'SIMPLE',
-      create_source_map: false,
-      language_out: 'ECMASCRIPT5',
+      compiler: {
+        compilation_level: 'SIMPLE',
+        create_source_map: false,
+        language_out: 'ECMASCRIPT5',
+      },
     }),
   ],
 };

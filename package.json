@@ -7,7 +7,7 @@
         "ajv": ">=6.0.0",
         "bootstrap": "^4.0.0-beta.2",
         "buffertools": "^2.1.6",
-        "closure-compiler-webpack-plugin": "^0.1.8",
+        "webpack-closure-compiler": "^2.1.6",
         "css-loader": "^0.28.7",
         "elm": "^0.18.0",
         "elm-webpack-loader": "git://github.com/elm-community/elm-webpack-loader#7d1c6d939ea5b8b8a8f2aa2eb497e7fba49e6c71",
