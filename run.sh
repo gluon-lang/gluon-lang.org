@@ -1,13 +1,8 @@
-#!/bin/bash
 set -x
 
-yarn install
-webpack
-cargo update -p https://github.com/gluon-lang/gluon
-cargo build --release
+docker build --tag try_gluon .
 
-OLD_GROUP_ID=$(ps x -o  "%p %r %y %x %c " | grep try_gluon | awk  '{print $2}')
-if [ -n $OLD_GROUP_ID ]; then
-	kill -- -$OLD_GROUP_ID
-fi
-RUST_LOG=info target/release/try_gluon --release &> output
+docker stop try_gluon_running || true
+docker rm try_gluon_running || true
+
+RUST_LOG=info docker run -p 80:8080 --name try_gluon_running --env RUST_LOG try_gluon

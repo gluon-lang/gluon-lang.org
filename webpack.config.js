@@ -53,6 +53,7 @@ module.exports = {
 
   plugins: [
     new ClosureCompilerPlugin({
+      jsCompiler: true,
       compiler: {
         compilation_level: 'SIMPLE',
         create_source_map: false,
