@@ -3,7 +3,7 @@ set -x
 
 yarn install
 webpack
-cargo update -p gluon_master
+cargo update -p https://github.com/gluon-lang/gluon
 cargo build --release
 
 OLD_GROUP_ID=$(ps x -o  "%p %r %y %x %c " | grep try_gluon | awk  '{print $2}')
