@@ -215,7 +215,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "gluon"
 version = "0.7.1"
-source = "git+https://github.com/gluon-lang/gluon#14db315faa97b8197071d53434e2cc0082e4132b"
+source = "git+https://github.com/gluon-lang/gluon#d7ce3e81c1fcfdf25cdd6d1abde2b6e376b4bf50"
 dependencies = [
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "either 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -255,7 +255,7 @@ dependencies = [
 [[package]]
 name = "gluon_base"
 version = "0.7.1"
-source = "git+https://github.com/gluon-lang/gluon#14db315faa97b8197071d53434e2cc0082e4132b"
+source = "git+https://github.com/gluon-lang/gluon#d7ce3e81c1fcfdf25cdd6d1abde2b6e376b4bf50"
 dependencies = [
  "anymap 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -287,7 +287,7 @@ dependencies = [
 [[package]]
 name = "gluon_check"
 version = "0.7.1"
-source = "git+https://github.com/gluon-lang/gluon#14db315faa97b8197071d53434e2cc0082e4132b"
+source = "git+https://github.com/gluon-lang/gluon#d7ce3e81c1fcfdf25cdd6d1abde2b6e376b4bf50"
 dependencies = [
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gluon_base 0.7.1 (git+https://github.com/gluon-lang/gluon)",
@@ -316,7 +316,7 @@ dependencies = [
 [[package]]
 name = "gluon_format"
 version = "0.7.1"
-source = "git+https://github.com/gluon-lang/gluon#14db315faa97b8197071d53434e2cc0082e4132b"
+source = "git+https://github.com/gluon-lang/gluon#d7ce3e81c1fcfdf25cdd6d1abde2b6e376b4bf50"
 dependencies = [
  "gluon_base 0.7.1 (git+https://github.com/gluon-lang/gluon)",
  "gluon_parser 0.7.1 (git+https://github.com/gluon-lang/gluon)",
@@ -349,7 +349,7 @@ dependencies = [
 [[package]]
 name = "gluon_parser"
 version = "0.7.1"
-source = "git+https://github.com/gluon-lang/gluon#14db315faa97b8197071d53434e2cc0082e4132b"
+source = "git+https://github.com/gluon-lang/gluon#d7ce3e81c1fcfdf25cdd6d1abde2b6e376b4bf50"
 dependencies = [
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gluon_base 0.7.1 (git+https://github.com/gluon-lang/gluon)",
@@ -381,7 +381,7 @@ dependencies = [
 [[package]]
 name = "gluon_vm"
 version = "0.7.1"
-source = "git+https://github.com/gluon-lang/gluon#14db315faa97b8197071d53434e2cc0082e4132b"
+source = "git+https://github.com/gluon-lang/gluon#d7ce3e81c1fcfdf25cdd6d1abde2b6e376b4bf50"
 dependencies = [
  "bitflags 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "collect-mac 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
