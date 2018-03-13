@@ -83,7 +83,7 @@ init location =
                 { config = "config"
                 , eval = "eval"
                 , format = "format"
-                , currentOrigin = location.origin ++ location.path
+                , currentOrigin = location.origin ++ location.pathname
                 }
             , config = { gitMaster = "Git master", lastRelease = "Last crates.io release", examples = [] }
             , selectedExample = Nothing
