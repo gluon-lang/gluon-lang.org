@@ -3,13 +3,16 @@ const ClosureCompilerPlugin = require('webpack-closure-compiler');
 
 module.exports = {
   entry: {
-    app: [
-      './src/client/index.js'
+    'try/app': [
+      './src/client/try/index.js'
+    ],
+    'gluon-lang': [
+        './src/client/index.js'
     ]
   },
 
   output: {
-    path: path.resolve(__dirname + '/dist/try'),
+    path: path.resolve(__dirname + '/dist'),
     filename: '[name].js',
   },
 
@@ -26,7 +29,15 @@ module.exports = {
       {
         test: /\.html$/,
         exclude: /node_modules/,
-        use: 'file-loader?name=[name].[ext]',
+        use: {
+          loader: 'file-loader',
+          options: {
+            name: (file) => {
+                let prefix = /src[\/\\]client(.*[\/\\]).+$/.exec(file)[1]
+                return prefix + '[name].[ext]';
+            }
+          }
+        }
       },
       {
         test: /\.elm$/,

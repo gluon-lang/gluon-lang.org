@@ -326,18 +326,7 @@ fn main_() -> Result<(), failure::Error> {
 
     let mut mount = Mount::new();
     mount.mount("/try/", try_mount);
-    mount.mount("/", |req: &mut Request| -> IronResult<Response> {
-        Ok(Response::with((
-            status::TemporaryRedirect,
-            RedirectRaw(format!(
-                "/try/{}",
-                req.url
-                    .query()
-                    .map(|q| format!("?{}", q))
-                    .unwrap_or(String::new())
-            )),
-        )))
-    });
+    mount.mount("/", Static::new("dist"));
 
     let docs = create_docs()?;
     mount.mount("doc/nightly", docs);
