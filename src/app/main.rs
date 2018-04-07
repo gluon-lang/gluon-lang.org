@@ -16,8 +16,11 @@ extern crate regex;
 extern crate serde_json;
 extern crate staticfile;
 
+use std::env;
 use std::fs::{read_dir, File};
 use std::io::{self, Read};
+use std::path::PathBuf;
+use std::process::Command;
 use std::time::Instant;
 
 use futures::Async;
@@ -260,28 +263,45 @@ where
     mount.mount(&format!("{}/eval", prefix), middleware);
 }
 
-fn create_docs() -> Result<Static, failure::Error> {
+fn gluon_git_path() -> Result<PathBuf, failure::Error> {
     let std_glob_path = home::cargo_home()?
         .join(&format!(
-            "git/checkouts/gluon-*/{}/std",
+            "git/checkouts/gluon-*/{}",
             &git_master_version()[..7]
         ))
         .display()
         .to_string();
-    let git_std = glob::glob(&std_glob_path)?
+    Ok(glob::glob(&std_glob_path)?
         .next()
-        .expect("git repo in cargo home")?;
+        .expect("git repo in cargo home")?)
+}
 
-    let exit_status = ::std::process::Command::new("cp")
-        .args(&["-r", &git_std.display().to_string(), "std"])
+fn create_docs(path: &str) -> Result<(), failure::Error> {
+    let git_dir = gluon_git_path()?;
+
+    let exit_status = Command::new("cp")
+        .args(&["-r", &git_dir.join("std").to_string_lossy(), "std"])
         .status()?;
     if !exit_status.success() {
         return Err(failure::err_msg("Error copying docs"));
     }
 
-    gluon_master::generate_doc("std", "dist/doc/nightly")?;
+    gluon_master::generate_doc("std", path)?;
 
-    Ok(Static::new("dist/doc/nightly"))
+    let mut command = Command::new("mdbook");
+    command.args(&[
+        "build",
+        "--dest-dir",
+        &env::current_dir()?.join("dist/book").to_string_lossy(),
+        &git_dir.join("book").to_string_lossy(),
+    ]);
+    println!("Building book: {:?}", command);
+    let exit_status = command.status()?;
+    if !exit_status.success() {
+        return Err(failure::err_msg("Error building book docs"));
+    }
+
+    Ok(())
 }
 
 fn main() {
@@ -328,8 +348,10 @@ fn main_() -> Result<(), failure::Error> {
     mount.mount("/try/", try_mount);
     mount.mount("/", Static::new("dist"));
 
-    let docs = create_docs()?;
-    mount.mount("doc/nightly", docs);
+    let doc_path = "dist/doc/nightly";
+    create_docs(doc_path)?;
+    mount.mount("doc/nightly", Static::new(doc_path));
+    mount.mount("book", Static::new("dist/book"));
 
     let address = "0.0.0.0:8080";
     // Dropping `server` causes it to block so keep it alive until the end of scope

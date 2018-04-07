@@ -15,6 +15,8 @@ RUN yarn install
 RUN yarn global add webpack-cli
 RUN yarn global add elm
 
+RUN cargo install mdbook --vers "0.1.2"
+
 COPY . .
 
 RUN webpack-cli
