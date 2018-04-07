@@ -1,12 +1,15 @@
 extern crate env_logger;
 extern crate futures;
+extern crate glob;
 extern crate gluon;
 extern crate gluon_format;
 extern crate gluon_master;
+extern crate home;
 #[macro_use]
 extern crate iron;
 #[macro_use]
 extern crate log;
+extern crate failure;
 extern crate mount;
 extern crate persistent;
 extern crate regex;
@@ -24,8 +27,8 @@ use regex::Regex;
 use iron::mime::Mime;
 use iron::modifiers::RedirectRaw;
 use iron::prelude::*;
-use iron::{status, Handler};
 use iron::typemap::Key;
+use iron::{status, Handler};
 
 use serde_json::Value;
 
@@ -33,15 +36,15 @@ use staticfile::Static;
 
 use mount::Mount;
 
-use gluon::base::symbol::{Symbol, SymbolRef};
+use gluon::Compiler;
 use gluon::base::kind::{ArcKind, KindEnv};
+use gluon::base::symbol::{Symbol, SymbolRef};
 use gluon::base::types::{Alias, ArcType, RecordSelector, TypeEnv};
+use gluon::import::{add_extern_module, DefaultImporter, Import};
+use gluon::vm::api::{Hole, OpaqueValue};
+use gluon::vm::internal::ValuePrinter;
 use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
 use gluon::vm::{self, Error};
-use gluon::vm::internal::ValuePrinter;
-use gluon::vm::api::{Hole, OpaqueValue};
-use gluon::Compiler;
-use gluon::import::{add_extern_module, DefaultImporter, Import};
 
 use gluon_format::format_expr;
 
@@ -143,6 +146,19 @@ fn config(req: &mut Request) -> IronResult<Response> {
     Ok(Response::with((status::Ok, (*s).clone())))
 }
 
+const LOCK_FILE: &str = include_str!("../../Cargo.lock");
+
+fn git_master_version() -> String {
+    Regex::new("git\\+[^#]+gluon#([^\"]+)")
+        .unwrap()
+        .captures(LOCK_FILE)
+        .expect("gluon master version")
+        .get(1)
+        .unwrap()
+        .as_str()
+        .to_string()
+}
+
 fn load_config() -> Value {
     let vec = read_dir("public/examples")
         .unwrap()
@@ -164,22 +180,14 @@ fn load_config() -> Value {
         .collect::<io::Result<_>>()
         .unwrap();
 
-    let lock_file = include_str!("../../Cargo.lock");
-
     let crates_io_version = Regex::new("checksum gluon ([^ ]+).+registry")
         .unwrap()
-        .captures(lock_file)
+        .captures(LOCK_FILE)
         .expect("crates.io version")
         .get(1)
         .unwrap()
         .as_str();
-    let git_master_version = &Regex::new("git\\+[^#]+gluon#([^\"]+)")
-        .unwrap()
-        .captures(lock_file)
-        .expect("gluon master version")
-        .get(1)
-        .unwrap()
-        .as_str()[0..6];
+    let git_master_version = git_master_version()[0..6].to_string();
 
     Value::Object(
         vec![
@@ -252,7 +260,37 @@ where
     mount.mount(&format!("{}/eval", prefix), middleware);
 }
 
+fn create_docs() -> Result<Static, failure::Error> {
+    let std_glob_path = home::cargo_home()?
+        .join(&format!(
+            "git/checkouts/gluon-*/{}/std",
+            &git_master_version()[..7]
+        ))
+        .display()
+        .to_string();
+    let git_std = glob::glob(&std_glob_path)?
+        .next()
+        .expect("git repo in cargo home")?;
+
+    let exit_status = ::std::process::Command::new("cp")
+        .args(&["-r", &git_std.display().to_string(), "std"])
+        .status()?;
+    if !exit_status.success() {
+        return Err(failure::err_msg("Error copying docs"));
+    }
+
+    gluon_master::generate_doc("std", "dist/doc/nightly")?;
+
+    Ok(Static::new("dist/doc/nightly"))
+}
+
 fn main() {
+    if let Err(err) = main_() {
+        eprintln!("{}\n{}", err, err.backtrace());
+    }
+}
+
+fn main_() -> Result<(), failure::Error> {
     env_logger::init().unwrap();
 
     let mut try_mount = Mount::new();
@@ -301,8 +339,10 @@ fn main() {
         )))
     });
 
-    let address = "0.0.0.0:8080";
+    let docs = create_docs()?;
+    mount.mount("doc/nightly", docs);
 
+    let address = "0.0.0.0:8080";
     // Dropping `server` causes it to block so keep it alive until the end of scope
     let _server = Iron::new(move |req: &mut Request| {
         // Redirect `try` to `try/` to make relative paths work
@@ -321,8 +361,8 @@ fn main() {
         } else {
             mount.handle(req)
         }
-    }).http(address)
-        .unwrap();
+    }).http(address)?;
 
     println!("Server started at `{}`", address);
+    Ok(())
 }

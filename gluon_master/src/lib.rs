@@ -1,20 +1,23 @@
+extern crate failure;
 extern crate futures;
 
 extern crate gluon;
+extern crate gluon_doc;
 pub extern crate gluon_format as format;
 
+use std::path::Path;
 use std::time::Instant;
 
 use futures::Async;
 
-use gluon::base::symbol::{Symbol, SymbolRef};
 use gluon::base::kind::{ArcKind, KindEnv};
+use gluon::base::symbol::{Symbol, SymbolRef};
 use gluon::base::types::{Alias, ArcType, RecordSelector, TypeEnv};
-use gluon::vm::thread::ThreadInternal;
-use gluon::vm;
-use gluon::vm::internal::ValuePrinter;
-use gluon::vm::api::{Hole, OpaqueValue};
 use gluon::import::{add_extern_module, DefaultImporter, Import};
+use gluon::vm;
+use gluon::vm::api::{Hole, OpaqueValue};
+use gluon::vm::internal::ValuePrinter;
+use gluon::vm::thread::ThreadInternal;
 
 pub use gluon::*;
 
@@ -112,4 +115,12 @@ pub fn eval(global_vm: &Thread, body: &str) -> Result<String> {
         ValuePrinter::new(&EmptyEnv, &typ, value.get_variant()).max_level(6),
         typ
     ))
+}
+
+pub fn generate_doc<P, Q>(input: &P, out: &Q) -> ::std::result::Result<(), failure::Error>
+where
+    P: ?Sized + AsRef<Path>,
+    Q: ?Sized + AsRef<Path>,
+{
+    gluon_doc::generate_for_path(&gluon::new_vm(), input, out)
 }
