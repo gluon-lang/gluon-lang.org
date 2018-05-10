@@ -20,7 +20,6 @@ RUN cargo install mdbook --vers "0.1.2"
 COPY . .
 
 RUN webpack-cli
-RUN cargo update -p https://github.com/gluon-lang/gluon
 RUN cargo install
 
 EXPOSE 8080
