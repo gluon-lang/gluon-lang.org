@@ -10,12 +10,20 @@ RUN apt-get update && apt-get install -y curl apt-transport-https && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
     apt-get update && apt-get install -y yarn
 
-COPY package.json yarn.lock ./
-RUN yarn install
+RUN cargo install mdbook --vers "0.1.2"
+
 RUN yarn global add webpack-cli
 RUN yarn global add elm
 
-RUN cargo install mdbook --vers "0.1.2"
+COPY package.json yarn.lock ./
+RUN yarn install
+
+# Cache the built dependencies
+COPY gluon_master/Cargo.toml gluon_master/
+COPY Cargo.toml Cargo.lock ./
+RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
+    && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
+RUN cargo build --release
 
 COPY . .
 
