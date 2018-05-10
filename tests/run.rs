@@ -16,7 +16,7 @@ fn test() {
             .lines()
             .find(|line| line.as_ref().unwrap().starts_with("Server started"))
         {
-            panic!("Expected the server to start",);
+            panic!("Expected the server to start");
         }
     }
     child.kill().unwrap();
