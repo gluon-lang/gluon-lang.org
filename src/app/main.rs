@@ -1,4 +1,5 @@
 extern crate env_logger;
+extern crate failure;
 extern crate futures;
 extern crate glob;
 extern crate gluon;
@@ -9,7 +10,6 @@ extern crate home;
 extern crate iron;
 #[macro_use]
 extern crate log;
-extern crate failure;
 extern crate mount;
 extern crate persistent;
 extern crate regex;
@@ -332,15 +332,18 @@ fn main_() -> Result<(), failure::Error> {
 
     {
         let vm = gluon_master::make_eval_vm();
-        mount_eval(&mut try_mount, "/master", move |body| {
-            Ok(match gluon_master::eval(&vm, body) {
-                Ok(x) => x,
-                Err(err) => err.to_string(),
-            })
-        });
+        {
+            let vm = vm.clone();
+            mount_eval(&mut try_mount, "/master", move |body| {
+                Ok(match gluon_master::eval(&vm, body) {
+                    Ok(x) => x,
+                    Err(err) => err.to_string(),
+                })
+            });
+        }
 
-        try_mount.mount("/master/format", |req: &mut Request| {
-            format(req, gluon_master::format::format_expr)
+        try_mount.mount("/master/format", move |req: &mut Request| {
+            format(req, |input| gluon_master::format_expr(&vm, input))
         });
     }
 

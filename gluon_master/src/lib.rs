@@ -3,7 +3,7 @@ extern crate futures;
 
 extern crate gluon;
 extern crate gluon_doc;
-pub extern crate gluon_format as format;
+extern crate gluon_format;
 
 use std::path::Path;
 use std::time::Instant;
@@ -12,7 +12,7 @@ use futures::Async;
 
 use gluon::base::kind::{ArcKind, KindEnv};
 use gluon::base::symbol::{Symbol, SymbolRef};
-use gluon::base::types::{Alias, ArcType, RecordSelector, TypeEnv};
+use gluon::base::types::{Alias, ArcType, TypeEnv};
 use gluon::import::{add_extern_module, DefaultImporter, Import};
 use gluon::vm;
 use gluon::vm::api::{Hole, OpaqueValue};
@@ -36,9 +36,6 @@ impl TypeEnv for EmptyEnv {
     fn find_type_info(&self, _id: &SymbolRef) -> Option<&Alias<Symbol, ArcType>> {
         None
     }
-    fn find_record(&self, _fields: &[Symbol], _: RecordSelector) -> Option<(ArcType, ArcType)> {
-        None
-    }
 }
 
 pub fn make_eval_vm() -> RootedThread {
@@ -59,19 +56,21 @@ pub fn make_eval_vm() -> RootedThread {
         .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)
         .unwrap();
 
-    add_extern_module(&vm, "std.prim", vm::primitives::load);
-    add_extern_module(&vm, "std.int.prim", vm::primitives::load_int);
-    add_extern_module(&vm, "std.float.prim", vm::primitives::load_float);
-    add_extern_module(&vm, "std.string.prim", vm::primitives::load_string);
-    add_extern_module(&vm, "std.char.prim", vm::primitives::load_char);
-    add_extern_module(&vm, "std.array.prim", vm::primitives::load_array);
+    add_extern_module(&vm, "std.prim", ::vm::primitives::load);
+    add_extern_module(&vm, "std.byte.prim", ::vm::primitives::load_byte);
+    add_extern_module(&vm, "std.int.prim", ::vm::primitives::load_int);
+    add_extern_module(&vm, "std.float.prim", ::vm::primitives::load_float);
+    add_extern_module(&vm, "std.string.prim", ::vm::primitives::load_string);
+    add_extern_module(&vm, "std.char.prim", ::vm::primitives::load_char);
+    add_extern_module(&vm, "std.array.prim", ::vm::primitives::load_array);
 
-    add_extern_module(&vm, "std.lazy", vm::lazy::load);
-    add_extern_module(&vm, "std.reference", vm::reference::load);
+    add_extern_module(&vm, "std.lazy", ::vm::lazy::load);
+    add_extern_module(&vm, "std.reference", ::vm::reference::load);
 
-    // Load the io library so the prelude can be loaded
-    // (`IO` actions won't actually execute however)
-    add_extern_module(&vm, "std.io.prim", gluon::io::load);
+    // add_extern_module(&vm, "std.channel", ::vm::channel::load_channel);
+    // add_extern_module(&vm, "std.thread.prim", ::vm::channel::load_thread);
+    // add_extern_module(&vm, "std.debug", ::vm::debug::load);
+    add_extern_module(&vm, "std.io.prim", ::io::load);
 
     vm
 }
@@ -123,4 +122,8 @@ where
     Q: ?Sized + AsRef<Path>,
 {
     gluon_doc::generate_for_path(&gluon::new_vm(), input, out)
+}
+
+pub fn format_expr(thread: &Thread, input: &str) -> Result<String> {
+    gluon_format::format_expr(&mut Compiler::new(), thread, "try", input)
 }
