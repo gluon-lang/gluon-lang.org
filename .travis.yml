@@ -3,6 +3,6 @@ sudo: false
 env: RUST_BACKTRACE=1
 
 install:
-  - sh scripts/install_mdbook.sh
+  - sh install_mdbook.sh
   - source ~/.cargo/env || true
   - ./install_mdbook.sh
