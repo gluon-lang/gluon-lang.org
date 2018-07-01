@@ -2,9 +2,6 @@ extern crate env_logger;
 extern crate failure;
 extern crate futures;
 extern crate glob;
-extern crate gluon;
-extern crate gluon_format;
-extern crate gluon_master;
 extern crate home;
 #[macro_use]
 extern crate iron;
@@ -16,14 +13,13 @@ extern crate regex;
 extern crate serde_json;
 extern crate staticfile;
 
+extern crate gluon_master;
+
 use std::env;
 use std::fs::{read_dir, File};
 use std::io::{self, Read};
 use std::path::PathBuf;
 use std::process::Command;
-use std::time::Instant;
-
-use futures::Async;
 
 use regex::Regex;
 
@@ -39,80 +35,7 @@ use staticfile::Static;
 
 use mount::Mount;
 
-use gluon::Compiler;
-use gluon::base::kind::{ArcKind, KindEnv};
-use gluon::base::symbol::{Symbol, SymbolRef};
-use gluon::base::types::{Alias, ArcType, RecordSelector, TypeEnv};
-use gluon::import::{add_extern_module, DefaultImporter, Import};
-use gluon::vm::api::{Hole, OpaqueValue};
-use gluon::vm::internal::ValuePrinter;
-use gluon::vm::thread::{RootedThread, Thread, ThreadInternal};
-use gluon::vm::{self, Error};
-
-use gluon_format::format_expr;
-
-pub struct EmptyEnv;
-
-impl KindEnv for EmptyEnv {
-    fn find_kind(&self, _type_name: &SymbolRef) -> Option<ArcKind> {
-        None
-    }
-}
-
-impl TypeEnv for EmptyEnv {
-    fn find_type(&self, _id: &SymbolRef) -> Option<&ArcType> {
-        None
-    }
-    fn find_type_info(&self, _id: &SymbolRef) -> Option<&Alias<Symbol, ArcType>> {
-        None
-    }
-    fn find_record(&self, _fields: &[Symbol], _: RecordSelector) -> Option<(ArcType, ArcType)> {
-        None
-    }
-}
-
-pub fn eval_stable(global_vm: &Thread, body: &str) -> IronResult<String> {
-    let vm = match global_vm.new_thread() {
-        Ok(vm) => vm,
-        Err(err) => return Ok(format!("{}", err)),
-    };
-
-    // Prevent a single thread from allocating to much memory
-    vm.set_memory_limit(2_000_000);
-
-    {
-        let mut context = vm.context();
-
-        // Prevent the stack from consuming to much memory
-        context.set_max_stack_size(10000);
-
-        // Prevent infinite loops from running forever
-        let start = Instant::now();
-        context.set_hook(Some(Box::new(move |_, _| {
-            if start.elapsed().as_secs() < 10 {
-                Ok(Async::Ready(()))
-            } else {
-                Err(Error::Message(
-                    "Thread has exceeded the allowed exection time".into(),
-                ))
-            }
-        })));
-    }
-
-    let (value, typ) =
-        match Compiler::new().run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "<top>", &body) {
-            Ok(value) => value,
-            Err(err) => return Ok(format!("{}", err)),
-        };
-
-    unsafe {
-        Ok(format!(
-            "{} : {}",
-            ValuePrinter::new(&EmptyEnv, &typ, value.get_value()).max_level(6),
-            typ
-        ))
-    }
-}
+mod gluon;
 
 fn format<F, E>(req: &mut Request, format_expr: F) -> IronResult<Response>
 where
@@ -207,42 +130,6 @@ fn load_config() -> Value {
             .collect(),
     )
 }
-
-fn make_eval_vm() -> RootedThread {
-    let vm = RootedThread::new();
-
-    // Ensure the import macro cannot be abused to to open files
-    {
-        // Ensure the lock to `paths` are released
-        let import = Import::new(DefaultImporter);
-        import.paths.write().unwrap().clear();
-        vm.get_macros().insert(String::from("import"), import);
-    }
-
-    // Initialize the basic types such as `Bool` and `Option` so they are available when loading
-    // other modules
-    Compiler::new()
-        .implicit_prelude(false)
-        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)
-        .unwrap();
-
-    add_extern_module(&vm, "std.prim", vm::primitives::load);
-    add_extern_module(&vm, "std.int.prim", vm::primitives::load_int);
-    add_extern_module(&vm, "std.float.prim", vm::primitives::load_float);
-    add_extern_module(&vm, "std.string.prim", vm::primitives::load_string);
-    add_extern_module(&vm, "std.char.prim", vm::primitives::load_char);
-    add_extern_module(&vm, "std.array.prim", vm::primitives::load_array);
-
-    add_extern_module(&vm, "std.lazy", vm::lazy::load);
-    add_extern_module(&vm, "std.reference", vm::reference::load);
-
-    // Load the io library so the prelude can be loaded
-    // (`IO` actions won't actually execute however)
-    add_extern_module(&vm, "std.io.prim", gluon::io::load);
-
-    vm
-}
-
 fn mount_eval<M>(mount: &mut Mount, prefix: &str, eval: M)
 where
     M: Fn(&str) -> IronResult<String> + Send + Sync + 'static,
@@ -324,10 +211,20 @@ fn main_() -> Result<(), failure::Error> {
     }
 
     {
-        let vm = make_eval_vm();
-        mount_eval(&mut try_mount, "", move |body| eval_stable(&vm, body));
+        let vm = gluon::make_eval_vm();
+        {
+            let vm = vm.clone();
+            mount_eval(&mut try_mount, "", move |body| {
+                Ok(match gluon::eval(&vm, body) {
+                    Ok(x) => x,
+                    Err(err) => err.to_string(),
+                })
+            });
+        }
 
-        try_mount.mount("/format", move |req: &mut Request| format(req, format_expr));
+        try_mount.mount("/format", move |req: &mut Request| {
+            format(req, |input| gluon::format_expr(&vm, input))
+        });
     }
 
     {

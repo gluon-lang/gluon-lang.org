@@ -28,6 +28,7 @@ home = "0.3"
 glob = "0.2"
 failure = "0.1"
 
-gluon = "0.7.0"
-gluon_format = "0.7.0"
+gluon = "0.8.0"
+gluon_format = "0.8.0"
+gluon_doc = "0.8.0"
 gluon_master = { path = "gluon_master" }
