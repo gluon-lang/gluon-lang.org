@@ -2,7 +2,7 @@ set -ex
 
 docker build --tag try_gluon .
 
-docker rm --force try_gluon_running
+docker rm --force try_gluon_running || true
 
 RUST_LOG=info docker run \
     --rm \
