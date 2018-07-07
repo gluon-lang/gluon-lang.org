@@ -28,8 +28,8 @@ RUN cargo build --release
 COPY . .
 
 RUN webpack-cli
-RUN cargo build --release
+RUN cargo install
 
 EXPOSE 8080
 
-CMD ["cargo", "run" "--release"]
+CMD ["try_gluon"]
