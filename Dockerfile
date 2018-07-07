@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y curl apt-transport-https && \
 RUN cargo install mdbook --vers "0.1.2"
 
 RUN yarn global add webpack-cli
+RUN yarn global add webpack
 RUN yarn global add elm
 
 COPY package.json yarn.lock ./
