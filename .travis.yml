@@ -2,11 +2,6 @@ language: rust
 sudo: false
 env: RUST_BACKTRACE=1
 
-install:
-  - sh install_mdbook.sh
-  - source ~/.cargo/env || true
-  - ./install_mdbook.sh
-
 before_script:
   - docker pull marwes/try_gluon || true
 
