@@ -2,7 +2,22 @@ language: rust
 sudo: false
 env: RUST_BACKTRACE=1
 
-install:
-  - sh install_mdbook.sh
-  - source ~/.cargo/env || true
-  - ./install_mdbook.sh
+before_script:
+  - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
+  - docker pull marwes/try_gluon || true
+
+script:
+  - docker build --pull --cache-from marwes/try_gluon --tag marwes/try_gluon .
+  - docker run marwes/try_gluon cargo test --release
+
+after_script:
+  - docker images
+
+before_deploy:
+  - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
+
+deploy:
+  provider: script
+  script: docker push marwes/try_gluon
+  on:
+    branch: master
