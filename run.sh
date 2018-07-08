@@ -1,6 +1,7 @@
 set -ex
 
 docker pull marwes/try_gluon
+docker rm --force try_gluon_running || true
 
 RUST_LOG=info docker run \
     --rm \
