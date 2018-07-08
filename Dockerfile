@@ -30,6 +30,9 @@ COPY . .
 
 RUN webpack-cli
 RUN touch gluon_master/src/lib.rs
+
+RUN git pull origin master --ff-only && cargo update -p https://github.com/gluon-lang/gluon
+
 RUN cargo build --release
 
 EXPOSE 8080
