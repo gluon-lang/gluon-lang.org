@@ -29,6 +29,7 @@ RUN cargo build --release
 COPY . .
 
 RUN webpack-cli
+RUN touch gluon_master/src/lib.rs
 RUN cargo build --release
 
 EXPOSE 8080
