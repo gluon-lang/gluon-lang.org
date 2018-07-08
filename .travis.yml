@@ -7,7 +7,7 @@ before_script:
   - docker pull marwes/try_gluon || true
 
 script:
-  - docker build --tag try_gluon .
+  - docker build --pull --cache-from marwes/try_gluon --tag marwes/try_gluon .
   - docker run try_gluon cargo test --release
 
 after_script:
