@@ -1,12 +1,11 @@
 set -ex
 
-docker build --tag try_gluon .
-
-docker rm --force try_gluon_running || true
+docker pull marwes/try_gluon
 
 RUST_LOG=info docker run \
     --rm \
     -p 80:8080 \
     --name try_gluon_running \
     --env RUST_LOG \
-    try_gluon
+    try_gluon \
+    ./run_latest.sh
