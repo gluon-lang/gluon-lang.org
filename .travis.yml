@@ -2,6 +2,11 @@ language: rust
 sudo: false
 env: RUST_BACKTRACE=1
 
+cache:
+    directories:
+    - $HOME/.cargo
+    - $HOME/.cache/sccache
+
 before_script:
   - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
   - docker pull marwes/try_gluon || true
