@@ -67,6 +67,8 @@ pub fn make_eval_vm() -> RootedThread {
     add_extern_module(&vm, "std.lazy", ::vm::lazy::load);
     add_extern_module(&vm, "std.reference", ::vm::reference::load);
 
+    add_extern_module(&vm, "std.serialization.prim", ::vm::api::json::load);
+
     // add_extern_module(&vm, "std.channel", ::vm::channel::load_channel);
     // add_extern_module(&vm, "std.thread.prim", ::vm::channel::load_thread);
     // add_extern_module(&vm, "std.debug", ::vm::debug::load);
