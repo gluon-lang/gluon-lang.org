@@ -3,6 +3,8 @@ extern crate failure;
 extern crate futures;
 extern crate glob;
 extern crate home;
+extern crate hubcaps;
+extern crate hyper;
 #[macro_use]
 extern crate iron;
 #[macro_use]
@@ -10,8 +12,15 @@ extern crate log;
 extern crate mount;
 extern crate persistent;
 extern crate regex;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 extern crate serde_json;
 extern crate staticfile;
+#[allow(unused_imports)]
+#[macro_use]
+extern crate structopt;
+extern crate tokio_core;
 
 extern crate gluon_master;
 
@@ -33,6 +42,8 @@ use serde_json::Value;
 
 use staticfile::Static;
 
+use structopt::StructOpt;
+
 use mount::Mount;
 
 mod gluon;
@@ -53,6 +64,71 @@ where
             mime,
             serde_json::to_string(&formatted).unwrap(),
         ))),
+        Err(err) => Ok(Response::with((
+            status::NotAcceptable,
+            mime,
+            serde_json::to_string(&err.to_string()).unwrap(),
+        ))),
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct Gist {
+    pub code: String,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct PostGist<'a> {
+    pub id: &'a str,
+    pub html_url: &'a str,
+}
+
+fn share<C>(
+    core: &mut tokio_core::reactor::Core,
+    gists: &hubcaps::gists::Gists<C>,
+    req: &mut Request,
+) -> IronResult<Response>
+where
+    C: Clone + hyper::client::Connect,
+{
+    let mut body = String::new();
+
+    itry!(req.body.read_to_string(&mut body));
+    info!("Share: `{}`", body);
+    let mime: Mime = "text/plain".parse().unwrap();
+    match serde_json::from_str::<Gist>(&body) {
+        Ok(gist) => {
+            let result = core.run(
+                gists.create(&hubcaps::gists::GistOptions {
+                    description: Some("Gluon code shared from try_gluon".into()),
+                    public: Some(true),
+                    files: Some((
+                        "try_gluon.glu".into(),
+                        hubcaps::gists::Content {
+                            filename: None,
+                            content: gist.code,
+                        },
+                    )).into_iter()
+                    .collect(),
+                }),
+            );
+            let response = match result {
+                Ok(r) => r,
+                Err(err) => {
+                    error!("{}", err);
+                    return Ok(Response::with((status::InternalServerError, mime, "")));
+                }
+            };
+
+            Ok(Response::with((
+                status::Ok,
+                mime,
+                serde_json::to_string(&PostGist {
+                    id: &response.id,
+                    html_url: &response.html_url,
+                }).unwrap(),
+            )))
+        }
         Err(err) => Ok(Response::with((
             status::NotAcceptable,
             mime,
@@ -102,8 +178,7 @@ fn load_config() -> Value {
             ];
 
             Ok(Value::Object(value.into_iter().collect()))
-        })
-        .collect::<io::Result<_>>()
+        }).collect::<io::Result<_>>()
         .unwrap();
 
     let crates_io_version = Regex::new("checksum gluon ([^ ]+).+registry")
@@ -127,7 +202,7 @@ fn load_config() -> Value {
             ),
             ("examples".to_string(), Value::Array(vec)),
         ].into_iter()
-            .collect(),
+        .collect(),
     )
 }
 fn mount_eval<M>(mount: &mut Mount, prefix: &str, eval: M)
@@ -155,8 +230,7 @@ fn gluon_git_path() -> Result<PathBuf, failure::Error> {
         .join(&format!(
             "git/checkouts/gluon-*/{}",
             &git_master_version()[..7]
-        ))
-        .display()
+        )).display()
         .to_string();
     Ok(glob::glob(&std_glob_path)?
         .next()
@@ -191,6 +265,16 @@ fn create_docs(path: &str) -> Result<(), failure::Error> {
     Ok(())
 }
 
+#[derive(StructOpt)]
+struct Opts {
+    #[structopt(
+        long = "gist-access-token",
+        env = "GIST_ACCESS_TOKEN",
+        help = "The access tokens used to create gists"
+    )]
+    gist_access_token: Option<String>,
+}
+
 fn main() {
     if let Err(err) = main_() {
         eprintln!("{}\n{}", err, err.backtrace());
@@ -198,51 +282,80 @@ fn main() {
 }
 
 fn main_() -> Result<(), failure::Error> {
-    env_logger::init().unwrap();
+    env_logger::init();
 
-    let mut try_mount = Mount::new();
-    try_mount.mount("/", Static::new("dist/try"));
-    {
-        let mut middleware = Chain::new(config);
-        let config_string = serde_json::to_string(&load_config()).unwrap();
+    let opts = Opts::from_args();
 
-        middleware.link(persistent::Read::<Config>::both(config_string));
-        try_mount.mount("/config", middleware);
-    }
+    let try_mount = {
+        let mut try_mount = Mount::new();
 
-    {
-        let vm = gluon::make_eval_vm();
+        try_mount.mount("/", Static::new("dist/try"));
+
         {
-            let vm = vm.clone();
-            mount_eval(&mut try_mount, "", move |body| {
-                Ok(match gluon::eval(&vm, body) {
-                    Ok(x) => x,
-                    Err(err) => err.to_string(),
-                })
+            let mut middleware = Chain::new(config);
+            let config_string = serde_json::to_string(&load_config()).unwrap();
+
+            middleware.link(persistent::Read::<Config>::both(config_string));
+            try_mount.mount("/config", middleware);
+        }
+
+        {
+            let vm = gluon::make_eval_vm();
+            {
+                let vm = vm.clone();
+                mount_eval(&mut try_mount, "", move |body| {
+                    Ok(match gluon::eval(&vm, body) {
+                        Ok(x) => x,
+                        Err(err) => err.to_string(),
+                    })
+                });
+            }
+
+            try_mount.mount("/format", move |req: &mut Request| {
+                format(req, |input| gluon::format_expr(&vm, input))
             });
         }
 
-        try_mount.mount("/format", move |req: &mut Request| {
-            format(req, |input| gluon::format_expr(&vm, input))
-        });
-    }
-
-    {
-        let vm = gluon_master::make_eval_vm();
         {
-            let vm = vm.clone();
-            mount_eval(&mut try_mount, "/master", move |body| {
-                Ok(match gluon_master::eval(&vm, body) {
-                    Ok(x) => x,
-                    Err(err) => err.to_string(),
-                })
+            let vm = gluon_master::make_eval_vm();
+            {
+                let vm = vm.clone();
+                mount_eval(&mut try_mount, "/master", move |body| {
+                    Ok(match gluon_master::eval(&vm, body) {
+                        Ok(x) => x,
+                        Err(err) => err.to_string(),
+                    })
+                });
+            }
+
+            try_mount.mount("/master/format", move |req: &mut Request| {
+                format(req, |input| gluon_master::format_expr(&vm, input))
             });
         }
 
-        try_mount.mount("/master/format", move |req: &mut Request| {
-            format(req, |input| gluon_master::format_expr(&vm, input))
-        });
-    }
+        if let Some(gist_access_token) = opts.gist_access_token {
+            try_mount.mount("/share", move |req: &mut Request| {
+                let mut core = tokio_core::reactor::Core::new().unwrap();
+                let github = hubcaps::Github::new(
+                    "try_gluon".to_string(),
+                    hubcaps::Credentials::Token(gist_access_token.clone()),
+                    &core.handle(),
+                );
+
+                share(&mut core, &github.gists(), req)
+            });
+        } else {
+            warn!("Gist sharing is not enabled!");
+            try_mount.mount("/share", |_: &mut Request| {
+                Ok(Response::with((
+                    status::InternalServerError,
+                    "Gist sharing is not enabled!",
+                )))
+            });
+        }
+
+        try_mount
+    };
 
     let mut mount = Mount::new();
     mount.mount("/try/", try_mount);

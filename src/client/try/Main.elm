@@ -36,34 +36,58 @@ type alias Example =
     , src : String
     }
 
+
 type alias Config =
     { lastRelease : String
     , gitMaster : String
     , examples : List Example
     }
 
-type Version = LastRelease | GitMaster
+
+type Version
+    = LastRelease
+    | GitMaster
+
 
 lastReleaseString : Config -> String
-lastReleaseString config = "Release: " ++ config.lastRelease
+lastReleaseString config =
+    "Release: " ++ config.lastRelease
 
-versionsMap : Config -> List (Version, String)
-versionsMap config = [
-        (LastRelease, lastReleaseString config),
-        (GitMaster, "Revision: " ++ config.gitMaster)
+
+versionsMap : Config -> List ( Version, String )
+versionsMap config =
+    [ ( LastRelease, lastReleaseString config )
+    , ( GitMaster, "Revision: " ++ config.gitMaster )
     ]
+
 
 humanReadableVersion : Config -> Version -> String
 humanReadableVersion config version =
-    List.filterMap (\(v, s) -> if version == v then Just s else Nothing) (versionsMap config)
+    List.filterMap
+        (\( v, s ) ->
+            if version == v then
+                Just s
+            else
+                Nothing
+        )
+        (versionsMap config)
         |> List.head
         |> Maybe.withDefault (lastReleaseString config)
 
+
 versionFromString : Config -> String -> Version
 versionFromString config stringVersion =
-    List.filterMap (\(v, s) -> if stringVersion == s then Just v else Nothing) (versionsMap config)
+    List.filterMap
+        (\( v, s ) ->
+            if stringVersion == s then
+                Just v
+            else
+                Nothing
+        )
+        (versionsMap config)
         |> List.head
         |> Maybe.withDefault LastRelease
+
 
 type alias Model =
     { urls : Urls
@@ -105,13 +129,15 @@ init location =
 initConfig : Config -> Model -> Model
 initConfig config model =
     let
-        newModel = { model | config = config }
-    in case List.head config.examples of
-        Just example ->
-            setExample example.name newModel
+        newModel =
+            { model | config = config }
+    in
+        case List.head config.examples of
+            Just example ->
+                setExample example.name newModel
 
-        Nothing ->
-            newModel
+            Nothing ->
+                newModel
 
 
 getExample : String -> Model -> Maybe String
@@ -262,9 +288,8 @@ versionSelect model =
     in
         div [ class "form float-xs-right" ]
             [ select [ class "form-control custom-select", onInput (SelectVersion << versionFromString model.config) ]
-                (List.map exampleOption [LastRelease, GitMaster])
+                (List.map exampleOption [ LastRelease, GitMaster ])
             ]
-
 
 
 evalResult : Model -> Html Msg
@@ -283,7 +308,7 @@ evalResult model =
 
                 GistReceived gist ->
                     div []
-                        [ a [ href (model.urls.currentOrigin ++ "/?gist=" ++ gist.id) ] [ text "Link to try_gluon" ]
+                        [ a [ href (model.urls.currentOrigin ++ "?gist=" ++ gist.id) ] [ text "Link to try_gluon" ]
                         , Html.br [] []
                         , a [ href gist.url ] [ text "Link to gist" ]
                         ]
@@ -367,8 +392,12 @@ view model =
 prefixVersion : Model -> String -> String
 prefixVersion model path =
     case model.selectedVersion of
-        GitMaster -> "master/" ++ path
-        LastRelease -> path
+        GitMaster ->
+            "master/" ++ path
+
+        LastRelease ->
+            path
+
 
 postEval : Model -> Cmd Msg
 postEval model =
@@ -392,7 +421,7 @@ getConfig model =
 
         decodeExamples =
             Json.list exampleOption
-        
+
         decodeConfig =
             Json.map3 (\git last examples -> { gitMaster = git, lastRelease = last, examples = examples })
                 (Json.field "git_master" Json.string)
@@ -448,17 +477,7 @@ postGist model =
     let
         body =
             JsonEncode.object
-                [ ( "description", JsonEncode.string "Gluon code shared from try_gluon" )
-                , ( "public", JsonEncode.bool True )
-                , ( "files"
-                  , JsonEncode.object
-                        [ ( "try_gluon.glu"
-                          , JsonEncode.object
-                                [ ( "content", JsonEncode.string model.src )
-                                ]
-                          )
-                        ]
-                  )
+                [ ( "code", JsonEncode.string model.src )
                 ]
 
         responseDecoder =
@@ -467,7 +486,7 @@ postGist model =
                 (Json.field "html_url" Json.string)
     in
         Http.send GistPostDone <|
-            Http.post baseGistString (Http.jsonBody body) responseDecoder
+            Http.post "share" (Http.jsonBody body) responseDecoder
 
 
 
