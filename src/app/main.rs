@@ -181,7 +181,7 @@ fn load_config() -> Value {
         }).collect::<io::Result<_>>()
         .unwrap();
 
-    let crates_io_version = Regex::new("checksum gluon ([^ ]+).+registry")
+    let crates_io_version = Regex::new("checksum gluon ([^ ]+).+(registry|git)")
         .unwrap()
         .captures(LOCK_FILE)
         .expect("crates.io version")
