@@ -3,14 +3,17 @@ module Main exposing (main)
 import Html exposing (Html, a, button, div, form, h2, li, nav, option, pre, select, text, textarea, ul)
 import Html.Attributes exposing (class, disabled, href, name, rows, selected, id)
 import Html.Events exposing (onClick, onInput)
-import Navigation exposing (Location)
+import Browser
+import Browser.Navigation exposing (Key)
 import Http exposing (Error(..))
 import Json.Decode as Json
 import Json.Encode as JsonEncode
 import List exposing ((::))
 import List.Extra as List
 import Dict
-import UrlParser exposing (s, parsePath, stringParam, (<?>), top)
+import Url exposing (Url)
+import Url.Parser exposing (s, string, (<?>), top)
+import Url.Parser.Query as Query
 
 
 -- MODEL
@@ -47,6 +50,15 @@ type alias Config =
 type Version
     = LastRelease
     | GitMaster
+
+
+versionToString version =
+    case version of
+        LastRelease ->
+            "LastRelease"
+
+        GitMaster ->
+            "GitMaster"
 
 
 lastReleaseString : Config -> String
@@ -99,6 +111,10 @@ type alias Model =
     }
 
 
+type alias Location =
+    { origin : String, pathname : String, href : String }
+
+
 init : Location -> ( Model, Cmd Msg )
 init location =
     let
@@ -117,11 +133,16 @@ init location =
             }
     in
         ( model
-        , case parsePath (s "try" <?> stringParam "gist") location of
-            Just (Just gistId) ->
-                Cmd.batch [ getConfig model, loadGist gistId ]
+        , case Url.fromString location.href of
+            Just url ->
+                case Url.Parser.parse (s "try" <?> Query.string "gist") url of
+                    Just (Just gistId) ->
+                        Cmd.batch [ getConfig model, loadGist gistId ]
 
-            _ ->
+                    _ ->
+                        getConfig model
+
+            Nothing ->
                 getConfig model
         )
 
@@ -152,8 +173,8 @@ setExample name model =
     let
         ( selectedExample, src ) =
             case getExample name model of
-                Just src ->
-                    ( Just name, src )
+                Just s ->
+                    ( Just name, s )
 
                 Nothing ->
                     ( Nothing, model.src )
@@ -189,6 +210,25 @@ type Msg
 -- UPDATE
 
 
+httpErrorToString : Http.Error -> String
+httpErrorToString err =
+    case err of
+        Timeout ->
+            "Request timed out"
+
+        NetworkError ->
+            "There was a problem with the network"
+
+        BadStatus response ->
+            response.body
+
+        BadPayload m _ ->
+            m
+
+        _ ->
+            "Http error."
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -199,25 +239,7 @@ update msg model =
             ( { model | evalResult = Succeed result }, Cmd.none )
 
         EvalDone (Err err) ->
-            let
-                msg =
-                    case err of
-                        Timeout ->
-                            "Request timed out"
-
-                        NetworkError ->
-                            "There was a problem with the network"
-
-                        BadStatus response ->
-                            response.body
-
-                        BadPayload msg _ ->
-                            msg
-
-                        _ ->
-                            toString err
-            in
-                ( { model | evalResult = Fail msg }, Cmd.none )
+            ( { model | evalResult = Fail (httpErrorToString err) }, Cmd.none )
 
         ConfigDone (Ok config) ->
             ( initConfig config model, Cmd.none )
@@ -247,7 +269,7 @@ update msg model =
             ( { model | src = gist.code }, Cmd.none )
 
         GistGetDone (Err err) ->
-            ( { model | evalResult = Fail ("Unable to load gist: " ++ toString err) }, Cmd.none )
+            ( { model | evalResult = Fail ("Unable to load gist: " ++ httpErrorToString err) }, Cmd.none )
 
         Share ->
             ( { model | evalResult = Pending }, postGist model )
@@ -256,7 +278,7 @@ update msg model =
             ( { model | evalResult = GistReceived gist }, Cmd.none )
 
         GistPostDone (Err err) ->
-            ( { model | evalResult = Fail ("Unable to make gist: " ++ toString err) }, Cmd.none )
+            ( { model | evalResult = Fail ("Unable to make gist: " ++ httpErrorToString err) }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -298,11 +320,11 @@ versionSelect model =
             selected (model.selectedVersion == key)
 
         exampleOption version =
-            option [ id (toString version), selectedAttr version ]
+            option [ id (versionToString version), selectedAttr version ]
                 [ text (humanReadableVersion model.config version) ]
 
         defaultOption =
-            option [ id (toString LastRelease), selectedAttr LastRelease ] [ text (humanReadableVersion model.config LastRelease) ]
+            exampleOption LastRelease
     in
         div [ class "form float-xs-right" ]
             [ select [ class "form-control custom-select", onInput (SelectVersion << versionFromString model.config) ]
@@ -313,7 +335,7 @@ versionSelect model =
 evalResult : Model -> Html Msg
 evalResult model =
     let
-        evalResult =
+        result =
             case model.evalResult of
                 Pending ->
                     pre [] [ text "Waiting..." ]
@@ -374,7 +396,7 @@ evalResult model =
                         ]
                     ]
                 ]
-            , div [ class "card-block" ] [ evalResult ]
+            , div [ class "card-block" ] [ result ]
             ]
 
 
@@ -520,12 +542,11 @@ subscriptions model =
 -- MAIN
 
 
-main : Program Never Model Msg
+main : Program Location Model Msg
 main =
-    Navigation.program
-        (\location -> NoOp)
+    Browser.element
         { init = init
-        , update = update
         , view = view
+        , update = update
         , subscriptions = subscriptions
         }

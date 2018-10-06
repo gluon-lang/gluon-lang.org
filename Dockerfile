@@ -14,7 +14,7 @@ RUN cargo install mdbook --vers "0.1.2"
 
 RUN yarn global add webpack-cli
 RUN yarn global add webpack
-RUN yarn global add elm@0.18.0
+RUN yarn global add elm@0.19.0
 
 COPY package.json yarn.lock ./
 RUN yarn install
@@ -28,7 +28,7 @@ RUN cargo build --release
 
 COPY . .
 
-RUN webpack-cli
+RUN webpack-cli --mode=production
 RUN touch gluon_master/src/lib.rs
 
 RUN git pull origin master --ff-only && cargo update -p https://github.com/gluon-lang/gluon
