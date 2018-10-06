@@ -39,8 +39,6 @@ use hyper_tls::HttpsConnector;
 
 use regex::Regex;
 
-use serde_json::Value;
-
 use gluon::{
     vm::{self, ExternModule},
     Thread,
@@ -138,51 +136,50 @@ fn git_master_version() -> String {
         .to_string()
 }
 
-fn load_config() -> Value {
-    let vec = fs::read_dir("public/examples")
-        .unwrap()
-        .map(|entry| {
-            let path = try!(entry).path();
-            let name = String::from(path.file_stem().unwrap().to_str().unwrap());
-            let mut file = try!(File::open(path));
-            let mut contents = String::new();
+#[derive(Serialize)]
+struct Example {
+    name: String,
+    src: String,
+}
 
-            try!(file.read_to_string(&mut contents));
+#[derive(Serialize)]
+struct Config {
+    last_release: String,
+    git_master: String,
+    examples: Vec<Example>,
+}
 
-            let value = vec![
-                ("name".into(), Value::String(name)),
-                ("value".into(), Value::String(contents)),
-            ];
-
-            Ok(Value::Object(value.into_iter().collect()))
-        })
-        .collect::<io::Result<_>>()
-        .unwrap();
-
-    let crates_io_version = Regex::new("checksum gluon ([^ ]+).+(registry|git)")
+fn load_config() -> Config {
+    let last_release = Regex::new("checksum gluon ([^ ]+).+(registry|git)")
         .unwrap()
         .captures(LOCK_FILE)
         .expect("crates.io version")
         .get(1)
         .unwrap()
-        .as_str();
-    let git_master_version = git_master_version()[0..6].to_string();
+        .as_str()
+        .to_string();
+    let git_master = git_master_version()[0..6].to_string();
 
-    Value::Object(
-        vec![
-            (
-                "last_release".to_string(),
-                Value::String(crates_io_version.to_string()),
-            ),
-            (
-                "git_master".to_string(),
-                Value::String(git_master_version.to_string()),
-            ),
-            ("examples".to_string(), Value::Array(vec)),
-        ]
-        .into_iter()
-        .collect(),
-    )
+    let examples = fs::read_dir("public/examples")
+        .unwrap()
+        .map(|entry| {
+            let path = try!(entry).path();
+            let name = String::from(path.file_stem().unwrap().to_str().unwrap());
+            let mut file = try!(File::open(path));
+            let mut src = String::new();
+
+            try!(file.read_to_string(&mut src));
+
+            Ok(Example { name, src })
+        })
+        .collect::<io::Result<_>>()
+        .unwrap();
+
+    Config {
+        last_release,
+        git_master,
+        examples,
+    }
 }
 
 fn gluon_git_path() -> Result<PathBuf, failure::Error> {

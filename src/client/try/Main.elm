@@ -433,9 +433,9 @@ getConfig : Model -> Cmd Msg
 getConfig model =
     let
         exampleOption =
-            Json.map2 (\name value -> { name = name, src = value })
+            Json.map2 (\name src -> { name = name, src = src })
                 (Json.field "name" Json.string)
-                (Json.field "value" Json.string)
+                (Json.field "src" Json.string)
 
         decodeExamples =
             Json.list exampleOption
