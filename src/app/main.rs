@@ -5,147 +5,124 @@ extern crate glob;
 extern crate home;
 extern crate hubcaps;
 extern crate hyper;
-#[macro_use]
-extern crate iron;
+extern crate hyper_tls;
 #[macro_use]
 extern crate log;
-extern crate mount;
-extern crate persistent;
 extern crate regex;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
-extern crate staticfile;
 #[allow(unused_imports)]
 #[macro_use]
 extern crate structopt;
-extern crate tokio_core;
+extern crate tokio;
 
 extern crate gluon_master;
 
+#[macro_use]
+extern crate gluon_vm;
+#[macro_use]
+extern crate gluon_codegen;
+
 use std::env;
-use std::fs::{read_dir, File};
-use std::io::{self, Read};
+use std::fs::{self, File};
+use std::io::{self, Read, Write};
+use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::Command;
 
-use regex::Regex;
+use futures::{future, Future};
 
-use iron::mime::Mime;
-use iron::modifiers::RedirectRaw;
-use iron::prelude::*;
-use iron::typemap::Key;
-use iron::{status, Handler};
+use hyper::client::HttpConnector;
+use hyper_tls::HttpsConnector;
+
+use regex::Regex;
 
 use serde_json::Value;
 
-use staticfile::Static;
+use gluon::{
+    vm::{self, ExternModule},
+    Thread,
+};
 
 use structopt::StructOpt;
 
-use mount::Mount;
-
 mod gluon;
 
-fn format<F, E>(req: &mut Request, format_expr: F) -> IronResult<Response>
-where
-    F: Fn(&str) -> Result<String, E>,
-    E: ::std::fmt::Display,
-{
-    let mut body = String::new();
+pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
+    #[derive(Debug, Userdata)]
+    pub struct TryThread(gluon_master::RootedThread);
 
-    itry!(req.body.read_to_string(&mut body));
-    info!("Format: `{}`", body);
-    let mime: Mime = "text/plain".parse().unwrap();
-    match format_expr(&body) {
-        Ok(formatted) => Ok(Response::with((
-            status::Ok,
-            mime,
-            serde_json::to_string(&formatted).unwrap(),
-        ))),
-        Err(err) => Ok(Response::with((
-            status::NotAcceptable,
-            mime,
-            serde_json::to_string(&err.to_string()).unwrap(),
-        ))),
-    }
-}
+    impl Deref for TryThread {
+        type Target = gluon_master::Thread;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct Gist {
-    pub code: String,
-}
-
-#[derive(Debug, Default, Serialize)]
-pub struct PostGist<'a> {
-    pub id: &'a str,
-    pub html_url: &'a str,
-}
-
-fn share<C>(
-    core: &mut tokio_core::reactor::Core,
-    gists: &hubcaps::gists::Gists<C>,
-    req: &mut Request,
-) -> IronResult<Response>
-where
-    C: Clone + hyper::client::Connect,
-{
-    let mut body = String::new();
-
-    itry!(req.body.read_to_string(&mut body));
-    info!("Share: `{}`", body);
-    let mime: Mime = "text/plain".parse().unwrap();
-    match serde_json::from_str::<Gist>(&body) {
-        Ok(gist) => {
-            let result = core.run(
-                gists.create(&hubcaps::gists::GistOptions {
-                    description: Some("Gluon code shared from try_gluon".into()),
-                    public: Some(true),
-                    files: Some((
-                        "try_gluon.glu".into(),
-                        hubcaps::gists::Content {
-                            filename: None,
-                            content: gist.code,
-                        },
-                    )).into_iter()
-                    .collect(),
-                }),
-            );
-            let response = match result {
-                Ok(r) => r,
-                Err(err) => {
-                    error!("{}", err);
-                    return Ok(Response::with((status::InternalServerError, mime, "")));
-                }
-            };
-
-            Ok(Response::with((
-                status::Ok,
-                mime,
-                serde_json::to_string(&PostGist {
-                    id: &response.id,
-                    html_url: &response.html_url,
-                }).unwrap(),
-            )))
+        fn deref(&self) -> &Self::Target {
+            &self.0
         }
-        Err(err) => Ok(Response::with((
-            status::NotAcceptable,
-            mime,
-            serde_json::to_string(&err.to_string()).unwrap(),
-        ))),
     }
+
+    thread.register_type::<TryThread>("MasterTryThread", &[])?;
+
+    ExternModule::new(
+        thread,
+        record! {
+            make_eval_vm => primitive!(1, "make_eval_vm", |x| TryThread(gluon_master::make_eval_vm(x))),
+            eval => primitive!(2, "eval", |t: &TryThread, s: &str| gluon_master::eval(t, s)),
+            format_expr => primitive!(2, |t: &TryThread, s: &str| gluon_master::format_expr(t, s))
+        },
+    )
 }
 
-struct Config;
-
-impl Key for Config {
-    type Value = String;
+#[derive(Debug, Default, Getable, VmType)]
+pub struct Gist<'a> {
+    pub code: &'a str,
 }
 
-fn config(req: &mut Request) -> IronResult<Response> {
-    let s = req.get::<persistent::Read<Config>>().unwrap();
-    Ok(Response::with((status::Ok, (*s).clone())))
+#[derive(Debug, Default, Serialize, Pushable, VmType)]
+pub struct PostGist {
+    pub id: String,
+    pub html_url: String,
+}
+
+#[derive(Debug, Userdata)]
+struct Github(hubcaps::Github<HttpsConnector<HttpConnector>>);
+
+fn new_github(gist_access_token: &str) -> Github {
+    Github(hubcaps::Github::new(
+        "try_gluon".to_string(),
+        hubcaps::Credentials::Token(gist_access_token.into()),
+    ))
+}
+
+fn share(
+    github: &Github,
+    gist: Gist,
+) -> impl Future<Item = Result<PostGist, String>, Error = vm::Error> {
+    info!("Share: `{}`", gist.code);
+
+    github
+        .0
+        .gists()
+        .create(&hubcaps::gists::GistOptions {
+            description: Some("Gluon code shared from try_gluon".into()),
+            public: Some(true),
+            files: Some((
+                "try_gluon.glu".into(),
+                hubcaps::gists::Content {
+                    filename: None,
+                    content: gist.code.into(),
+                },
+            ))
+            .into_iter()
+            .collect(),
+        })
+        .map_err(|err| err.to_string())
+        .map(|response| PostGist {
+            id: response.id,
+            html_url: response.html_url,
+        })
+        .then(Ok)
 }
 
 const LOCK_FILE: &str = include_str!("../../Cargo.lock");
@@ -162,7 +139,7 @@ fn git_master_version() -> String {
 }
 
 fn load_config() -> Value {
-    let vec = read_dir("public/examples")
+    let vec = fs::read_dir("public/examples")
         .unwrap()
         .map(|entry| {
             let path = try!(entry).path();
@@ -178,7 +155,8 @@ fn load_config() -> Value {
             ];
 
             Ok(Value::Object(value.into_iter().collect()))
-        }).collect::<io::Result<_>>()
+        })
+        .collect::<io::Result<_>>()
         .unwrap();
 
     let crates_io_version = Regex::new("checksum gluon ([^ ]+).+(registry|git)")
@@ -201,28 +179,10 @@ fn load_config() -> Value {
                 Value::String(git_master_version.to_string()),
             ),
             ("examples".to_string(), Value::Array(vec)),
-        ].into_iter()
+        ]
+        .into_iter()
         .collect(),
     )
-}
-fn mount_eval<M>(mount: &mut Mount, prefix: &str, eval: M)
-where
-    M: Fn(&str) -> IronResult<String> + Send + Sync + 'static,
-{
-    let middleware = Chain::new(move |req: &mut Request| {
-        let mut body = String::new();
-
-        itry!(req.body.read_to_string(&mut body));
-        info!("Eval: `{}`", body);
-
-        eval(&body).map(|s| {
-            let mime: Mime = "text/plain".parse().unwrap();
-
-            Response::with((status::Ok, mime, serde_json::to_string(&s).unwrap()))
-        })
-    });
-
-    mount.mount(&format!("{}/eval", prefix), middleware);
 }
 
 fn gluon_git_path() -> Result<PathBuf, failure::Error> {
@@ -230,7 +190,8 @@ fn gluon_git_path() -> Result<PathBuf, failure::Error> {
         .join(&format!(
             "git/checkouts/gluon-*/{}",
             &git_master_version()[..7]
-        )).display()
+        ))
+        .display()
         .to_string();
     Ok(glob::glob(&std_glob_path)?
         .next()
@@ -241,7 +202,7 @@ fn create_docs(path: &str) -> Result<(), failure::Error> {
     let git_dir = gluon_git_path()?;
 
     let exit_status = Command::new("cp")
-        .args(&["-r", &git_dir.join("std").to_string_lossy(), "std"])
+        .args(&["-r", &git_dir.join("std").to_string_lossy(), "."])
         .status()?;
     if !exit_status.success() {
         return Err(failure::err_msg("Error copying docs"));
@@ -265,7 +226,7 @@ fn create_docs(path: &str) -> Result<(), failure::Error> {
     Ok(())
 }
 
-#[derive(StructOpt)]
+#[derive(StructOpt, Pushable, VmType)]
 struct Opts {
     #[structopt(
         long = "gist-access-token",
@@ -273,6 +234,13 @@ struct Opts {
         help = "The access tokens used to create gists"
     )]
     gist_access_token: Option<String>,
+    #[structopt(
+        short = "p",
+        long = "port",
+        default_value = "80",
+        help = "The port to start the server on"
+    )]
+    port: u16,
 }
 
 fn main() {
@@ -286,107 +254,44 @@ fn main_() -> Result<(), failure::Error> {
 
     let opts = Opts::from_args();
 
-    let try_mount = {
-        let mut try_mount = Mount::new();
+    use gluon::vm::api::{OwnedFunction, IO};
 
-        try_mount.mount("/", Static::new("dist/try"));
-
-        {
-            let mut middleware = Chain::new(config);
-            let config_string = serde_json::to_string(&load_config()).unwrap();
-
-            middleware.link(persistent::Read::<Config>::both(config_string));
-            try_mount.mount("/config", middleware);
-        }
-
-        {
-            let vm = gluon::make_eval_vm();
-            {
-                let vm = vm.clone();
-                mount_eval(&mut try_mount, "", move |body| {
-                    Ok(match gluon::eval(&vm, body) {
-                        Ok(x) => x,
-                        Err(err) => err.to_string(),
-                    })
-                });
-            }
-
-            try_mount.mount("/format", move |req: &mut Request| {
-                format(req, |input| gluon::format_expr(&vm, input))
-            });
-        }
-
-        {
-            let vm = gluon_master::make_eval_vm();
-            {
-                let vm = vm.clone();
-                mount_eval(&mut try_mount, "/master", move |body| {
-                    Ok(match gluon_master::eval(&vm, body) {
-                        Ok(x) => x,
-                        Err(err) => err.to_string(),
-                    })
-                });
-            }
-
-            try_mount.mount("/master/format", move |req: &mut Request| {
-                format(req, |input| gluon_master::format_expr(&vm, input))
-            });
-        }
-
-        if let Some(gist_access_token) = opts.gist_access_token {
-            try_mount.mount("/share", move |req: &mut Request| {
-                let mut core = tokio_core::reactor::Core::new().unwrap();
-                let github = hubcaps::Github::new(
-                    "try_gluon".to_string(),
-                    hubcaps::Credentials::Token(gist_access_token.clone()),
-                    &core.handle(),
-                );
-
-                share(&mut core, &github.gists(), req)
-            });
-        } else {
-            warn!("Gist sharing is not enabled!");
-            try_mount.mount("/share", |_: &mut Request| {
-                Ok(Response::with((
-                    status::InternalServerError,
-                    "Gist sharing is not enabled!",
-                )))
-            });
-        }
-
-        try_mount
-    };
-
-    let mut mount = Mount::new();
-    mount.mount("/try/", try_mount);
-    mount.mount("/", Static::new("dist"));
+    {
+        let config_string = serde_json::to_string(&load_config())?;
+        let mut config_file = File::create("dist/try/config")?;
+        config_file.write_all(config_string.as_bytes())?;
+    }
 
     let doc_path = "dist/doc/nightly";
     create_docs(doc_path)?;
-    mount.mount("doc/nightly", Static::new(doc_path));
-    mount.mount("book", Static::new("dist/book"));
 
-    let address = "0.0.0.0:8080";
-    // Dropping `server` causes it to block so keep it alive until the end of scope
-    let _server = Iron::new(move |req: &mut Request| {
-        // Redirect `try` to `try/` to make relative paths work
-        // Need to hack it in here since `Mount` strips trailing `/` ...
-        if req.url.path() == ["try"] {
-            Ok(Response::with((
-                status::PermanentRedirect,
-                RedirectRaw(format!(
-                    "/try/{}",
-                    req.url
-                        .query()
-                        .map(|q| format!("?{}", q))
-                        .unwrap_or(String::new())
-                )),
-            )))
-        } else {
-            mount.handle(req)
-        }
-    }).http(address)?;
+    let mut runtime = tokio::runtime::Runtime::new()?;
 
-    println!("Server started at `{}`", address);
+    let vm = gluon::new_vm();
+    gluon::add_extern_module(&vm, "gluon.try", gluon::load);
+    gluon::add_extern_module(&vm, "gluon.try.master", load_master);
+    gluon::add_extern_module(&vm, "github", |vm| {
+        vm.register_type::<Github>("Github", &[])?;
+        ExternModule::new(
+            vm,
+            record!{
+                new_github => primitive!(1, new_github),
+                share => primitive!(2, async fn share)
+            },
+        )
+    });
+
+    let server_source = fs::read_to_string("src/app/server.glu")?;
+
+    runtime.block_on(future::lazy(move || {
+        gluon::Compiler::new()
+            .run_expr_async::<OwnedFunction<fn(Opts) -> IO<()>>>(
+                &vm,
+                "src.app.server",
+                &server_source,
+            )
+            .and_then(|(mut f, _)| f.call_async(opts).from_err())
+    }))?;
+
     Ok(())
 }

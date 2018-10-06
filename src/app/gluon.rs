@@ -4,18 +4,27 @@ extern crate futures;
 extern crate gluon;
 extern crate gluon_format;
 
+use std::ops::Deref;
+use std::result::Result as StdResult;
 use std::time::Instant;
 
 use self::futures::Async;
 
-use self::gluon::base::kind::{ArcKind, KindEnv};
-use self::gluon::base::symbol::{Symbol, SymbolRef};
-use self::gluon::base::types::{Alias, ArcType, TypeEnv};
-use self::gluon::import::{add_extern_module, DefaultImporter, Import};
-use self::gluon::vm;
-use self::gluon::vm::api::{Hole, OpaqueValue};
-use self::gluon::vm::internal::ValuePrinter;
-use self::gluon::vm::thread::ThreadInternal;
+pub use self::{
+    gluon::base::{
+        kind::{ArcKind, KindEnv},
+        symbol::{Symbol, SymbolRef},
+        types::{Alias, ArcType, TypeEnv},
+    },
+    gluon::import::{add_extern_module, DefaultImporter, Import},
+    gluon::vm::{
+        self,
+        api::{Hole, OpaqueValue},
+        internal::ValuePrinter,
+        thread::ThreadInternal,
+        ExternModule,
+    },
+};
 
 pub use self::gluon::*;
 
@@ -36,7 +45,10 @@ impl TypeEnv for EmptyEnv {
     }
 }
 
-pub fn make_eval_vm() -> RootedThread {
+#[derive(Debug, Userdata)]
+struct TryThread(RootedThread);
+
+fn make_eval_vm(_: ()) -> TryThread {
     let vm = RootedThread::new();
 
     // Ensure the import macro cannot be abused to to open files
@@ -72,10 +84,18 @@ pub fn make_eval_vm() -> RootedThread {
     // add_extern_module(&vm, "std.debug", ::vm::debug::load);
     add_extern_module(&vm, "std.io.prim", io::load);
 
-    vm
+    TryThread(vm)
 }
 
-pub fn eval(global_vm: &Thread, body: &str) -> Result<String> {
+impl Deref for TryThread {
+    type Target = Thread;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+fn eval(global_vm: &TryThread, body: &str) -> StdResult<String, String> {
     let vm = match global_vm.new_thread() {
         Ok(vm) => vm,
         Err(err) => return Ok(format!("{}", err)),
@@ -116,6 +136,20 @@ pub fn eval(global_vm: &Thread, body: &str) -> Result<String> {
     ))
 }
 
-pub fn format_expr(thread: &Thread, input: &str) -> Result<String> {
+fn format_expr(thread: &TryThread, input: &str) -> StdResult<String, String> {
     gluon_format::format_expr(&mut Compiler::new(), thread, "try", input)
+        .map_err(|err| err.to_string())
+}
+
+pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
+    thread.register_type::<TryThread>("TryThread", &[])?;
+
+    ExternModule::new(
+        thread,
+        record! {
+            make_eval_vm => primitive!(1, make_eval_vm),
+            eval => primitive!(2, eval),
+            format_expr => primitive!(2, format_expr)
+        },
+    )
 }

@@ -4,8 +4,12 @@ extern crate futures;
 extern crate gluon;
 extern crate gluon_doc;
 extern crate gluon_format;
+#[macro_use]
+extern crate gluon_codegen;
 
+use std::ops::Deref;
 use std::path::Path;
+use std::result::Result as StdResult;
 use std::time::Instant;
 
 use futures::Async;
@@ -38,7 +42,7 @@ impl TypeEnv for EmptyEnv {
     }
 }
 
-pub fn make_eval_vm() -> RootedThread {
+pub fn make_eval_vm(_: ()) -> RootedThread {
     let vm = RootedThread::new();
 
     // Ensure the import macro cannot be abused to to open files
@@ -77,7 +81,7 @@ pub fn make_eval_vm() -> RootedThread {
     vm
 }
 
-pub fn eval(global_vm: &Thread, body: &str) -> Result<String> {
+pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
     let vm = match global_vm.new_thread() {
         Ok(vm) => vm,
         Err(err) => return Ok(format!("{}", err)),
@@ -118,14 +122,15 @@ pub fn eval(global_vm: &Thread, body: &str) -> Result<String> {
     ))
 }
 
+pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
+    gluon_format::format_expr(&mut Compiler::new(), thread, "try", input)
+        .map_err(|err| err.to_string())
+}
+
 pub fn generate_doc<P, Q>(input: &P, out: &Q) -> ::std::result::Result<(), failure::Error>
 where
     P: ?Sized + AsRef<Path>,
     Q: ?Sized + AsRef<Path>,
 {
     gluon_doc::generate_for_path(&gluon::new_vm(), input, out)
-}
-
-pub fn format_expr(thread: &Thread, input: &str) -> Result<String> {
-    gluon_format::format_expr(&mut Compiler::new(), thread, "try", input)
 }

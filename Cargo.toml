@@ -19,8 +19,7 @@ failure = "0.1"
 futures = "0.1.0"
 glob = "0.2"
 home = "0.3"
-hubcaps = "0.4"
-iron = "0.6.0"
+hubcaps = { git = "https://github.com/softprops/hubcaps", rev = "12ee80d" }
 log = "0.4"
 mount = "0.4.0"
 persistent = "0.4.0"
@@ -30,9 +29,9 @@ serde_derive = "1"
 serde_json = "1"
 staticfile = "0.5.0"
 structopt = "0.2"
-tokio-core = "0.1"
-urlencoded = "0.6.0"
-hyper = "0.11"
+tokio = "0.1"
+hyper = "0.12"
+hyper-tls = "0.3"
 
 gluon = { version = "0.9", features = ["serialization", "web", "regex", "rand"], git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }
 gluon_format = { version = "0.9", git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }

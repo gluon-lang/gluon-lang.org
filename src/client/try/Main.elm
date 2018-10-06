@@ -4,7 +4,7 @@ import Html exposing (Html, a, button, div, form, h2, li, nav, option, pre, sele
 import Html.Attributes exposing (class, disabled, href, name, rows, selected, id)
 import Html.Events exposing (onClick, onInput)
 import Navigation exposing (Location)
-import Http
+import Http exposing (Error(..))
 import Json.Decode as Json
 import Json.Encode as JsonEncode
 import List exposing ((::))
@@ -199,7 +199,25 @@ update msg model =
             ( { model | evalResult = Succeed result }, Cmd.none )
 
         EvalDone (Err err) ->
-            ( { model | evalResult = Fail "Http Error." }, Cmd.none )
+            let
+                msg =
+                    case err of
+                        Timeout ->
+                            "Request timed out"
+
+                        NetworkError ->
+                            "There was a problem with the network"
+
+                        BadStatus response ->
+                            response.body
+
+                        BadPayload msg _ ->
+                            msg
+
+                        _ ->
+                            toString err
+            in
+                ( { model | evalResult = Fail msg }, Cmd.none )
 
         ConfigDone (Ok config) ->
             ( initConfig config model, Cmd.none )
