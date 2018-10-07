@@ -644,7 +644,6 @@ dependencies = [
  "failure 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "gluon 0.9.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_codegen 0.9.1 (git+https://github.com/gluon-lang/gluon)",
  "gluon_doc 0.9.1 (git+https://github.com/gluon-lang/gluon)",
  "gluon_format 0.9.1 (git+https://github.com/gluon-lang/gluon)",
 ]
@@ -2381,6 +2380,22 @@ dependencies = [
  "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[patch.unused]]
+name = "gluon"
+version = "0.9.1"
+
+[[patch.unused]]
+name = "gluon_codegen"
+version = "0.9.1"
+
+[[patch.unused]]
+name = "gluon_format"
+version = "0.9.1"
+
+[[patch.unused]]
+name = "gluon_vm"
+version = "0.9.1"
 
 [metadata]
 "checksum aho-corasick 0.6.8 (registry+https://github.com/rust-lang/crates.io-index)" = "68f56c7353e5a9547cbd76ed90f7bb5ffc3ba09d4ea9bd1d8c06c8b1142eeb5a"

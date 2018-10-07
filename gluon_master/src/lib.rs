@@ -4,10 +4,7 @@ extern crate futures;
 extern crate gluon;
 extern crate gluon_doc;
 extern crate gluon_format;
-#[macro_use]
-extern crate gluon_codegen;
 
-use std::ops::Deref;
 use std::path::Path;
 use std::result::Result as StdResult;
 use std::time::Instant;

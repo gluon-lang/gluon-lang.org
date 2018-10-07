@@ -40,7 +40,11 @@ use hyper_tls::HttpsConnector;
 use regex::Regex;
 
 use gluon::{
-    vm::{self, ExternModule},
+    vm::{
+        self,
+        api::{OwnedFunction, IO},
+        ExternModule,
+    },
     Thread,
 };
 
@@ -250,8 +254,6 @@ fn main_() -> Result<(), failure::Error> {
     env_logger::init();
 
     let opts = Opts::from_args();
-
-    use gluon::vm::api::{OwnedFunction, IO};
 
     {
         let config_string = serde_json::to_string(&load_config())?;
