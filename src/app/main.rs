@@ -26,8 +26,7 @@ extern crate gluon_vm;
 extern crate gluon_codegen;
 
 use std::env;
-use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::fs;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::Command;
@@ -140,52 +139,6 @@ fn git_master_version() -> String {
         .to_string()
 }
 
-#[derive(Serialize)]
-struct Example {
-    name: String,
-    src: String,
-}
-
-#[derive(Serialize)]
-struct Config {
-    last_release: String,
-    git_master: String,
-    examples: Vec<Example>,
-}
-
-fn load_config() -> Config {
-    let last_release = Regex::new("checksum gluon ([^ ]+).+(registry|git)")
-        .unwrap()
-        .captures(LOCK_FILE)
-        .expect("crates.io version")
-        .get(1)
-        .unwrap()
-        .as_str()
-        .to_string();
-    let git_master = git_master_version()[0..6].to_string();
-
-    let examples = fs::read_dir("public/examples")
-        .unwrap()
-        .map(|entry| {
-            let path = try!(entry).path();
-            let name = String::from(path.file_stem().unwrap().to_str().unwrap());
-            let mut file = try!(File::open(path));
-            let mut src = String::new();
-
-            try!(file.read_to_string(&mut src));
-
-            Ok(Example { name, src })
-        })
-        .collect::<io::Result<_>>()
-        .unwrap();
-
-    Config {
-        last_release,
-        git_master,
-        examples,
-    }
-}
-
 fn gluon_git_path() -> Result<PathBuf, failure::Error> {
     let std_glob_path = home::cargo_home()?
         .join(&format!(
@@ -254,12 +207,6 @@ fn main_() -> Result<(), failure::Error> {
     env_logger::init();
 
     let opts = Opts::from_args();
-
-    {
-        let config_string = serde_json::to_string(&load_config())?;
-        let mut config_file = File::create("dist/try/config")?;
-        config_file.write_all(config_string.as_bytes())?;
-    }
 
     let doc_path = "dist/doc/nightly";
     create_docs(doc_path)?;

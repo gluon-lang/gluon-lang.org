@@ -1,5 +1,5 @@
 let { map } = import! std.functor
-let { (<<), (<|) } = import! std.function
+let { (<<), (<|), (|>) } = import! std.function
 let { (*>), wrap } = import! std.applicative
 let { empty, (<|>) } = import! std.alternative
 let http @ { Handler, Response, Request, get, post, path, is_match, uri, ? } = import! std.http.http
@@ -9,12 +9,17 @@ let { ? } = import! std.array
 let path_mod @ { Component } = import! std.path
 let { any, foldl } = import! std.foldable
 let { Result, ? } = import! std.result
-let { ? } = import! std.array
+let array @ { ? } = import! std.array
 let { ? } = import! std.path
 let { (<>) } = import! std.semigroup
 let fs = import! std.fs
 let json_ser @ { Serialize, ? } = import! std.json.ser
 let json_de @ { Deserialize, ? } = import! std.json.de
+let regex = import! std.regex
+let option = import! std.option
+let result = import! std.result
+let { for } = import! std.traversable
+let { for } = import! std.traversable
 
 let try_gluon = import! gluon.try
 let try_gluon_master = import! gluon.try.master
@@ -114,10 +119,56 @@ let share_handler opts : Opts -> _ =
         )
     | None -> http.write_response (string.as_bytes "Sharing is not enabled") *> wrap { status = http.status.internal_server_error }
 
+
+let load_config =
+    do lock_file_contents = io.read_file_to_string "Cargo.lock"
+    let get_version_by_regex re_str : String -> String =
+        let match_ =
+            regex.new re_str
+                |> result.unwrap_ok
+                |> (\re -> regex.captures re lock_file_contents)
+                |> option.unwrap
+                |> (\captures -> array.index captures 1)
+                |> option.unwrap
+        match_.text
+
+    let git_master =
+        get_version_by_regex "git\\+[^#]+gluon#([^\"]+)"
+            |> (\revision -> string.slice revision 0 6)
+    let last_release = get_version_by_regex "checksum gluon ([^ ]+).+(registry|git)"
+
+    do examples =
+        do dir_entries = fs.read_dir "public/examples"
+        for dir_entries (\entry ->
+            let example_path = fs.dir_entry.path entry
+            let name = path_mod.file_stem example_path |> option.unwrap
+            do src = io.read_file_to_string example_path
+            wrap { name, src })
+
+    #[derive(Serialize)]
+    type Example = { name : String, src : String }
+
+    #[derive(Serialize)]
+    type Config = {
+        last_release : String,
+        git_master : String,
+        examples : Array Example 
+    }
+
+    let config : Config = {
+        last_release,
+        git_master,
+        examples,
+    }
+    wrap (json_ser.to_string config |> result.unwrap_ok)
+
 let start opts : Opts -> IO () =
+    do config = load_config
     let handler =
         foldl (<|>) empty
-            [get *> is_match "^/.*" *> static "./dist",
+            [get *> path "/try/config"
+                *> http.write_response (string.as_bytes config) *> wrap { status = http.status.ok },
+            get *> is_match "^/.*" *> static "./dist",
             post *> path "/try/share" *> share_handler opts,
             post *> path "/try/eval"
                 *> gluon_handler (\code -> try_gluon.eval try_vm_released code),
