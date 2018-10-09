@@ -25,6 +25,7 @@ COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
 RUN cargo build --release
+RUN cargo build
 
 COPY . .
 
