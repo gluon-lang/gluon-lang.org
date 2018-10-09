@@ -23,7 +23,7 @@ hubcaps = { git = "https://github.com/softprops/hubcaps", rev = "12ee80d" }
 log = "0.4"
 mount = "0.4.0"
 persistent = "0.4.0"
-regex = "0.2.7"
+regex = "1"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
