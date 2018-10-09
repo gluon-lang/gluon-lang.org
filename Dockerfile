@@ -1,4 +1,4 @@
-FROM rust:1.28.0
+FROM rust:1.28.0 as builder
 
 WORKDIR /usr/src/try_gluon
 
@@ -24,8 +24,8 @@ COPY gluon_master/Cargo.toml gluon_master/
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
-RUN cargo build --release
 RUN cargo build
+RUN cargo build --release
 
 COPY . .
 
@@ -36,6 +36,16 @@ RUN cargo update -p https://github.com/gluon-lang/gluon
 
 RUN cargo build --release
 
+FROM rust:1.28.0
+
+WORKDIR /root/
+
+COPY --from=builder /usr/src/try_gluon/target/release/try_gluon .
+COPY --from=builder /usr/src/try_gluon/dist ./dist
+COPY --from=builder /usr/src/try_gluon/src/ ./src
+
+ENV RUST_BACKTRACE 1
+
 EXPOSE 8080
 
-CMD ["target/release/try_gluon"]
+CMD ["./try_gluon"]

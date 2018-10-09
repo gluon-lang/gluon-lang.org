@@ -1,14 +1,11 @@
 extern crate env_logger;
 extern crate failure;
 extern crate futures;
-extern crate glob;
-extern crate home;
 extern crate hubcaps;
 extern crate hyper;
 extern crate hyper_tls;
 #[macro_use]
 extern crate log;
-extern crate regex;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
@@ -35,8 +32,6 @@ use futures::{future, Future};
 
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
-
-use regex::Regex;
 
 use gluon::{
     vm::{
@@ -68,7 +63,9 @@ pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     ExternModule::new(
         thread,
         record! {
-            make_eval_vm => primitive!(1, "make_eval_vm", |x| TryThread(gluon_master::make_eval_vm(x))),
+            make_eval_vm => primitive!(1, "make_eval_vm", |x| {
+                RuntimeResult::from(gluon_master::make_eval_vm(x).map(TryThread))
+            }),
             eval => primitive!(2, "eval", |t: &TryThread, s: &str| gluon_master::eval(t, s)),
             format_expr => primitive!(2, |t: &TryThread, s: &str| gluon_master::format_expr(t, s))
         },
@@ -126,60 +123,6 @@ fn share(
         .then(Ok)
 }
 
-const LOCK_FILE: &str = include_str!("../../Cargo.lock");
-
-fn git_master_version() -> String {
-    Regex::new("git\\+[^#]+gluon#([^\"]+)")
-        .unwrap()
-        .captures(LOCK_FILE)
-        .expect("gluon master version")
-        .get(1)
-        .unwrap()
-        .as_str()
-        .to_string()
-}
-
-fn gluon_git_path() -> Result<PathBuf, failure::Error> {
-    let std_glob_path = home::cargo_home()?
-        .join(&format!(
-            "git/checkouts/gluon-*/{}",
-            &git_master_version()[..7]
-        ))
-        .display()
-        .to_string();
-    Ok(glob::glob(&std_glob_path)?
-        .next()
-        .expect("git repo in cargo home")?)
-}
-
-fn create_docs(path: &str) -> Result<(), failure::Error> {
-    let git_dir = gluon_git_path()?;
-
-    let exit_status = Command::new("cp")
-        .args(&["-r", &git_dir.join("std").to_string_lossy(), "."])
-        .status()?;
-    if !exit_status.success() {
-        return Err(failure::err_msg("Error copying docs"));
-    }
-
-    gluon_master::generate_doc("std", path)?;
-
-    let mut command = Command::new("mdbook");
-    command.args(&[
-        "build",
-        "--dest-dir",
-        &env::current_dir()?.join("dist/book").to_string_lossy(),
-        &git_dir.join("book").to_string_lossy(),
-    ]);
-    println!("Building book: {:?}", command);
-    let exit_status = command.status()?;
-    if !exit_status.success() {
-        return Err(failure::err_msg("Error building book docs"));
-    }
-
-    Ok(())
-}
-
 #[derive(StructOpt, Pushable, VmType)]
 struct Opts {
     #[structopt(
@@ -207,9 +150,6 @@ fn main_() -> Result<(), failure::Error> {
     env_logger::init();
 
     let opts = Opts::from_args();
-
-    let doc_path = "dist/doc/nightly";
-    create_docs(doc_path)?;
 
     let mut runtime = tokio::runtime::Runtime::new()?;
 

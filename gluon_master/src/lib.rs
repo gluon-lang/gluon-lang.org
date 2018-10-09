@@ -11,14 +11,19 @@ use std::time::Instant;
 
 use futures::Async;
 
-use gluon::base::kind::{ArcKind, KindEnv};
-use gluon::base::symbol::{Symbol, SymbolRef};
-use gluon::base::types::{Alias, ArcType, TypeEnv};
-use gluon::import::{add_extern_module, DefaultImporter, Import};
-use gluon::vm;
-use gluon::vm::api::{Hole, OpaqueValue};
-use gluon::vm::internal::ValuePrinter;
-use gluon::vm::thread::ThreadInternal;
+use gluon::{
+    base::kind::{ArcKind, KindEnv},
+    base::symbol::{Symbol, SymbolRef},
+    base::types::{Alias, ArcType, TypeEnv},
+    import::{add_extern_module, DefaultImporter, Import},
+    vm::{
+        self,
+        api::{Hole, OpaqueValue},
+        internal::ValuePrinter,
+        thread::ThreadInternal,
+    },
+    Result,
+};
 
 pub use gluon::*;
 
@@ -39,7 +44,7 @@ impl TypeEnv for EmptyEnv {
     }
 }
 
-pub fn make_eval_vm(_: ()) -> RootedThread {
+pub fn make_eval_vm() -> Result<RootedThread> {
     let vm = RootedThread::new();
 
     // Ensure the import macro cannot be abused to to open files
@@ -54,8 +59,7 @@ pub fn make_eval_vm(_: ()) -> RootedThread {
     // other modules
     Compiler::new()
         .implicit_prelude(false)
-        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)
-        .unwrap();
+        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)?;
 
     add_extern_module(&vm, "std.prim", ::vm::primitives::load);
     add_extern_module(&vm, "std.byte.prim", ::vm::primitives::load_byte);
@@ -75,7 +79,7 @@ pub fn make_eval_vm(_: ()) -> RootedThread {
     // add_extern_module(&vm, "std.debug", ::vm::debug::load);
     add_extern_module(&vm, "std.io.prim", ::io::load);
 
-    vm
+    Ok(vm)
 }
 
 pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
@@ -124,7 +128,7 @@ pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
         .map_err(|err| err.to_string())
 }
 
-pub fn generate_doc<P, Q>(input: &P, out: &Q) -> ::std::result::Result<(), failure::Error>
+pub fn generate_doc<P, Q>(input: &P, out: &Q) -> StdResult<(), failure::Error>
 where
     P: ?Sized + AsRef<Path>,
     Q: ?Sized + AsRef<Path>,

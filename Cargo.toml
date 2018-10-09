@@ -17,13 +17,10 @@ path = "src/app/main.rs"
 env_logger = "0.5"
 failure = "0.1"
 futures = "0.1.0"
-glob = "0.2"
-home = "0.3"
 hubcaps = { git = "https://github.com/softprops/hubcaps", rev = "12ee80d" }
 log = "0.4"
 mount = "0.4.0"
 persistent = "0.4.0"
-regex = "1"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
@@ -37,6 +34,14 @@ gluon = { version = "0.9.2", features = ["serialization", "web", "regex", "rand"
 gluon_format = { version = "0.9.2" }
 gluon_vm = { version = "0.9.2" }
 gluon_codegen = { version = "0.9.2" }
+
+gluon_master = { path = "gluon_master" }
+
+[build-dependencies]
+failure = "0.1"
+glob = "0.2"
+home = "0.3"
+regex = "1"
 
 gluon_master = { path = "gluon_master" }
 
