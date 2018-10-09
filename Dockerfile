@@ -31,7 +31,7 @@ COPY . .
 RUN webpack-cli --mode=production
 RUN touch gluon_master/src/lib.rs
 
-RUN git pull origin master --ff-only && cargo update -p https://github.com/gluon-lang/gluon
+RUN cargo update -p https://github.com/gluon-lang/gluon
 
 RUN cargo build --release
 
