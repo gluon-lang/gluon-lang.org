@@ -38,7 +38,7 @@ gluon_format = { version = "0.9", git = "https://github.com/gluon-lang/gluon", r
 gluon_vm = { version = "0.9", git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }
 gluon_codegen = { version = "0.9", git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }
 
-gluon_master = { path = "gluon_master", features = ["serialization"] }
+gluon_master = { path = "gluon_master" }
 
 [patch.crates-io]
 gluon_codegen = { path = "../gluon/codegen" }
