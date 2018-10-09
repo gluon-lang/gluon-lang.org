@@ -8,7 +8,6 @@ cache:
     - $HOME/.cache/sccache
 
 before_script:
-  - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
   - docker pull marwes/try_gluon || true
 
 script:
