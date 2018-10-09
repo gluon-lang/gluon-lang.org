@@ -40,8 +40,8 @@ gluon_codegen = { version = "0.9", git = "https://github.com/gluon-lang/gluon", 
 
 gluon_master = { path = "gluon_master" }
 
-[patch.crates-io]
-gluon_codegen = { path = "../gluon/codegen" }
-gluon_format = { path = "../gluon/format" }
-gluon_vm = { path = "../gluon/vm" }
-gluon = { path = "../gluon" }
+# [patch.crates-io]
+# gluon_codegen = { path = "../gluon/codegen" }
+# gluon_format = { path = "../gluon/format" }
+# gluon_vm = { path = "../gluon/vm" }
+# gluon = { path = "../gluon" }
