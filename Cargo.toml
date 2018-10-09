@@ -34,6 +34,15 @@ tokio-core = "0.1"
 urlencoded = "0.6.0"
 hyper = "0.11"
 
-gluon = { version = "0.9.0", features = ["serialization"] }
-gluon_format = "0.9.0"
+gluon = { version = "0.9", features = ["serialization", "web", "regex", "rand"], git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }
+gluon_format = { version = "0.9", git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }
+gluon_vm = { version = "0.9", git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }
+gluon_codegen = { version = "0.9", git = "https://github.com/gluon-lang/gluon", rev = "9a082df" }
+
 gluon_master = { path = "gluon_master", features = ["serialization"] }
+
+# [patch.crates-io]
+# gluon_codegen = { path = "../gluon/codegen" }
+# gluon_format = { path = "../gluon/format" }
+# gluon_vm = { path = "../gluon/vm" }
+# gluon = { path = "../gluon" }
