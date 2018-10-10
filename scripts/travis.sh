@@ -1,7 +1,8 @@
 #!/bin/bash
 set -eux
 
-if [ "$1" == 'cache' ];
+USE_CACHE=${1:-}
+if [ "$USE_CACHE" == 'cache' ];
 then
     docker build \
         --pull \
