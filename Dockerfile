@@ -36,7 +36,7 @@ RUN webpack-cli --mode=production
 
 RUN cargo build --release
 
-FROM alpine:latest
+FROM rust:1.28.0
 
 WORKDIR /root/
 
