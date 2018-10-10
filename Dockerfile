@@ -50,4 +50,4 @@ ENV RUST_BACKTRACE 1
 
 EXPOSE 8080
 
-
+CMD ./try_gluon
