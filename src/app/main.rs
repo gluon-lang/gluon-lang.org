@@ -22,11 +22,8 @@ extern crate gluon_vm;
 #[macro_use]
 extern crate gluon_codegen;
 
-use std::env;
 use std::fs;
 use std::ops::Deref;
-use std::path::PathBuf;
-use std::process::Command;
 
 use futures::{future, Future};
 
@@ -36,7 +33,7 @@ use hyper_tls::HttpsConnector;
 use gluon::{
     vm::{
         self,
-        api::{OwnedFunction, IO},
+        api::{OwnedFunction, RuntimeResult, IO},
         ExternModule,
     },
     Thread,
@@ -63,8 +60,8 @@ pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     ExternModule::new(
         thread,
         record! {
-            make_eval_vm => primitive!(1, "make_eval_vm", |x| {
-                RuntimeResult::from(gluon_master::make_eval_vm(x).map(TryThread))
+            make_eval_vm => primitive!(1, "make_eval_vm", |()| {
+                RuntimeResult::from(gluon_master::make_eval_vm().map(TryThread))
             }),
             eval => primitive!(2, "eval", |t: &TryThread, s: &str| gluon_master::eval(t, s)),
             format_expr => primitive!(2, |t: &TryThread, s: &str| gluon_master::format_expr(t, s))
@@ -111,16 +108,13 @@ fn share(
                     filename: None,
                     content: gist.code.into(),
                 },
-            ))
-            .into_iter()
+            )).into_iter()
             .collect(),
-        })
-        .map_err(|err| err.to_string())
+        }).map_err(|err| err.to_string())
         .map(|response| PostGist {
             id: response.id,
             html_url: response.html_url,
-        })
-        .then(Ok)
+        }).then(Ok)
 }
 
 #[derive(StructOpt, Pushable, VmType)]
@@ -175,8 +169,7 @@ fn main_() -> Result<(), failure::Error> {
                 &vm,
                 "src.app.server",
                 &server_source,
-            )
-            .and_then(|(mut f, _)| f.call_async(opts).from_err())
+            ).and_then(|(mut f, _)| f.call_async(opts).from_err())
     }))?;
 
     Ok(())

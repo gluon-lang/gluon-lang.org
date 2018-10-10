@@ -19,20 +19,22 @@ RUN yarn global add elm@0.19.0
 COPY package.json yarn.lock ./
 RUN yarn install
 
+COPY ./setup_cache.sh .
+ARG RUSTC_WRAPPER
+ENV SCCACHE_REDIS=redis://localhost
+RUN . ./setup_cache.sh 
 # Cache the built dependencies
 COPY gluon_master/Cargo.toml gluon_master/
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
-    && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
+    && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs \
+    && echo "fn main() { }" > src/app/build.rs
 RUN cargo build
 RUN cargo build --release
 
 COPY . .
 
 RUN webpack-cli --mode=production
-RUN touch gluon_master/src/lib.rs
-
-RUN cargo update -p https://github.com/gluon-lang/gluon
 
 RUN cargo build --release
 
@@ -42,7 +44,9 @@ WORKDIR /root/
 
 COPY --from=builder /usr/src/try_gluon/target/release/try_gluon .
 COPY --from=builder /usr/src/try_gluon/dist ./dist
+COPY --from=builder /usr/src/try_gluon/public/ ./public
 COPY --from=builder /usr/src/try_gluon/src/ ./src
+COPY --from=builder /usr/src/try_gluon/Cargo.lock .
 
 ENV RUST_BACKTRACE 1
 
