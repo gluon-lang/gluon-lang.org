@@ -44,6 +44,9 @@ regex = "1"
 
 gluon_master = { path = "gluon_master" }
 
+[dev-dependencies]
+tokio-retry = "0.2"
+
 # [patch.crates-io]
 # gluon_codegen = { path = "../gluon/codegen" }
 # gluon_format = { path = "../gluon/format" }

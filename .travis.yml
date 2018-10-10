@@ -8,11 +8,11 @@ cache:
     - $HOME/.cache/sccache
 
 before_script:
+  - docker pull marwes/try_gluon_builder || true
   - docker pull marwes/try_gluon || true
 
 script:
-  - docker build --pull --cache-from marwes/try_gluon --tag marwes/try_gluon .
-  - docker run --env=RUST_BACKTRACE marwes/try_gluon cargo test --release
+  - ./scripts/travis.sh
 
 after_script:
   - docker images
@@ -22,6 +22,8 @@ before_deploy:
 
 deploy:
   provider: script
-  script: docker push marwes/try_gluon
+  script:
+    - docker push marwes/try_gluon_builder
+    - docker push marwes/try_gluon
   on:
     branch: master
