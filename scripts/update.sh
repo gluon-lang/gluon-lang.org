@@ -9,4 +9,4 @@ git pull origin master --ff-only
 
 docker system prune -f
 
-./run.sh
+./scripts/run.sh

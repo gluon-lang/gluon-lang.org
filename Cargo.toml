@@ -5,7 +5,6 @@ authors = ["Markus <marwes91@gmail.com>"]
 
 license = "MIT"
 
-
 [workspace]
 members = ["gluon_master"]
 
@@ -17,23 +16,39 @@ path = "src/app/main.rs"
 env_logger = "0.5"
 failure = "0.1"
 futures = "0.1.0"
-glob = "0.2"
-home = "0.3"
-hubcaps = "0.4"
-iron = "0.6.0"
+hubcaps = { git = "https://github.com/softprops/hubcaps", rev = "12ee80d" }
 log = "0.4"
 mount = "0.4.0"
 persistent = "0.4.0"
-regex = "0.2.7"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
 staticfile = "0.5.0"
 structopt = "0.2"
-tokio-core = "0.1"
-urlencoded = "0.6.0"
-hyper = "0.11"
+tokio = "0.1"
+hyper = "0.12"
+hyper-tls = "0.3"
 
-gluon = { version = "0.9.0", features = ["serialization"] }
-gluon_format = "0.9.0"
-gluon_master = { path = "gluon_master", features = ["serialization"] }
+gluon = { version = "0.9.2", features = ["serialization", "web", "regex", "rand"] }
+gluon_format = { version = "0.9.2" }
+gluon_vm = { version = "0.9.2" }
+gluon_codegen = { version = "0.9.2" }
+
+gluon_master = { path = "gluon_master" }
+
+[build-dependencies]
+failure = "0.1"
+glob = "0.2"
+home = "0.3"
+regex = "1"
+
+gluon_master = { path = "gluon_master" }
+
+[dev-dependencies]
+tokio-retry = "0.2"
+
+# [patch.crates-io]
+# gluon_codegen = { path = "../gluon/codegen" }
+# gluon_format = { path = "../gluon/format" }
+# gluon_vm = { path = "../gluon/vm" }
+# gluon = { path = "../gluon" }

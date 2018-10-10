@@ -1,0 +1,185 @@
+let { map } = import! std.functor
+let { (<<), (<|), (|>) } = import! std.function
+let { (*>), wrap } = import! std.applicative
+let { empty, (<|>) } = import! std.alternative
+let http @ { Handler, Response, Request, get, post, path, is_match, uri, ? } = import! std.http.http
+let io @ { ? } = import! std.io
+let string = import! std.string
+let { ? } = import! std.array
+let path_mod @ { Component } = import! std.path
+let { any, foldl } = import! std.foldable
+let { Result, ? } = import! std.result
+let array @ { ? } = import! std.array
+let { ? } = import! std.path
+let { (<>) } = import! std.semigroup
+let fs = import! std.fs
+let json_ser @ { Serialize, ? } = import! std.json.ser
+let json_de @ { Deserialize, ? } = import! std.json.de
+let regex = import! std.regex
+let option = import! std.option
+let result = import! std.result
+let { for } = import! std.traversable
+let { for } = import! std.traversable
+
+let try_gluon = import! gluon.try
+let try_gluon_master = import! gluon.try.master
+let github_mod = import! github
+
+let hello_world : Handler Response =
+    http.write_response (string.as_bytes "Hello World")
+        *> (wrap { status = http.status.ok })
+
+let static base : String -> Handler Response =
+    let detect_path_traversal uri : String -> Bool =
+        any (\c ->
+            match c with
+            | Normal _ -> False
+            | _ -> True)
+            (path_mod.components uri)
+
+    do request = http.get_request
+    let uri = string.trim_left_matches (uri.path request.uri) "/"
+    if detect_path_traversal uri then
+        wrap { status = http.status.bad_request }
+    else
+        let file_path = path_mod.join base uri
+
+        let open_file =
+            do metadata = path_mod.metadata file_path
+            let file_path =
+                if fs.metadata.is_file metadata
+                then file_path
+                else path_mod.join file_path "index.html"
+
+            io.read_file_to_array file_path
+
+        do result = http.io_handler (io.catch (map Ok open_file) (wrap << Err))
+        match result with
+        | Ok contents ->
+            do _ = http.write_response contents
+            wrap { status = http.status.ok }
+        | Err err ->
+            if string.contains err "The system cannot find the file"
+            then wrap { status = http.status.not_found }
+            else
+                do _ = http.io_handler (io.eprintln ("Error opening file: " ++ file_path) *> io.eprintln err)
+                wrap { status = http.status.not_found }
+
+let array_body request : Request -> Handler (Array Byte) =
+    do chunk = http.io_handler (http.read_chunk request.body)
+    match chunk with
+    | Some chunk ->
+        do rest = array_body request
+        wrap (chunk <> rest)
+    | None -> wrap []
+
+
+let try_vm_released = try_gluon.make_eval_vm ()
+let try_vm_master = try_gluon_master.make_eval_vm ()
+
+let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Handler Response =
+    do request = http.get_request
+    do body = array_body request
+    match string.from_utf8 body with
+    | Err err ->
+        do _ = http.write_response (string.as_bytes "Invalid UTF-8")
+        wrap { status = http.status.bad_request }
+    | Ok code ->
+        let (response_body, status) =
+            match eval code with
+            | Ok response ->
+                match json_ser.to_string response with
+                | Ok s -> (s, http.status.ok)
+                | Err s -> (s, http.status.internal_server_error)
+            | Err response_body -> (response_body, http.status.internal_server_error)
+
+        do _ = http.write_response <| string.as_bytes response_body
+        wrap { status }
+
+type Opts = { gist_access_token : Option String, port : Int }
+
+#[derive(Deserialize)]
+type Gist = {
+    code : String,
+}
+
+#[derive(Serialize)]
+type PostGist = {
+    id : String,
+    html_url : String,
+}
+
+let share_handler opts : Opts -> _ =
+    match opts.gist_access_token with
+    | Some gist_access_token ->
+        let github = github_mod.new_github gist_access_token
+        gluon_handler (\gist_str ->
+            do gist = json_de.deserialize json_de.deserializer gist_str
+            github_mod.share github gist
+        )
+    | None -> http.write_response (string.as_bytes "Sharing is not enabled") *> wrap { status = http.status.internal_server_error }
+
+
+let load_config =
+    do lock_file_contents = io.read_file_to_string "Cargo.lock"
+    let get_version_by_regex re_str : String -> String =
+        let match_ =
+            regex.new re_str
+                |> result.unwrap_ok
+                |> (\re -> regex.captures re lock_file_contents)
+                |> option.unwrap
+                |> (\captures -> array.index captures 1)
+                |> option.unwrap
+        match_.text
+
+    let git_master =
+        get_version_by_regex "git\\+[^#]+gluon#([^\"]+)"
+            |> (\revision -> string.slice revision 0 6)
+    let last_release = get_version_by_regex "checksum gluon ([^ ]+).+(registry|git)"
+
+    do examples =
+        do dir_entries = fs.read_dir "public/examples"
+        for dir_entries (\entry ->
+            let example_path = fs.dir_entry.path entry
+            let name = path_mod.file_stem example_path |> option.unwrap
+            do src = io.read_file_to_string example_path
+            wrap { name, src })
+
+    #[derive(Serialize)]
+    type Example = { name : String, src : String }
+
+    #[derive(Serialize)]
+    type Config = {
+        last_release : String,
+        git_master : String,
+        examples : Array Example 
+    }
+
+    let config : Config = {
+        last_release,
+        git_master,
+        examples,
+    }
+    wrap (json_ser.to_string config |> result.unwrap_ok)
+
+let start opts : Opts -> IO () =
+    do config = load_config
+    let handler =
+        foldl (<|>) empty
+            [get *> path "/try/config"
+                *> http.write_response (string.as_bytes config) *> wrap { status = http.status.ok },
+            get *> is_match "^/.*" *> static "./dist",
+            post *> path "/try/share" *> share_handler opts,
+            post *> path "/try/eval"
+                *> gluon_handler (\code -> try_gluon.eval try_vm_released code),
+            post *> path "/try/format"
+                *> gluon_handler (\code -> try_gluon.format_expr try_vm_released code),
+            post *> path "/try/master/eval"
+                *> gluon_handler (\code -> try_gluon_master.eval try_vm_master code),
+            post *> path "/try/master/format"
+                *> gluon_handler (\code -> try_gluon_master.format_expr try_vm_master code)]
+
+    io.println ("Opened server on port " ++ show opts.port)
+        *> http.listen opts.port handler
+
+start
