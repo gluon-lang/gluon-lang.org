@@ -28,8 +28,7 @@ COPY gluon_master/Cargo.toml gluon_master/
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
-RUN cargo build
-RUN cargo build --release
+RUN cargo build --release --tests
 
 COPY . .
 
@@ -41,11 +40,11 @@ FROM alpine:latest
 
 WORKDIR /root/
 
-COPY --from=try_gluon_builder /usr/src/try_gluon/target/release/try_gluon .
-COPY --from=try_gluon_builder /usr/src/try_gluon/dist ./dist
-COPY --from=try_gluon_builder /usr/src/try_gluon/public/ ./public
-COPY --from=try_gluon_builder /usr/src/try_gluon/src/ ./src
-COPY --from=try_gluon_builder /usr/src/try_gluon/Cargo.lock .
+COPY --from=builder /usr/src/try_gluon/target/release/try_gluon .
+COPY --from=builder /usr/src/try_gluon/dist ./dist
+COPY --from=builder /usr/src/try_gluon/public/ ./public
+COPY --from=builder /usr/src/try_gluon/src/ ./src
+COPY --from=builder /usr/src/try_gluon/Cargo.lock .
 
 ENV RUST_BACKTRACE 1
 

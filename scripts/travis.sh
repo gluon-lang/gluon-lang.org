@@ -5,7 +5,6 @@ USE_CACHE=${1:-}
 if [ "$USE_CACHE" == 'cache' ];
 then
     docker build \
-        --pull \
         --network host \
         --build-arg=RUSTC_WRAPPER=./sccache \
         --cache-from marwes/try_gluon:builder \
@@ -14,7 +13,6 @@ then
         .
 else
     docker build \
-        --pull \
         --cache-from marwes/try_gluon:builder \
         --tag marwes/try_gluon:builder \
         --target builder \
@@ -29,7 +27,6 @@ docker run \
     cargo test --release
 
 docker build \
-    --pull \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
     --tag marwes/try_gluon \
