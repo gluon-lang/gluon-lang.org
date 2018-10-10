@@ -8,27 +8,29 @@ then
         --pull \
         --network host \
         --build-arg=RUSTC_WRAPPER=./sccache \
-        --cache-from marwes/try_gluon_builder \
-        --tag marwes/try_gluon_builder \
-        --target try_gluon_builder \
+        --cache-from marwes/try_gluon:builder \
+        --tag marwes/try_gluon:builder \
+        --target builder \
         .
 else
     docker build \
         --pull \
-        --cache-from marwes/try_gluon_builder \
-        --tag marwes/try_gluon_builder \
-        --target try_gluon_builder \
+        --cache-from marwes/try_gluon:builder \
+        --tag marwes/try_gluon:builder \
+        --target builder \
         .
 fi
 
 docker run \
     --init \
     -it \
-    --env=RUST_BACKTRACE marwes/try_gluon_builder \
+    --env=RUST_BACKTRACE \
+    marwes/try_gluon:builder \
     cargo test --release
 
 docker build \
     --pull \
-    --cache-from marwes/try_gluon,marwes/try_gluon_builder \
+    --cache-from marwes/try_gluon \
+    --cache-from marwes/try_gluon:builder \
     --tag marwes/try_gluon \
     .

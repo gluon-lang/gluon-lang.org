@@ -1,4 +1,4 @@
-FROM rust:1.28.0 as try_gluon_builder
+FROM rust:1.28.0 as builder
 
 WORKDIR /usr/src/try_gluon
 
