@@ -45,6 +45,7 @@ COPY --from=builder /usr/src/try_gluon/dist ./dist
 COPY --from=builder /usr/src/try_gluon/public/ ./public
 COPY --from=builder /usr/src/try_gluon/src/ ./src
 COPY --from=builder /usr/src/try_gluon/Cargo.lock .
+COPY --from=builder /usr/src/try_gluon/robots.txt /usr/src/try_gluon/favicon.ico ./dist
 
 ENV RUST_BACKTRACE 1
 
