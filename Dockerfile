@@ -36,7 +36,7 @@ RUN webpack-cli --mode=production
 
 RUN cargo build --release
 
-FROM alpine:latest
+FROM rust:1.28.0
 
 WORKDIR /root/
 
@@ -45,9 +45,10 @@ COPY --from=builder /usr/src/try_gluon/dist ./dist
 COPY --from=builder /usr/src/try_gluon/public/ ./public
 COPY --from=builder /usr/src/try_gluon/src/ ./src
 COPY --from=builder /usr/src/try_gluon/Cargo.lock .
+COPY --from=builder /usr/src/try_gluon/robots.txt /usr/src/try_gluon/favicon.ico ./dist
 
 ENV RUST_BACKTRACE 1
 
 EXPOSE 8080
 
-
+CMD ./try_gluon
