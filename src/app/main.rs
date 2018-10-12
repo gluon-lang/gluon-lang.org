@@ -108,13 +108,16 @@ fn share(
                     filename: None,
                     content: gist.code.into(),
                 },
-            )).into_iter()
+            ))
+            .into_iter()
             .collect(),
-        }).map_err(|err| err.to_string())
+        })
+        .map_err(|err| err.to_string())
         .map(|response| PostGist {
             id: response.id,
             html_url: response.html_url,
-        }).then(Ok)
+        })
+        .then(Ok)
 }
 
 #[derive(StructOpt, Pushable, VmType)]
@@ -132,6 +135,8 @@ struct Opts {
         help = "The port to start the server on"
     )]
     port: u16,
+    #[structopt(long = "https", help = "Wheter to run the server with https")]
+    https: bool,
 }
 
 fn main() {
@@ -150,6 +155,14 @@ fn main_() -> Result<(), failure::Error> {
     let vm = gluon::new_vm();
     gluon::add_extern_module(&vm, "gluon.try", gluon::load);
     gluon::add_extern_module(&vm, "gluon.try.master", load_master);
+    gluon::add_extern_module(&vm, "gluon.http_server", |vm| {
+        ExternModule::new(
+            vm,
+            record!{
+                type Opts => Opts
+            },
+        )
+    });
     gluon::add_extern_module(&vm, "github", |vm| {
         vm.register_type::<Github>("Github", &[])?;
         ExternModule::new(
@@ -169,7 +182,8 @@ fn main_() -> Result<(), failure::Error> {
                 &vm,
                 "src.app.server",
                 &server_source,
-            ).and_then(|(mut f, _)| f.call_async(opts).from_err())
+            )
+            .and_then(|(mut f, _)| f.call_async(opts).from_err())
     }))?;
 
     Ok(())

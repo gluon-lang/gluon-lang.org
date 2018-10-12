@@ -19,11 +19,12 @@ let regex = import! std.regex
 let option = import! std.option
 let result = import! std.result
 let { for } = import! std.traversable
-let { for } = import! std.traversable
+let process = import! std.process
 
 let try_gluon = import! gluon.try
 let try_gluon_master = import! gluon.try.master
 let github_mod = import! github
+let { Opts } = import! gluon.http_server
 
 let hello_world : Handler Response =
     http.write_response (string.as_bytes "Hello World")
@@ -96,7 +97,6 @@ let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Handler
         do _ = http.write_response <| string.as_bytes response_body
         wrap { status }
 
-type Opts = { gist_access_token : Option String, port : Int }
 
 #[derive(Deserialize)]
 type Gist = {
@@ -162,8 +162,27 @@ let load_config =
     }
     wrap (json_ser.to_string config |> result.unwrap_ok)
 
+
+let when b f : [Monad m] -> Bool -> (() -> m ()) -> m () =
+    if b then f () else wrap ()
+
 let start opts : Opts -> IO () =
     do config = load_config
+    do server_settings =
+        // let cert_path = "/etc/letsencrypt/live/gluon-lang.org/"
+        let cert_path = "live/gluon-lang.org/"
+        if opts.https then
+            do status = process.execute (process.proc "certbot" ["certonly", "--standalone", "-d", "gluon-lang.org", "-m", "marwes91@gmail.com", "--agree-tos"])
+            do _ = when (status /= Some 0) (\_ -> error "Unable to retrieve the certificate")
+
+            do status = process.execute (process.proc "openssl"
+                    ["pkcs12", "-out", "identity.p12", "-inkey", path_mod.join cert_path "privkey.pem", "-in", path_mod.join cert_path "fullchain.pem", path_mod.join cert_path "chain.pem"]
+                )
+            do _ = when (status /= Some 0) (\_ -> error "Unable to convert the certificate")
+
+            wrap { port = opts.port, tls_cert = Some "identity.p12" }
+        else
+            wrap { port = opts.port, tls_cert = None }
     let handler =
         foldl (<|>) empty
             [get *> path "/try/config"
@@ -179,7 +198,7 @@ let start opts : Opts -> IO () =
             post *> path "/try/master/format"
                 *> gluon_handler (\code -> try_gluon_master.format_expr try_vm_master code)]
 
-    io.println ("Opened server on port " ++ show opts.port)
-        *> http.listen opts.port handler
+    io.println ("Opened server on port " ++ show server_settings.port)
+        *> http.listen server_settings handler
 
 start
