@@ -4,20 +4,16 @@ set -eux
 USE_CACHE=${1:-}
 if [ "$USE_CACHE" == 'cache' ];
 then
-    docker build \
-        --network host \
-        --build-arg=RUSTC_WRAPPER=./sccache \
-        --cache-from marwes/try_gluon:builder \
-        --tag marwes/try_gluon:builder \
-        --target builder \
-        .
+    EXTRA_BUILD_ARGS=(--network host --build-arg=RUSTC_WRAPPER=./sccache)
 else
-    docker build \
-        --cache-from marwes/try_gluon:builder \
-        --tag marwes/try_gluon:builder \
-        --target builder \
-        .
+    EXTRA_BUILD_ARGS=()
 fi
+docker build \
+    "${EXTRA_BUILD_ARGS[@]}" \
+    --cache-from marwes/try_gluon:builder \
+    --tag marwes/try_gluon:builder \
+    --target builder \
+    .
 
 docker run \
     --init \
@@ -27,6 +23,7 @@ docker run \
     cargo test --release
 
 docker build \
+    "${EXTRA_BUILD_ARGS[@]}" \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
     --tag marwes/try_gluon \

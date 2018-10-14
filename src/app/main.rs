@@ -108,16 +108,13 @@ fn share(
                     filename: None,
                     content: gist.code.into(),
                 },
-            ))
-            .into_iter()
+            )).into_iter()
             .collect(),
-        })
-        .map_err(|err| err.to_string())
+        }).map_err(|err| err.to_string())
         .map(|response| PostGist {
             id: response.id,
             html_url: response.html_url,
-        })
-        .then(Ok)
+        }).then(Ok)
 }
 
 #[derive(StructOpt, Pushable, VmType)]
@@ -131,12 +128,20 @@ struct Opts {
     #[structopt(
         short = "p",
         long = "port",
-        default_value = "80",
         help = "The port to start the server on"
     )]
-    port: u16,
-    #[structopt(long = "https", help = "Wheter to run the server with https")]
+    port: Option<u16>,
+    #[structopt(
+        long = "https",
+        help = "Whether to run the server with https"
+    )]
     https: bool,
+    #[structopt(
+        long = "host",
+        default_value = "\"gluon-lang.org\"",
+        help = "The hostname for the server"
+    )]
+    host: String,
 }
 
 fn main() {
@@ -182,8 +187,7 @@ fn main_() -> Result<(), failure::Error> {
                 &vm,
                 "src.app.server",
                 &server_source,
-            )
-            .and_then(|(mut f, _)| f.call_async(opts).from_err())
+            ).and_then(|(mut f, _)| f.call_async(opts).from_err())
     }))?;
 
     Ok(())

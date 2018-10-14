@@ -169,20 +169,26 @@ let when b f : [Monad m] -> Bool -> (() -> m ()) -> m () =
 let start opts : Opts -> IO () =
     do config = load_config
     do server_settings =
-        // let cert_path = "/etc/letsencrypt/live/gluon-lang.org/"
-        let cert_path = "live/gluon-lang.org/"
+        let port =
+            match opts.port with
+            | None -> if opts.https then 443 else 80
+            | Some port -> port
+
+        let host_name = opts.host
+        let cert_path = path_mod.join "/etc/letsencrypt/live/" host_name
         if opts.https then
-            do status = process.execute (process.proc "certbot" ["certonly", "--standalone", "-d", "gluon-lang.org", "-m", "marwes91@gmail.com", "--agree-tos"])
+            do status = process.execute (process.proc "certbot" ["certonly", "--standalone", "-d", host_name, "-m", "marwes91@gmail.com", "--agree-tos", "-n"])
             do _ = when (status /= Some 0) (\_ -> error "Unable to retrieve the certificate")
 
+            let tls_cert = "identity.p12"
             do status = process.execute (process.proc "openssl"
-                    ["pkcs12", "-out", "identity.p12", "-inkey", path_mod.join cert_path "privkey.pem", "-in", path_mod.join cert_path "fullchain.pem", path_mod.join cert_path "chain.pem"]
+            ["pkcs12", "-out", tls_cert, "-inkey", path_mod.join cert_path "privkey.pem", "-in", path_mod.join cert_path "fullchain.pem", "-export", "-passout", "pass:"]
                 )
-            do _ = when (status /= Some 0) (\_ -> error "Unable to convert the certificate")
+            do _ = when (status /= Some 0) (\_ -> error ("Unable to convert the certificate: " ++ show status))
 
-            wrap { port = opts.port, tls_cert = Some "identity.p12" }
+            wrap { port, tls_cert = Some tls_cert }
         else
-            wrap { port = opts.port, tls_cert = None }
+            wrap { port, tls_cert = None }
     let handler =
         foldl (<|>) empty
             [get *> path "/try/config"

@@ -40,6 +40,8 @@ FROM rust:1.28.0
 
 WORKDIR /root/
 
+RUN apt-get update && apt-get install -y certbot
+
 COPY --from=builder /usr/src/try_gluon/target/release/try_gluon .
 COPY --from=builder /usr/src/try_gluon/dist ./dist
 COPY --from=builder /usr/src/try_gluon/public/ ./public
@@ -49,6 +51,7 @@ COPY --from=builder /usr/src/try_gluon/src/robots.txt /usr/src/try_gluon/src/fav
 
 ENV RUST_BACKTRACE 1
 
-EXPOSE 8080
+EXPOSE 80
+EXPOSE 443
 
 CMD ./try_gluon
