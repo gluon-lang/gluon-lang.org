@@ -210,27 +210,27 @@ let start opts : Opts -> IO () =
         | None -> if opts.https then 443 else 80
         | Some port -> port
 
-    let start_server =
-        if opts.https then
-            do _ = setup_cert opts
+    if opts.https then
+        do _ = setup_cert opts
 
-            let http_server_settings = { port = 80, tls_cert = None }
-            let http_redirect_handler : Handler Response =
-                wrap {
-                    status = http.status.permanent_redirect,
-                    headers = [("Location", string.as_bytes ("https://" ++ opts.host))],
-                    .. http.response 
-                }
+        let http_server_settings = { port = 80, tls_cert = None }
+        let http_redirect_handler : Handler Response =
+            wrap {
+                status = http.status.permanent_redirect,
+                headers = [("Location", string.as_bytes ("https://" ++ opts.host))],
+                .. http.response 
+            }
 
-            let https_server_settings = { port, tls_cert = Some tls_cert }
+        let https_server_settings = { port, tls_cert = Some tls_cert }
 
-            do _ = io.println ("Opening https server on port " ++ show port)
-            thread.join
-                (http.listen http_server_settings http_redirect_handler)
-                (http.listen https_server_settings handler)
+        do _ = io.println ("Opening https server on port " ++ show port)
+        thread.join
+            (http.listen http_server_settings http_redirect_handler)
+            (http.listen https_server_settings handler)
                 *> wrap ()
-        else
-            let server_settings = { port, tls_cert = None }
-            do _ = io.println ("Opening http server on port " ++ show port)
-            http.listen server_settings handler
+    else
+        let server_settings = { port, tls_cert = None }
+        do _ = io.println ("Opening http server on port " ++ show port)
+        http.listen server_settings handler
+
 start
