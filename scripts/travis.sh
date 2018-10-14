@@ -15,16 +15,18 @@ docker build \
     --target builder \
     .
 
-docker run \
-    --init \
-    -it \
-    --env=RUST_BACKTRACE \
-    marwes/try_gluon:builder \
-    cargo test --release
-
 docker build \
     "${EXTRA_BUILD_ARGS[@]}" \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
     --tag marwes/try_gluon \
     .
+
+if [ -z ${BUILD_ONLY:-} ]; then
+    docker run \
+        --init \
+        -it \
+        --env=RUST_BACKTRACE \
+        marwes/try_gluon:builder \
+        cargo test --release
+fi

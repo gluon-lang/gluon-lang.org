@@ -142,6 +142,11 @@ struct Opts {
         help = "The hostname for the server"
     )]
     host: String,
+    #[structopt(
+        long = "staging",
+        help = "Whether to use letsencrypt's staging environment"
+    )]
+    staging: bool,
 }
 
 fn main() {
