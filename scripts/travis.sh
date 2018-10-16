@@ -9,14 +9,14 @@ else
     EXTRA_BUILD_ARGS=()
 fi
 docker build \
-    "${EXTRA_BUILD_ARGS[@]}" \
+    ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --cache-from marwes/try_gluon:builder \
     --tag marwes/try_gluon:builder \
     --target builder \
     .
 
 docker build \
-    "${EXTRA_BUILD_ARGS[@]}" \
+    ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
     --tag marwes/try_gluon \
