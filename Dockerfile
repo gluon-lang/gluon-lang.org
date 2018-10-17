@@ -1,4 +1,4 @@
-FROM rust:1.29.2 as builder
+FROM rust:1.29.2-slim-stretch as builder
 
 WORKDIR /usr/src/try_gluon
 
