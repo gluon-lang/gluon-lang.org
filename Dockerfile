@@ -33,7 +33,7 @@ RUN npx webpack-cli --mode=production
 
 RUN cargo build --release
 
-FROM rust:1.28.0
+FROM rust:1.29.2-slim-stretch
 
 WORKDIR /root/
 
