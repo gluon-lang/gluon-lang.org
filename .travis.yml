@@ -1,11 +1,13 @@
 language: rust
 sudo: false
+services:
+  - docker
 env: RUST_BACKTRACE=1
 
-cache:
-    directories:
-    - $HOME/.cargo
-    - $HOME/.cache/sccache
+addons:
+  apt:
+    packages:
+      - docker-ce
 
 before_script:
   - docker pull marwes/try_gluon:builder || true
@@ -18,7 +20,7 @@ after_script:
   - docker images
 
 before_deploy:
-  - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
+  - echo "$REGISTRY_PASS" | docker login -u "$REGISTRY_USER" --password-stdin
 
 deploy:
   provider: script
