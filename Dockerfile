@@ -1,4 +1,4 @@
-FROM rust:1.28.0 as builder
+FROM rust:1.29.2 as builder
 
 WORKDIR /usr/src/try_gluon
 
@@ -12,9 +12,7 @@ RUN apt-get update && apt-get install -y curl apt-transport-https && \
 
 RUN cargo install mdbook --vers "0.1.2"
 
-RUN yarn global add webpack-cli
-RUN yarn global add webpack
-RUN yarn global add elm@0.19.0
+RUN yarn global add webpack-cli webpack elm@0.19.0
 
 COPY package.json yarn.lock ./
 RUN yarn install
