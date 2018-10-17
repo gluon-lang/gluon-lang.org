@@ -6,6 +6,10 @@ Dockerfile
 
 node_modules
 target
+elm-stuff
+std
+
+try_gluon.env
 
 .git
 .dockerignore
