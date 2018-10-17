@@ -2,11 +2,9 @@ FROM rust:1.29.2-slim-stretch as builder
 
 WORKDIR /usr/src/try_gluon
 
-RUN apt-get update && apt-get install -y curl gnupg make g++
+RUN apt-get update && apt-get install -y curl gnupg make g++ git pkg-config libssl-dev
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
     apt-get install -y nodejs
-
-RUN npm install --global webpack-cli webpack elm@0.19.0
 
 RUN curl -L https://github.com/rust-lang-nursery/mdBook/releases/download/v0.1.2/mdbook-v0.1.2-x86_64-unknown-linux-gnu.tar.gz | tar -xvz && \
     mv mdbook /usr/local/bin/
@@ -23,7 +21,7 @@ COPY gluon_master/Cargo.toml gluon_master/
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
-RUN cargo build --release --tests
+RUN cargo build --release --tests --bins
 
 RUN cargo doc -p https://github.com/gluon-lang/gluon --all-features && \
     mkdir dist && \
@@ -31,7 +29,7 @@ RUN cargo doc -p https://github.com/gluon-lang/gluon --all-features && \
 
 COPY . .
 
-RUN webpack-cli --mode=production
+RUN npx webpack-cli --mode=production
 
 RUN cargo build --release
 

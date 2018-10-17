@@ -10,7 +10,6 @@ addons:
       - docker-ce
 
 before_script:
-  - docker pull rust:1.29.2 || true
   - docker pull marwes/try_gluon:builder || true
   - docker pull marwes/try_gluon || true
 
