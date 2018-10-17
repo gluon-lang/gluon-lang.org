@@ -2,20 +2,17 @@ FROM rust:1.29.2-slim-stretch as builder
 
 WORKDIR /usr/src/try_gluon
 
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
-RUN apt-get install -y nodejs
+RUN apt-get update && apt-get install -y curl gnupg make g++
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
+    apt-get install -y nodejs
 
-RUN apt-get update && apt-get install -y curl apt-transport-https && \
-    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
-    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
-    apt-get update && apt-get install -y yarn
+RUN npm install --global webpack-cli webpack elm@0.19.0
 
-RUN cargo install mdbook --vers "0.1.2"
+RUN curl -L https://github.com/rust-lang-nursery/mdBook/releases/download/v0.1.2/mdbook-v0.1.2-x86_64-unknown-linux-gnu.tar.gz | tar -xvz && \
+    mv mdbook /usr/local/bin/
 
-RUN yarn global add webpack-cli webpack elm@0.19.0
-
-COPY package.json yarn.lock ./
-RUN yarn install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY ./scripts/setup_cache.sh .
 ARG RUSTC_WRAPPER
