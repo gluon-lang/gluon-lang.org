@@ -10,7 +10,6 @@ before_install:
 
 before_script:
   - docker pull marwes/try_gluon:builder || true
-  - docker pull marwes/try_gluon || true
 
 script:
   - ./scripts/travis.sh
