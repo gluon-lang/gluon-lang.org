@@ -11,9 +11,9 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
-    --cache-from marwes/try_gluon:builder \
     --tag marwes/try_gluon:builder \
     --target builder \
+    --cache-from marwes/try_gluon:builder \
     .
 
 docker build \
