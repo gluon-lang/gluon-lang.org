@@ -1,6 +1,9 @@
 #!/bin/bash
 set -eux
 
+sha1sum package.json
+sha1sum package-lock.json
+
 USE_CACHE=${1:-}
 if [ "$USE_CACHE" == 'cache' ];
 then
