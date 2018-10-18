@@ -10,6 +10,7 @@ before_install:
 
 before_script:
   - '[ -z "${REGISTRY_PASS:-}" ] || echo "$REGISTRY_PASS" | docker login -u "$REGISTRY_USER" --password-stdin'
+  - docker pull marwes/try_gluon:dependencies || true
   - docker pull marwes/try_gluon:builder || true
 
 script:
