@@ -11,16 +11,33 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+    --target dependencies \
+    --tag marwes/try_gluon:dependencies \
+    --cache-from marwes/try_gluon:dependencies \
+    .
+
+if [ -n "${REGISTRY_PASS:-}" ]; then
+    docker push marwes/try_gluon:dependencies
+fi
+
+docker build \
+    ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --target builder \
     --tag marwes/try_gluon:builder \
     --cache-from marwes/try_gluon:builder \
+    --cache-from marwes/try_gluon:dependencies \
     .
+
+if [ -n "${REGISTRY_PASS:-}" ]; then
+    docker push marwes/try_gluon:builder
+fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --tag marwes/try_gluon \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
+    --cache-from marwes/try_gluon:dependencies \
     .
 
 if [ -z ${BUILD_ONLY:-} ]; then

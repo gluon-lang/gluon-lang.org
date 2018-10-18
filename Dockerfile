@@ -1,4 +1,4 @@
-FROM rust:1.29.2-slim-stretch as builder
+FROM rust:1.29.2-slim-stretch as dependencies
 
 WORKDIR /usr/src/try_gluon
 
@@ -22,6 +22,8 @@ COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
 RUN cargo build --release --tests --bins
+
+FROM dependencies as builder
 
 RUN cargo doc -p https://github.com/gluon-lang/gluon --all-features && \
     mkdir dist && \
