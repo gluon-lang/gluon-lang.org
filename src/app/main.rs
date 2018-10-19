@@ -128,10 +128,25 @@ struct Opts {
     #[structopt(
         short = "p",
         long = "port",
-        default_value = "80",
         help = "The port to start the server on"
     )]
-    port: u16,
+    port: Option<u16>,
+    #[structopt(
+        long = "https",
+        help = "Whether to run the server with https"
+    )]
+    https: bool,
+    #[structopt(
+        long = "host",
+        default_value = "\"gluon-lang.org\"",
+        help = "The hostname for the server"
+    )]
+    host: String,
+    #[structopt(
+        long = "staging",
+        help = "Whether to use letsencrypt's staging environment"
+    )]
+    staging: bool,
 }
 
 fn main() {
@@ -150,6 +165,14 @@ fn main_() -> Result<(), failure::Error> {
     let vm = gluon::new_vm();
     gluon::add_extern_module(&vm, "gluon.try", gluon::load);
     gluon::add_extern_module(&vm, "gluon.try.master", load_master);
+    gluon::add_extern_module(&vm, "gluon.http_server", |vm| {
+        ExternModule::new(
+            vm,
+            record!{
+                type Opts => Opts
+            },
+        )
+    });
     gluon::add_extern_module(&vm, "github", |vm| {
         vm.register_type::<Github>("Github", &[])?;
         ExternModule::new(

@@ -1,11 +1,11 @@
 extern crate failure;
-extern crate home;
 extern crate glob;
+extern crate home;
 extern crate regex;
 
 extern crate gluon_master;
 
-use std::{process::Command, env, path::PathBuf};
+use std::{env, fs, io, path::PathBuf, process::Command};
 
 use regex::Regex;
 
@@ -27,14 +27,12 @@ fn gluon_git_path() -> Result<PathBuf, failure::Error> {
         .join(&format!(
             "git/checkouts/gluon-*/{}",
             &git_master_version()[..7]
-        ))
-        .display()
+        )).display()
         .to_string();
     Ok(glob::glob(&std_glob_path)?
         .next()
         .expect("git repo in cargo home")?)
 }
-
 
 fn create_docs(path: &str) -> Result<(), failure::Error> {
     let git_dir = gluon_git_path()?;
@@ -48,6 +46,13 @@ fn create_docs(path: &str) -> Result<(), failure::Error> {
 
     gluon_master::generate_doc("std", path)?;
 
+    fs::remove_dir_all("dist/book").or_else(|err| {
+        if err.kind() == io::ErrorKind::NotFound {
+            Ok(())
+        } else {
+            Err(err)
+        }
+    })?;
     let mut command = Command::new("mdbook");
     command.args(&[
         "build",
@@ -55,7 +60,7 @@ fn create_docs(path: &str) -> Result<(), failure::Error> {
         &env::current_dir()?.join("dist/book").to_string_lossy(),
         &git_dir.join("book").to_string_lossy(),
     ]);
-    println!("Building book: {:?}", command);
+    eprintln!("Building book: {:?}", command);
     let exit_status = command.status()?;
     if !exit_status.success() {
         return Err(failure::err_msg("Error building book docs"));
@@ -63,7 +68,6 @@ fn create_docs(path: &str) -> Result<(), failure::Error> {
 
     Ok(())
 }
-
 
 fn main() {
     let doc_path = "dist/doc/nightly";

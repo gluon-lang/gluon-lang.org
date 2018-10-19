@@ -1,11 +1,19 @@
-setup.sh
-run.sh
-deploy.sh
+scripts/setup.sh
+scripts/run.sh
+scripts/deploy.sh
+scripts/travis.sh
+scripts/update.sh
+scripts/docker_push.sh
 
 Dockerfile
 
 node_modules
 target
+elm-stuff
+std
+
+try_gluon.env
 
 .git
-	.dockerignore
+.dockerignore
+.travis.yml

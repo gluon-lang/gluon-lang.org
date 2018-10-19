@@ -4,30 +4,61 @@ set -eux
 USE_CACHE=${1:-}
 if [ "$USE_CACHE" == 'cache' ];
 then
-    docker build \
-        --network host \
-        --build-arg=RUSTC_WRAPPER=./sccache \
-        --cache-from marwes/try_gluon:builder \
-        --tag marwes/try_gluon:builder \
-        --target builder \
-        .
+    EXTRA_BUILD_ARGS=(--network host --build-arg=RUSTC_WRAPPER=./sccache)
 else
-    docker build \
-        --cache-from marwes/try_gluon:builder \
-        --tag marwes/try_gluon:builder \
-        --target builder \
-        .
+    EXTRA_BUILD_ARGS=()
 fi
 
-docker run \
-    --init \
-    -it \
-    --env=RUST_BACKTRACE \
-    marwes/try_gluon:builder \
-    cargo test --release
+docker build \
+    ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+    --target dependencies \
+    --tag marwes/try_gluon:dependencies \
+    --cache-from marwes/try_gluon:dependencies \
+    .
+
+if [ -n "${REGISTRY_PASS:-}" ]; then
+    docker push marwes/try_gluon:dependencies
+fi
 
 docker build \
+    ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+    --target builder \
+    --tag marwes/try_gluon:builder \
+    --cache-from marwes/try_gluon:builder \
+    --cache-from marwes/try_gluon:dependencies \
+    .
+
+if [ -n "${REGISTRY_PASS:-}" ]; then
+    docker push marwes/try_gluon:builder
+fi
+
+docker build \
+    ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+    --tag marwes/try_gluon \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
-    --tag marwes/try_gluon \
+    --cache-from marwes/try_gluon:dependencies \
     .
+
+if [ -z ${BUILD_ONLY:-} ]; then
+    docker run \
+        --init \
+        -it \
+        --env=RUST_BACKTRACE \
+        marwes/try_gluon:builder \
+        cargo test --release
+
+    docker run \
+        --rm \
+        -p 80:80 \
+        --name try_gluon_running \
+        marwes/try_gluon \
+        ./try_gluon &
+
+    until $(curl --output /dev/null --silent --fail http://localhost); do
+        printf '.'
+        sleep 1
+    done
+
+    docker rm --force try_gluon_running || true
+fi
