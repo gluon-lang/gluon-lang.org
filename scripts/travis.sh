@@ -11,6 +11,7 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+    --pull \
     --target dependencies \
     --tag marwes/try_gluon:dependencies \
     --cache-from marwes/try_gluon:dependencies \
@@ -22,6 +23,7 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+    --pull \
     --target builder \
     --tag marwes/try_gluon:builder \
     --cache-from marwes/try_gluon:builder \
@@ -34,6 +36,7 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+    --pull \
     --tag marwes/try_gluon \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
