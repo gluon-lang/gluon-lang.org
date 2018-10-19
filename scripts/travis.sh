@@ -52,7 +52,8 @@ if [ -z ${BUILD_ONLY:-} ]; then
         --rm \
         -p 80:80 \
         --name try_gluon_running \
-        marwes/try_gluon &
+        marwes/try_gluon \
+        ./try_gluon &
 
     until $(curl --output /dev/null --silent --fail http://localhost); do
         printf '.'

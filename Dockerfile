@@ -56,4 +56,4 @@ ENV RUST_BACKTRACE 1
 EXPOSE 80
 EXPOSE 443
 
-CMD ./try_gluon
+CMD ./try_gluon --https
