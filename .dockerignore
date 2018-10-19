@@ -1,6 +1,8 @@
-setup.sh
-run.sh
-deploy.sh
+scripts/setup.sh
+scripts/run.sh
+scripts/deploy.sh
+scripts/travis.sh
+scripts/update.sh
 
 Dockerfile
 

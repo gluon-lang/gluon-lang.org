@@ -11,7 +11,6 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
-    --pull \
     --target dependencies \
     --tag marwes/try_gluon:dependencies \
     --cache-from marwes/try_gluon:dependencies \
@@ -23,7 +22,6 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
-    --pull \
     --target builder \
     --tag marwes/try_gluon:builder \
     --cache-from marwes/try_gluon:builder \
@@ -36,7 +34,6 @@ fi
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
-    --pull \
     --tag marwes/try_gluon \
     --cache-from marwes/try_gluon \
     --cache-from marwes/try_gluon:builder \
@@ -50,4 +47,14 @@ if [ -z ${BUILD_ONLY:-} ]; then
         --env=RUST_BACKTRACE \
         marwes/try_gluon:builder \
         cargo test --release
+
+    docker run \
+        --rm \
+        -p 80:80 \
+        --name try_gluon_running \
+        marwes/try_gluon &
+
+    curl http://localhost
+
+    docker kill try_gluon_running
 fi
