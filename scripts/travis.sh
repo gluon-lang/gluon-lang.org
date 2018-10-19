@@ -54,7 +54,10 @@ if [ -z ${BUILD_ONLY:-} ]; then
         --name try_gluon_running \
         marwes/try_gluon &
 
-    curl http://localhost
+    until $(curl --output /dev/null --silent --fail http://localhost); do
+        printf '.'
+        sleep 1
+    done
 
-    docker kill try_gluon_running
+    docker rm --force try_gluon_running || true
 fi

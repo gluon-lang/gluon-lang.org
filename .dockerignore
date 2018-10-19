@@ -3,6 +3,7 @@ scripts/run.sh
 scripts/deploy.sh
 scripts/travis.sh
 scripts/update.sh
+scripts/docker_push.sh
 
 Dockerfile
 

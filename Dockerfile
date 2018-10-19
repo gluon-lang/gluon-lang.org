@@ -36,7 +36,7 @@ COPY . .
 RUN npx webpack-cli --mode=production
 
 RUN touch gluon_master/src/lib.rs && \
-    cargo build --release
+    cargo build --release --tests --bins
 
 FROM rust:1.29.2-slim-stretch
 

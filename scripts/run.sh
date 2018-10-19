@@ -1,3 +1,4 @@
+#!/bin/bash
 set -ex
 
 docker pull marwes/try_gluon
