@@ -56,8 +56,13 @@ if [ -z ${BUILD_ONLY:-} ]; then
         ./try_gluon &
 
     until $(curl --output /dev/null --silent --fail http://localhost); do
-        printf '.'
-        sleep 1
+        if jobs %1; then
+            printf '.'
+            sleep 1
+        else
+            echo "ERROR: Server unexpectdly shutdown or could not start"
+            exit 1
+        fi
     done
 
     docker rm --force try_gluon_running || true
