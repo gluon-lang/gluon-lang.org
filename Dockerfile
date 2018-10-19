@@ -25,9 +25,9 @@ RUN cargo build --release --tests --bins
 
 FROM dependencies as builder
 
-RUN cargo doc -p https://github.com/gluon-lang/gluon --all-features && \
-    mkdir dist && \
-    cp -r target/doc dist/rust_doc
+# RUN cargo doc -p https://github.com/gluon-lang/gluon --all-features && \
+#     mkdir dist && \
+#     cp -r target/doc dist/rust_doc
 
 COPY . .
 

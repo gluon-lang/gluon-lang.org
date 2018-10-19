@@ -2,16 +2,11 @@ language: rust
 sudo: false
 env: RUST_BACKTRACE=1
 
-before_install:
-  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  - sudo apt-get update
-  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
-
 before_script:
   - '[ -z "${REGISTRY_PASS:-}" ] || echo "$REGISTRY_PASS" | docker login -u "$REGISTRY_USER" --password-stdin'
   - docker pull marwes/try_gluon:dependencies || true
   - docker pull marwes/try_gluon:builder || true
+  - docker pull marwes/try_gluon || true
 
 script:
   - ./scripts/travis.sh
@@ -22,7 +17,7 @@ after_script:
 deploy:
   provider: script
   script:
-    - docker push marwes/try_gluon:depedencies
+    - docker push marwes/try_gluon:dependencies
     - docker push marwes/try_gluon:builder
     - docker push marwes/try_gluon
   on:
