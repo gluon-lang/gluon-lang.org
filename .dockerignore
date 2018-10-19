@@ -16,3 +16,4 @@ try_gluon.env
 
 .git
 .dockerignore
+.travis.yml
