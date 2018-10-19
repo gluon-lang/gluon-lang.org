@@ -12,4 +12,5 @@ RUST_LOG=try_gluon=info,warn docker run \
     --env RUST_LOG \
     --env-file try_gluon.env \
     --mount source=letsencrypt,target=/etc/letsencrypt \
+    --mount source=letsencrypt_log,target=/var/log/letsencrypt \
     marwes/try_gluon
