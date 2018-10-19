@@ -2,14 +2,6 @@ language: rust
 sudo: false
 env: RUST_BACKTRACE=1
 
-cache:
-  directories:
-    - $HOME/docker
-
-before_install:
-  # Load cached docker images
-  - if [[ -d $HOME/docker ]]; then ls $HOME/docker/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
-
 before_script:
   - '[ -z "${REGISTRY_PASS:-}" ] || echo "$REGISTRY_PASS" | docker login -u "$REGISTRY_USER" --password-stdin'
   - docker pull marwes/try_gluon:dependencies || true
@@ -21,12 +13,6 @@ script:
 
 after_script:
   - docker images
-
-before_cache:
-  # Save tagged docker images
-  - >
-    mkdir -p $HOME/docker && docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}'
-    | xargs -n 2 -t sh -c 'test -e $HOME/docker/$1.tar.gz || docker save $0 | gzip -2 > $HOME/docker/$1.tar.gz'
 
 deploe:
   provider: script
