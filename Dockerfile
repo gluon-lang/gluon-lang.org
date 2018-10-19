@@ -20,7 +20,9 @@ RUN . ./setup_cache.sh
 COPY gluon_master/Cargo.toml gluon_master/
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
-    && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs
+    && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs \
+    && mkdir -p tests && touch tests/run.rs \
+    && echo "fn main() { }" > build.rs
 RUN cargo build --release --tests --bins
 
 FROM dependencies as builder
@@ -33,7 +35,8 @@ COPY . .
 
 RUN npx webpack-cli --mode=production
 
-RUN cargo build --release
+RUN touch gluon_master/src/lib.rs && \
+    cargo build --release
 
 FROM rust:1.29.2-slim-stretch
 
