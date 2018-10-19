@@ -138,7 +138,7 @@ struct Opts {
     https: bool,
     #[structopt(
         long = "host",
-        default_value = "\"gluon-lang.org\"",
+        default_value = "gluon-lang.org",
         help = "The hostname for the server"
     )]
     host: String,
