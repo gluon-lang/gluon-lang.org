@@ -24,8 +24,8 @@ docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --target builder \
     --tag marwes/try_gluon:builder \
-    --cache-from marwes/try_gluon:builder \
     --cache-from marwes/try_gluon:dependencies \
+    --cache-from marwes/try_gluon:builder \
     .
 
 if [ -n "${REGISTRY_PASS:-}" ]; then
@@ -35,9 +35,9 @@ fi
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --tag marwes/try_gluon \
-    --cache-from marwes/try_gluon \
-    --cache-from marwes/try_gluon:builder \
     --cache-from marwes/try_gluon:dependencies \
+    --cache-from marwes/try_gluon:builder \
+    --cache-from marwes/try_gluon \
     .
 
 if [ -z ${BUILD_ONLY:-} ]; then
