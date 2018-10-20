@@ -9,9 +9,10 @@ else
     EXTRA_BUILD_ARGS=()
 fi
 
-if [ "${TRAVIS_BRANCH:-}" == 'master' ] || [ -n "${RELEASE:-}" ] ; then
+if [ "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH:-}}" == 'master' ] || [ -n "${RELEASE:-}" ] ; then
     EXTRA_BUILD_ARGS+=(--build-arg 'RELEASE=--release')
 fi
+echo ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
 
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
@@ -50,7 +51,7 @@ if [ -z ${BUILD_ONLY:-} ]; then
         -it \
         --env=RUST_BACKTRACE \
         marwes/try_gluon:builder \
-        cargo test ${RELEASE}
+        cargo test ${RELEASE:-}
 
     docker run \
         --rm \

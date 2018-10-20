@@ -37,7 +37,8 @@ COPY . .
 RUN npx webpack-cli --mode=production
 
 RUN touch gluon_master/src/lib.rs && \
-    cargo build ${RELEASE} --tests --bins
+    cargo build ${RELEASE} --tests --bins && \
+    cargo install --path . --root target/try_gluon $([ -n "${RELEASE:-}" ] && echo ${RELEASE} || echo --debug)
 
 FROM rust:1.29.2-slim-stretch
 
@@ -45,7 +46,7 @@ WORKDIR /root/
 
 RUN apt-get update && apt-get install -y certbot
 
-COPY --from=builder /usr/src/try_gluon/target/release/try_gluon .
+COPY --from=builder /usr/src/try_gluon/target/try_gluon/bin/try_gluon .
 COPY --from=builder /usr/src/try_gluon/dist ./dist
 COPY --from=builder /usr/src/try_gluon/public/ ./public
 COPY --from=builder /usr/src/try_gluon/src/ ./src
