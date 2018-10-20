@@ -26,10 +26,10 @@ tokio = "0.1"
 hyper = "0.12"
 hyper-tls = "0.3"
 
-gluon = { version = "0.9.3", features = ["serialization", "web", "regex", "rand"] }
-gluon_format = { version = "0.9.3" }
-gluon_vm = { version = "0.9.3" }
-gluon_codegen = { version = "0.9.3" }
+gluon = { version = "0.9.4", features = ["serialization", "web", "regex", "rand"] }
+gluon_format = { version = "0.9.4" }
+gluon_vm = { version = "0.9.4" }
+gluon_codegen = { version = "0.9.4" }
 
 gluon_master = { path = "gluon_master" }
 

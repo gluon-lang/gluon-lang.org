@@ -9,6 +9,11 @@ else
     EXTRA_BUILD_ARGS=()
 fi
 
+if [ "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH:-}}" == 'master' ] || [ -n "${RELEASE:-}" ] ; then
+    EXTRA_BUILD_ARGS+=(--build-arg 'RELEASE=--release')
+fi
+echo ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
+
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --target dependencies \
@@ -24,8 +29,8 @@ docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --target builder \
     --tag marwes/try_gluon:builder \
-    --cache-from marwes/try_gluon:builder \
     --cache-from marwes/try_gluon:dependencies \
+    --cache-from marwes/try_gluon:builder \
     .
 
 if [ -n "${REGISTRY_PASS:-}" ]; then
@@ -35,9 +40,9 @@ fi
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --tag marwes/try_gluon \
-    --cache-from marwes/try_gluon \
-    --cache-from marwes/try_gluon:builder \
     --cache-from marwes/try_gluon:dependencies \
+    --cache-from marwes/try_gluon:builder \
+    --cache-from marwes/try_gluon \
     .
 
 if [ -z ${BUILD_ONLY:-} ]; then
@@ -46,7 +51,7 @@ if [ -z ${BUILD_ONLY:-} ]; then
         -it \
         --env=RUST_BACKTRACE \
         marwes/try_gluon:builder \
-        cargo test --release
+        cargo test ${RELEASE:-}
 
     docker run \
         --rm \
