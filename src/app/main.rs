@@ -69,6 +69,32 @@ pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     )
 }
 
+pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
+    #[derive(Debug, Userdata)]
+    pub struct TryThread(gluon::RootedThread);
+
+    impl Deref for TryThread {
+        type Target = gluon::Thread;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    thread.register_type::<TryThread>("TryThread", &[])?;
+
+    ExternModule::new(
+        thread,
+        record! {
+            make_eval_vm => primitive!(1, "make_eval_vm", |()| {
+                RuntimeResult::from(gluon::make_eval_vm().map(TryThread))
+            }),
+            eval => primitive!(2, "eval", |t: &TryThread, s: &str| gluon::eval(t, s)),
+            format_expr => primitive!(2, |t: &TryThread, s: &str| gluon::format_expr(t, s))
+        },
+    )
+}
+
 #[derive(Debug, Default, Getable, VmType)]
 pub struct Gist<'a> {
     pub code: &'a str,
@@ -108,13 +134,16 @@ fn share(
                     filename: None,
                     content: gist.code.into(),
                 },
-            )).into_iter()
+            ))
+            .into_iter()
             .collect(),
-        }).map_err(|err| err.to_string())
+        })
+        .map_err(|err| err.to_string())
         .map(|response| PostGist {
             id: response.id,
             html_url: response.html_url,
-        }).then(Ok)
+        })
+        .then(Ok)
 }
 
 #[derive(StructOpt, Pushable, VmType)]
@@ -125,16 +154,9 @@ struct Opts {
         help = "The access tokens used to create gists"
     )]
     gist_access_token: Option<String>,
-    #[structopt(
-        short = "p",
-        long = "port",
-        help = "The port to start the server on"
-    )]
+    #[structopt(short = "p", long = "port", help = "The port to start the server on")]
     port: Option<u16>,
-    #[structopt(
-        long = "https",
-        help = "Whether to run the server with https"
-    )]
+    #[structopt(long = "https", help = "Whether to run the server with https")]
     https: bool,
     #[structopt(
         long = "host",
@@ -163,12 +185,12 @@ fn main_() -> Result<(), failure::Error> {
     let mut runtime = tokio::runtime::Runtime::new()?;
 
     let vm = gluon::new_vm();
-    gluon::add_extern_module(&vm, "gluon.try", gluon::load);
+    gluon::add_extern_module(&vm, "gluon.try", load);
     gluon::add_extern_module(&vm, "gluon.try.master", load_master);
     gluon::add_extern_module(&vm, "gluon.http_server", |vm| {
         ExternModule::new(
             vm,
-            record!{
+            record! {
                 type Opts => Opts
             },
         )
@@ -177,7 +199,7 @@ fn main_() -> Result<(), failure::Error> {
         vm.register_type::<Github>("Github", &[])?;
         ExternModule::new(
             vm,
-            record!{
+            record! {
                 new_github => primitive!(1, new_github),
                 share => primitive!(2, async fn share)
             },
@@ -192,7 +214,8 @@ fn main_() -> Result<(), failure::Error> {
                 &vm,
                 "src.app.server",
                 &server_source,
-            ).and_then(|(mut f, _)| f.call_async(opts).from_err())
+            )
+            .and_then(|(mut f, _)| f.call_async(opts).from_err())
     }))?;
 
     Ok(())
