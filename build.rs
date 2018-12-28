@@ -1,11 +1,11 @@
-extern crate env_logger;
-extern crate failure;
-extern crate glob;
-extern crate home;
-extern crate regex;
+use env_logger;
+use failure;
+use glob;
+use home;
 
-extern crate gluon_crates_io;
-extern crate gluon_master;
+
+use gluon_crates_io;
+use gluon_master;
 
 use std::{
     env, fs, io,
@@ -69,7 +69,7 @@ where
 fn generate_doc_for_dir_(
     in_dir: &Path,
     out_dir: &Path,
-    generate_doc: &mut FnMut(&Path, &Path) -> Result<(), failure::Error>,
+    generate_doc: &mut dyn FnMut(&Path, &Path) -> Result<(), failure::Error>,
 ) -> Result<(), failure::Error> {
     {
         fs::remove_dir_all("target/std")?;

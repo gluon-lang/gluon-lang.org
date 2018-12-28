@@ -1,9 +1,9 @@
-extern crate failure;
-extern crate futures;
+use failure;
 
-extern crate gluon;
-extern crate gluon_doc;
-extern crate gluon_format;
+
+use gluon;
+use gluon_doc;
+use gluon_format;
 
 use std::{path::Path, result::Result as StdResult, time::Instant};
 

@@ -1,23 +1,21 @@
-extern crate env_logger;
-extern crate failure;
-extern crate futures;
-extern crate gluon;
-extern crate hubcaps;
-extern crate hyper;
-extern crate hyper_tls;
+use env_logger;
+use failure;
+
+use gluon;
+use hubcaps;
+
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+
 #[allow(unused_imports)]
 #[macro_use]
 extern crate structopt;
-extern crate tokio;
+use tokio;
 
-extern crate gluon_crates_io;
-extern crate gluon_master;
+use gluon_crates_io;
+use gluon_master;
 
 #[macro_use]
 extern crate gluon_vm;
@@ -118,7 +116,7 @@ fn new_github(gist_access_token: &str) -> Github {
 
 fn share(
     github: &Github,
-    gist: Gist,
+    gist: Gist<'_>,
 ) -> impl Future<Item = Result<PostGist, String>, Error = vm::Error> {
     info!("Share: `{}`", gist.code);
 

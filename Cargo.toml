@@ -5,6 +5,8 @@ authors = ["Markus <marwes91@gmail.com>"]
 
 license = "MIT"
 
+edition = "2018"
+
 [workspace]
 members = ["gluon_master"]
 
