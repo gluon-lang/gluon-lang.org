@@ -2,10 +2,10 @@ extern crate failure;
 extern crate futures;
 
 extern crate gluon;
+extern crate gluon_doc;
 extern crate gluon_format;
 
-use std::result::Result as StdResult;
-use std::time::Instant;
+use std::{path::Path, result::Result as StdResult, time::Instant};
 
 use futures::Async;
 
@@ -124,4 +124,12 @@ pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
 pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
     gluon_format::format_expr(&mut Compiler::new(), thread, "try", input)
         .map_err(|err| err.to_string())
+}
+
+pub fn generate_doc<P, Q>(input: &P, out: &Q) -> StdResult<(), failure::Error>
+where
+    P: ?Sized + AsRef<Path>,
+    Q: ?Sized + AsRef<Path>,
+{
+    gluon_doc::generate_for_path(&gluon::new_vm(), input, out)
 }

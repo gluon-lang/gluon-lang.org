@@ -27,19 +27,21 @@ hyper = "0.12"
 hyper-tls = "0.3"
 
 gluon = { version = "0.9.4", features = ["serialization", "web", "regex", "rand"] }
-gluon_format = { version = "0.9.4" }
 gluon_vm = { version = "0.9.4" }
 gluon_codegen = { version = "0.9.4" }
 
 gluon_master = { path = "gluon_master" }
+gluon_crates_io = { path = "gluon_crates_io" }
 
 [build-dependencies]
+env_logger = "0.6"
 failure = "0.1"
 glob = "0.2"
 home = "0.3"
 regex = "1"
 
 gluon_master = { path = "gluon_master" }
+gluon_crates_io = { path = "gluon_crates_io" }
 
 [dev-dependencies]
 tokio-retry = "0.2"

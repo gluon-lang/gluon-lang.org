@@ -1,6 +1,7 @@
 extern crate env_logger;
 extern crate failure;
 extern crate futures;
+extern crate gluon;
 extern crate hubcaps;
 extern crate hyper;
 extern crate hyper_tls;
@@ -15,6 +16,7 @@ extern crate serde_json;
 extern crate structopt;
 extern crate tokio;
 
+extern crate gluon_crates_io;
 extern crate gluon_master;
 
 #[macro_use]
@@ -40,8 +42,6 @@ use gluon::{
 };
 
 use structopt::StructOpt;
-
-mod gluon;
 
 pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     #[derive(Debug, Userdata)]
@@ -71,10 +71,10 @@ pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
 
 pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
     #[derive(Debug, Userdata)]
-    pub struct TryThread(gluon::RootedThread);
+    pub struct TryThread(gluon_crates_io::RootedThread);
 
     impl Deref for TryThread {
-        type Target = gluon::Thread;
+        type Target = gluon_crates_io::Thread;
 
         fn deref(&self) -> &Self::Target {
             &self.0
@@ -87,10 +87,10 @@ pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
         thread,
         record! {
             make_eval_vm => primitive!(1, "make_eval_vm", |()| {
-                RuntimeResult::from(gluon::make_eval_vm().map(TryThread))
+                RuntimeResult::from(gluon_crates_io::make_eval_vm().map(TryThread))
             }),
-            eval => primitive!(2, "eval", |t: &TryThread, s: &str| gluon::eval(t, s)),
-            format_expr => primitive!(2, |t: &TryThread, s: &str| gluon::format_expr(t, s))
+            eval => primitive!(2, "eval", |t: &TryThread, s: &str| gluon_crates_io::eval(t, s)),
+            format_expr => primitive!(2, |t: &TryThread, s: &str| gluon_crates_io::format_expr(t, s))
         },
     )
 }
@@ -185,9 +185,9 @@ fn main_() -> Result<(), failure::Error> {
     let mut runtime = tokio::runtime::Runtime::new()?;
 
     let vm = gluon::new_vm();
-    gluon::add_extern_module(&vm, "gluon.try", load);
-    gluon::add_extern_module(&vm, "gluon.try.master", load_master);
-    gluon::add_extern_module(&vm, "gluon.http_server", |vm| {
+    gluon::import::add_extern_module(&vm, "gluon.try", load);
+    gluon::import::add_extern_module(&vm, "gluon.try.master", load_master);
+    gluon::import::add_extern_module(&vm, "gluon.http_server", |vm| {
         ExternModule::new(
             vm,
             record! {
@@ -195,7 +195,7 @@ fn main_() -> Result<(), failure::Error> {
             },
         )
     });
-    gluon::add_extern_module(&vm, "github", |vm| {
+    gluon::import::add_extern_module(&vm, "github", |vm| {
         vm.register_type::<Github>("Github", &[])?;
         ExternModule::new(
             vm,

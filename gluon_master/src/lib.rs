@@ -5,9 +5,7 @@ extern crate gluon;
 extern crate gluon_doc;
 extern crate gluon_format;
 
-use std::path::Path;
-use std::result::Result as StdResult;
-use std::time::Instant;
+use std::{path::Path, result::Result as StdResult, time::Instant};
 
 use futures::Async;
 
