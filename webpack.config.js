@@ -73,16 +73,17 @@ module.exports = function (env, args) {
       stats: { colors: true },
     },
 
-    plugins: [
-      new ClosureCompilerPlugin({
-        jsCompiler: true,
-        compiler: {
-          compilation_level: 'SIMPLE',
-          create_source_map: false,
-          language_out: 'ECMASCRIPT5',
-        },
-      }),
-    ],
+    plugins: args.mode == 'production' ?
+          [
+          new ClosureCompilerPlugin({
+            jsCompiler: true,
+            compiler: {
+              compilation_level: 'SIMPLE',
+              create_source_map: false,
+              language_out: 'ECMASCRIPT5',
+            },
+          }),
+        ] : [],
 
     watchOptions: {
         ignored: /node_modules/
