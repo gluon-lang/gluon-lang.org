@@ -30,6 +30,7 @@ RUN cargo build ${RELEASE} --tests --bins
 
 FROM dependencies as builder
 
+COPY ./scripts/build_docs.sh ./scripts/
 RUN ./scripts/build_docs.sh 
 
 COPY . .
