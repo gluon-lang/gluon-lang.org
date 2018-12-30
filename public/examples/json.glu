@@ -1,11 +1,12 @@
-let de @ { Deserialize, deserializer, field, ? } = import! std.json.de
+let de @ { Deserialize, ? } = import! std.json.de
 let ser @ { Serialize, ? } = import! std.json.ser
 let { Result, ? } = import! std.result
 
 #[derive(Serialize, Deserialize)]
 type Vec = { x : Float, y : Float, name : Option String }
 
-match de.deserialize deserializer r#"{ "x": 123, "y": 456.78, "name": null }"# with
+let input = r#"{ "x": 123, "y": 456.78, "name": null }"#
+match de.deserialize input with
 | Err err -> err
 | Ok v ->
     let v : Vec = v
