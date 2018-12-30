@@ -1,29 +1,26 @@
-extern crate failure;
-extern crate futures;
+use failure;
 
-extern crate gluon;
-extern crate gluon_format;
 
-use std::ops::Deref;
-use std::result::Result as StdResult;
-use std::time::Instant;
+use gluon;
+use gluon_doc;
+use gluon_format;
 
-use self::futures::Async;
+use std::{path::Path, result::Result as StdResult, time::Instant};
 
-pub use self::{
-    gluon::base::{
-        kind::{ArcKind, KindEnv},
-        symbol::{Symbol, SymbolRef},
-        types::{Alias, ArcType, TypeEnv},
-    },
-    gluon::import::{add_extern_module, DefaultImporter, Import},
-    gluon::vm::{
+use futures::Async;
+
+pub use self::gluon::{
+    base::kind::{ArcKind, KindEnv},
+    base::symbol::{Symbol, SymbolRef},
+    base::types::{Alias, ArcType, TypeEnv},
+    import::{add_extern_module, DefaultImporter, Import},
+    vm::{
         self,
         api::{Hole, OpaqueValue},
         internal::ValuePrinter,
         thread::ThreadInternal,
-        ExternModule,
     },
+    Result,
 };
 
 pub use self::gluon::*;
@@ -45,10 +42,7 @@ impl TypeEnv for EmptyEnv {
     }
 }
 
-#[derive(Debug, Userdata)]
-struct TryThread(RootedThread);
-
-fn make_eval_vm(_: ()) -> TryThread {
+pub fn make_eval_vm() -> Result<RootedThread> {
     let vm = RootedThread::new();
 
     // Ensure the import macro cannot be abused to to open files
@@ -63,8 +57,7 @@ fn make_eval_vm(_: ()) -> TryThread {
     // other modules
     Compiler::new()
         .implicit_prelude(false)
-        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)
-        .unwrap();
+        .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)?;
 
     add_extern_module(&vm, "std.prim", vm::primitives::load);
     add_extern_module(&vm, "std.byte.prim", vm::primitives::load_byte);
@@ -79,23 +72,15 @@ fn make_eval_vm(_: ()) -> TryThread {
 
     add_extern_module(&vm, "std.json.prim", vm::api::json::load);
 
-    // add_extern_module(&vm, "std.channel", ::vm::channel::load_channel);
-    // add_extern_module(&vm, "std.thread.prim", ::vm::channel::load_thread);
-    // add_extern_module(&vm, "std.debug", ::vm::debug::load);
+    // add_extern_module(&vm, "std.channel",vm::channel::load_channel);
+    // add_extern_module(&vm, "std.thread.prim",vm::channel::load_thread);
+    // add_extern_module(&vm, "std.debug",vm::debug::load);
     add_extern_module(&vm, "std.io.prim", io::load);
 
-    TryThread(vm)
+    Ok(vm)
 }
 
-impl Deref for TryThread {
-    type Target = Thread;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-fn eval(global_vm: &TryThread, body: &str) -> StdResult<String, String> {
+pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
     let vm = match global_vm.new_thread() {
         Ok(vm) => vm,
         Err(err) => return Ok(format!("{}", err)),
@@ -136,20 +121,15 @@ fn eval(global_vm: &TryThread, body: &str) -> StdResult<String, String> {
     ))
 }
 
-fn format_expr(thread: &TryThread, input: &str) -> StdResult<String, String> {
+pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
     gluon_format::format_expr(&mut Compiler::new(), thread, "try", input)
         .map_err(|err| err.to_string())
 }
 
-pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
-    thread.register_type::<TryThread>("TryThread", &[])?;
-
-    ExternModule::new(
-        thread,
-        record! {
-            make_eval_vm => primitive!(1, make_eval_vm),
-            eval => primitive!(2, eval),
-            format_expr => primitive!(2, format_expr)
-        },
-    )
+pub fn generate_doc<P, Q>(input: &P, out: &Q) -> StdResult<(), failure::Error>
+where
+    P: ?Sized + AsRef<Path>,
+    Q: ?Sized + AsRef<Path>,
+{
+    gluon_doc::generate_for_path(&gluon::new_vm(), input, out)
 }

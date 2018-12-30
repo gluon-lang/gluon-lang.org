@@ -1,17 +1,15 @@
-extern crate failure;
-extern crate futures;
+use failure;
 
-extern crate gluon;
-extern crate gluon_doc;
-extern crate gluon_format;
 
-use std::path::Path;
-use std::result::Result as StdResult;
-use std::time::Instant;
+use gluon;
+use gluon_doc;
+use gluon_format;
+
+use std::{path::Path, result::Result as StdResult, time::Instant};
 
 use futures::Async;
 
-use gluon::{
+pub use gluon::{
     base::kind::{ArcKind, KindEnv},
     base::symbol::{Symbol, SymbolRef},
     base::types::{Alias, ArcType, TypeEnv},
@@ -61,23 +59,23 @@ pub fn make_eval_vm() -> Result<RootedThread> {
         .implicit_prelude(false)
         .run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "", r#" import! "std/types.glu" "#)?;
 
-    add_extern_module(&vm, "std.prim", ::vm::primitives::load);
-    add_extern_module(&vm, "std.byte.prim", ::vm::primitives::load_byte);
-    add_extern_module(&vm, "std.int.prim", ::vm::primitives::load_int);
-    add_extern_module(&vm, "std.float.prim", ::vm::primitives::load_float);
-    add_extern_module(&vm, "std.string.prim", ::vm::primitives::load_string);
-    add_extern_module(&vm, "std.char.prim", ::vm::primitives::load_char);
-    add_extern_module(&vm, "std.array.prim", ::vm::primitives::load_array);
+    add_extern_module(&vm, "std.prim", vm::primitives::load);
+    add_extern_module(&vm, "std.byte.prim", vm::primitives::load_byte);
+    add_extern_module(&vm, "std.int.prim", vm::primitives::load_int);
+    add_extern_module(&vm, "std.float.prim", vm::primitives::load_float);
+    add_extern_module(&vm, "std.string.prim", vm::primitives::load_string);
+    add_extern_module(&vm, "std.char.prim", vm::primitives::load_char);
+    add_extern_module(&vm, "std.array.prim", vm::primitives::load_array);
 
-    add_extern_module(&vm, "std.lazy", ::vm::lazy::load);
-    add_extern_module(&vm, "std.reference", ::vm::reference::load);
+    add_extern_module(&vm, "std.lazy", vm::lazy::load);
+    add_extern_module(&vm, "std.reference", vm::reference::load);
 
-    add_extern_module(&vm, "std.json.prim", ::vm::api::json::load);
+    add_extern_module(&vm, "std.json.prim", vm::api::json::load);
 
-    // add_extern_module(&vm, "std.channel", ::vm::channel::load_channel);
-    // add_extern_module(&vm, "std.thread.prim", ::vm::channel::load_thread);
-    // add_extern_module(&vm, "std.debug", ::vm::debug::load);
-    add_extern_module(&vm, "std.io.prim", ::io::load);
+    // add_extern_module(&vm, "std.channel",vm::channel::load_channel);
+    // add_extern_module(&vm, "std.thread.prim",vm::channel::load_thread);
+    // add_extern_module(&vm, "std.debug",vm::debug::load);
+    add_extern_module(&vm, "std.io.prim", io::load);
 
     Ok(vm)
 }
@@ -118,13 +116,19 @@ pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
 
     Ok(format!(
         "{} : {}",
-        ValuePrinter::new(&EmptyEnv, &typ, value.get_variant()).max_level(6),
+        ValuePrinter::new(&EmptyEnv, &typ, value.get_variant(), &Default::default()).max_level(6),
         typ
     ))
 }
 
 pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
-    gluon_format::format_expr(&mut Compiler::new(), thread, "try", input)
+    Compiler::new()
+        .format_expr(
+            &mut gluon_format::Formatter::default(),
+            thread,
+            "try",
+            input,
+        )
         .map_err(|err| err.to_string())
 }
 

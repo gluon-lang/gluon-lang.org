@@ -1,4 +1,4 @@
-FROM rust:1.29.2-slim-stretch as dependencies
+FROM rust:1.31.1-slim-stretch as dependencies
 
 WORKDIR /usr/src/try_gluon
 
@@ -18,8 +18,10 @@ ENV SCCACHE_REDIS=redis://localhost
 RUN . ./setup_cache.sh 
 # Cache the built dependencies
 COPY gluon_master/Cargo.toml gluon_master/
+COPY gluon_crates_io/Cargo.toml gluon_crates_io/
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
+    && mkdir -p gluon_crates_io/src && touch gluon_crates_io/src/lib.rs \
     && mkdir -p src/app && echo "fn main() { }" > src/app/main.rs \
     && mkdir -p tests && touch tests/run.rs \
     && echo "fn main() { }" > build.rs
@@ -28,19 +30,19 @@ RUN cargo build ${RELEASE} --tests --bins
 
 FROM dependencies as builder
 
-RUN cargo doc -p https://github.com/gluon-lang/gluon --all-features && \
-    mkdir dist && \
-    cp -r target/doc dist/rust_doc
+COPY ./scripts/build_docs.sh ./scripts/
+RUN ./scripts/build_docs.sh 
 
 COPY . .
 
 RUN npx webpack-cli --mode=production
 
 RUN touch gluon_master/src/lib.rs && \
+    touch gluon_crates_io/src/lib.rs && \
     cargo build ${RELEASE} --tests --bins && \
     cargo install --path . --root target/try_gluon $([ -n "${RELEASE:-}" ] && echo ${RELEASE} || echo --debug)
 
-FROM rust:1.29.2-slim-stretch
+FROM rust:1.31.1-slim-stretch
 
 WORKDIR /root/
 

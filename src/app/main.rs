@@ -1,21 +1,21 @@
-extern crate env_logger;
-extern crate failure;
-extern crate futures;
-extern crate hubcaps;
-extern crate hyper;
-extern crate hyper_tls;
+use env_logger;
+use failure;
+
+use gluon;
+use hubcaps;
+
 #[macro_use]
 extern crate log;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
-extern crate serde_json;
+
 #[allow(unused_imports)]
 #[macro_use]
 extern crate structopt;
-extern crate tokio;
+use tokio;
 
-extern crate gluon_master;
+use gluon_crates_io;
+use gluon_master;
 
 #[macro_use]
 extern crate gluon_vm;
@@ -40,8 +40,6 @@ use gluon::{
 };
 
 use structopt::StructOpt;
-
-mod gluon;
 
 pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     #[derive(Debug, Userdata)]
@@ -69,6 +67,32 @@ pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     )
 }
 
+pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
+    #[derive(Debug, Userdata)]
+    pub struct TryThread(gluon_crates_io::RootedThread);
+
+    impl Deref for TryThread {
+        type Target = gluon_crates_io::Thread;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    thread.register_type::<TryThread>("TryThread", &[])?;
+
+    ExternModule::new(
+        thread,
+        record! {
+            make_eval_vm => primitive!(1, "make_eval_vm", |()| {
+                RuntimeResult::from(gluon_crates_io::make_eval_vm().map(TryThread))
+            }),
+            eval => primitive!(2, "eval", |t: &TryThread, s: &str| gluon_crates_io::eval(t, s)),
+            format_expr => primitive!(2, |t: &TryThread, s: &str| gluon_crates_io::format_expr(t, s))
+        },
+    )
+}
+
 #[derive(Debug, Default, Getable, VmType)]
 pub struct Gist<'a> {
     pub code: &'a str,
@@ -92,7 +116,7 @@ fn new_github(gist_access_token: &str) -> Github {
 
 fn share(
     github: &Github,
-    gist: Gist,
+    gist: Gist<'_>,
 ) -> impl Future<Item = Result<PostGist, String>, Error = vm::Error> {
     info!("Share: `{}`", gist.code);
 
@@ -108,13 +132,16 @@ fn share(
                     filename: None,
                     content: gist.code.into(),
                 },
-            )).into_iter()
+            ))
+            .into_iter()
             .collect(),
-        }).map_err(|err| err.to_string())
+        })
+        .map_err(|err| err.to_string())
         .map(|response| PostGist {
             id: response.id,
             html_url: response.html_url,
-        }).then(Ok)
+        })
+        .then(Ok)
 }
 
 #[derive(StructOpt, Pushable, VmType)]
@@ -125,16 +152,9 @@ struct Opts {
         help = "The access tokens used to create gists"
     )]
     gist_access_token: Option<String>,
-    #[structopt(
-        short = "p",
-        long = "port",
-        help = "The port to start the server on"
-    )]
+    #[structopt(short = "p", long = "port", help = "The port to start the server on")]
     port: Option<u16>,
-    #[structopt(
-        long = "https",
-        help = "Whether to run the server with https"
-    )]
+    #[structopt(long = "https", help = "Whether to run the server with https")]
     https: bool,
     #[structopt(
         long = "host",
@@ -163,21 +183,21 @@ fn main_() -> Result<(), failure::Error> {
     let mut runtime = tokio::runtime::Runtime::new()?;
 
     let vm = gluon::new_vm();
-    gluon::add_extern_module(&vm, "gluon.try", gluon::load);
-    gluon::add_extern_module(&vm, "gluon.try.master", load_master);
-    gluon::add_extern_module(&vm, "gluon.http_server", |vm| {
+    gluon::import::add_extern_module(&vm, "gluon.try", load);
+    gluon::import::add_extern_module(&vm, "gluon.try.master", load_master);
+    gluon::import::add_extern_module(&vm, "gluon.http_server", |vm| {
         ExternModule::new(
             vm,
-            record!{
+            record! {
                 type Opts => Opts
             },
         )
     });
-    gluon::add_extern_module(&vm, "github", |vm| {
+    gluon::import::add_extern_module(&vm, "github", |vm| {
         vm.register_type::<Github>("Github", &[])?;
         ExternModule::new(
             vm,
-            record!{
+            record! {
                 new_github => primitive!(1, new_github),
                 share => primitive!(2, async fn share)
             },
@@ -192,7 +212,8 @@ fn main_() -> Result<(), failure::Error> {
                 &vm,
                 "src.app.server",
                 &server_source,
-            ).and_then(|(mut f, _)| f.call_async(opts).from_err())
+            )
+            .and_then(|(mut f, _)| f.call_async(opts).from_err())
     }))?;
 
     Ok(())

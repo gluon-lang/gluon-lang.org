@@ -1,0 +1,14 @@
+[package]
+name = "gluon_crates_io"
+version = "0.1.0"
+authors = ["Markus Westerlind <marwes91@gmail.com>"]
+
+edition = "2018"
+
+[dependencies]
+gluon = { version = "0.9.4", features = ["serialization", "web", "regex", "rand"] }
+gluon_format = { version = "0.9.4" }
+gluon_doc = { version = "0.9.4" }
+
+futures = "0.1"
+failure = "0.1"

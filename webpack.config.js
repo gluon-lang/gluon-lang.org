@@ -23,6 +23,7 @@ module.exports = function (env, args) {
       rules: [
         {
           test: /\.(css|scss)$/,
+          exclude: [/elm-stuff/, /node_modules/],
           use: [
             'style-loader',
             'css-loader',
@@ -31,7 +32,7 @@ module.exports = function (env, args) {
         },
         {
           test: /\.html$/,
-          exclude: /node_modules/,
+          exclude: [/elm-stuff/, /node_modules/],
           use: {
             loader: 'file-loader',
             options: {
@@ -54,10 +55,12 @@ module.exports = function (env, args) {
         },
         {
           test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+          exclude: [/elm-stuff/, /node_modules/],
           use: 'url-loader?limit=10000&mimetype=application/font-woff',
         },
         {
           test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+          exclude: [/elm-stuff/, /node_modules/],
           use: 'file-loader',
         },
       ],
@@ -70,15 +73,20 @@ module.exports = function (env, args) {
       stats: { colors: true },
     },
 
-    plugins: [
-      new ClosureCompilerPlugin({
-        jsCompiler: true,
-        compiler: {
-          compilation_level: 'SIMPLE',
-          create_source_map: false,
-          language_out: 'ECMASCRIPT5',
-        },
-      }),
-    ],
+    plugins: args.mode == 'production' ?
+          [
+          new ClosureCompilerPlugin({
+            jsCompiler: true,
+            compiler: {
+              compilation_level: 'SIMPLE',
+              create_source_map: false,
+              language_out: 'ECMASCRIPT5',
+            },
+          }),
+        ] : [],
+
+    watchOptions: {
+        ignored: /node_modules/
+    }
   }
 };
