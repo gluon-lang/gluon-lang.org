@@ -38,10 +38,11 @@ COPY . .
 RUN npx webpack-cli --mode=production
 
 RUN touch gluon_master/src/lib.rs && \
+    touch gluon_crates_io/src/lib.rs && \
     cargo build ${RELEASE} --tests --bins && \
     cargo install --path . --root target/try_gluon $([ -n "${RELEASE:-}" ] && echo ${RELEASE} || echo --debug)
 
-FROM rust:1.29.2-slim-stretch
+FROM rust:1.31.1-slim-stretch
 
 WORKDIR /root/
 

@@ -3,14 +3,13 @@ use failure;
 use glob;
 use home;
 
-
 use gluon_crates_io;
 use gluon_master;
 
 use std::{
     env, fs, io,
     path::{Path, PathBuf},
-    process::Command,
+    process::{self, Command},
 };
 
 use regex::Regex;
@@ -72,7 +71,9 @@ fn generate_doc_for_dir_(
     generate_doc: &mut dyn FnMut(&Path, &Path) -> Result<(), failure::Error>,
 ) -> Result<(), failure::Error> {
     {
-        fs::remove_dir_all("target/std")?;
+        if Path::new("target/std").exists() {
+            fs::remove_dir_all("target/std")?;
+        }
 
         let exit_status = Command::new("cp")
             .args(&["-r", &in_dir.join("std").to_string_lossy(), "target/"])
@@ -128,7 +129,10 @@ fn create_docs() -> Result<(), failure::Error> {
 fn main() {
     env_logger::init();
 
-    create_docs().unwrap_or_else(|err| panic!("{}", err));
+    if let Err(err) = create_docs() {
+        eprintln!("{}\n{}", err.backtrace(), err);
+        process::exit(1);
+    }
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=Cargo.lock");
 }
