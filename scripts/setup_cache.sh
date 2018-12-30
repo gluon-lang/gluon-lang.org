@@ -10,4 +10,5 @@ else
     curl -L "https://github.com/mozilla/sccache/releases/download/0.2.7/$SCCACHE_VERSION.tar.gz" | tar -xvz
     mv $SCCACHE_VERSION/sccache .
     chmod +x ./sccache
+    mv ./sccache /usr/local/bin/ 
 fi
