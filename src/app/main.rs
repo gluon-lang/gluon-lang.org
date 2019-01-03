@@ -30,8 +30,6 @@ use futures::{future, prelude::*};
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
 
-use tokio_signal::unix::{Signal, SIGINT, SIGTERM};
-
 use gluon::{
     vm::{
         self,
@@ -177,6 +175,28 @@ fn main() {
     }
 }
 
+#[cfg(unix)]
+fn exit_server() -> impl Future<Item = (), Error = failure::Error> {
+    use tokio_signal::unix::{Signal, SIGINT, SIGTERM};
+    Signal::new(SIGINT)
+        .flatten_stream()
+        .select(Signal::new(SIGTERM).flatten_stream())
+        .into_future()
+        .map(|_| {
+            eprintln!("Signal received. Shutting down");
+        })
+        .map_err(|(err, _)| failure::format_err!("{}", err))
+}
+
+#[cfg(not(unix))]
+fn exit_server() -> impl Future<Item = (), Error = failure::Error> {
+    tokio_signal::ctrl_c()
+        .flatten_stream()
+        .into_future()
+        .map(|_| ())
+        .map_err(|(err, _)| failure::format_err!("{}", err))
+}
+
 fn main_() -> Result<(), failure::Error> {
     env_logger::init();
 
@@ -208,15 +228,6 @@ fn main_() -> Result<(), failure::Error> {
 
     let server_source = fs::read_to_string("src/app/server.glu")?;
 
-    let signal = Signal::new(SIGINT)
-        .flatten_stream()
-        .select(Signal::new(SIGTERM).flatten_stream())
-        .into_future()
-        .map(|_| {
-            eprintln!("Signal received. Shutting down");
-        })
-        .map_err(|(err, _)| failure::format_err!("{}", err));
-
     runtime.block_on(
         future::lazy(move || {
             gluon::Compiler::new()
@@ -229,7 +240,7 @@ fn main_() -> Result<(), failure::Error> {
                 .map_err(|err| failure::Error::from(err))
                 .map(|_| ())
         })
-        .select(signal)
+        .select(exit_server())
         .map_err(|(err, _)| err),
     )?;
 
