@@ -8,16 +8,42 @@
     <main class="container">
         <h1>Gluon</h1>
 
-        <p>
-            Gluon is a static, type inferred and embeddabble language written in Rust.
-        </p>
+        <div class="row">
+            <div class="col-6">
 
-        <p>
-            <a href="try/">Try gluon from your browser!</a>
-        </p>
-        <p>
-            <a href="https://github.com/gluon-lang/gluon">Gluon on Github</a>
-        </p>
+                <p>
+                    Gluon is a static, type inferred and embeddabble language written in Rust.
+                </p>
+
+                <p>
+                    <a href="try/">Try gluon from your browser!</a>
+                </p>
+                <p>
+                    <a href="https://github.com/gluon-lang/gluon">Gluon on Github</a>
+                </p>
+            </div>
+
+            <div class="col-6">
+                <pre>
+let de @ { Deserialize, ? } = import! std.json.de
+let ser @ { Serialize, ? } = import! std.json.ser
+let { Result, ? } = import! std.result
+
+#[derive(Serialize, Deserialize)]
+type Vec = { x : Float, y : Float, name : Option String }
+
+let input = r#"{ "x": 123, "y": 456.78, "name": null }"#
+match de.deserialize input with
+| Err err -> err
+| Ok v ->
+    let v : Vec = v
+    let updated = { x = v.x, y = v.y, name = Some "Vector" }
+    match ser.to_string_pretty updated with
+    | Err err -> err
+    | Ok s -> s
+                </pre>
+            </div>
+        </div>
 
         <h2 class="text-center">Documentation</h2>
         <div class="row">

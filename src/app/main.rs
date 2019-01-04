@@ -25,7 +25,7 @@ extern crate gluon_codegen;
 use std::fs;
 use std::ops::Deref;
 
-use futures::{future, Future};
+use futures::{future, prelude::*};
 
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
@@ -175,6 +175,28 @@ fn main() {
     }
 }
 
+#[cfg(unix)]
+fn exit_server() -> impl Future<Item = (), Error = failure::Error> {
+    use tokio_signal::unix::{Signal, SIGINT, SIGTERM};
+    Signal::new(SIGINT)
+        .flatten_stream()
+        .select(Signal::new(SIGTERM).flatten_stream())
+        .into_future()
+        .map(|_| {
+            eprintln!("Signal received. Shutting down");
+        })
+        .map_err(|(err, _)| failure::format_err!("{}", err))
+}
+
+#[cfg(not(unix))]
+fn exit_server() -> impl Future<Item = (), Error = failure::Error> {
+    tokio_signal::ctrl_c()
+        .flatten_stream()
+        .into_future()
+        .map(|_| ())
+        .map_err(|(err, _)| failure::format_err!("{}", err))
+}
+
 fn main_() -> Result<(), failure::Error> {
     env_logger::init();
 
@@ -206,15 +228,21 @@ fn main_() -> Result<(), failure::Error> {
 
     let server_source = fs::read_to_string("src/app/server.glu")?;
 
-    runtime.block_on(future::lazy(move || {
-        gluon::Compiler::new()
-            .run_expr_async::<OwnedFunction<fn(Opts) -> IO<()>>>(
-                &vm,
-                "src.app.server",
-                &server_source,
-            )
-            .and_then(|(mut f, _)| f.call_async(opts).from_err())
-    }))?;
+    runtime.block_on(
+        future::lazy(move || {
+            gluon::Compiler::new()
+                .run_expr_async::<OwnedFunction<fn(Opts) -> IO<()>>>(
+                    &vm,
+                    "src.app.server",
+                    &server_source,
+                )
+                .and_then(|(mut f, _)| f.call_async(opts).from_err())
+                .map_err(|err| failure::Error::from(err))
+                .map(|_| ())
+        })
+        .select(exit_server())
+        .map_err(|(err, _)| err),
+    )?;
 
     Ok(())
 }

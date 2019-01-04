@@ -31,6 +31,14 @@ let hello_world : Handler Response =
     http.write_response (string.as_bytes "Hello World")
         *> (wrap { status = http.status.ok, .. http.response })
 
+let content_type_for_file file =
+    do ext = path_mod.extension file
+    match ext with
+    | "html" -> Some "text/html"
+    | "js" -> Some "text/javascript"
+    | "css" -> Some "text/css"
+    | _ -> None
+
 let static base : String -> Handler Response =
     let detect_path_traversal uri : String -> Bool =
         any (\c ->
@@ -44,27 +52,32 @@ let static base : String -> Handler Response =
     if detect_path_traversal uri then
             wrap { status = http.status.bad_request, .. http.response }
     else
-        let file_path = path_mod.join base uri
+        let request_path = path_mod.join base uri
 
         let open_file =
-            do metadata = path_mod.metadata file_path
+            do metadata = path_mod.metadata request_path
             let file_path =
                 if fs.metadata.is_file metadata
-                then file_path
-                else path_mod.join file_path "index.html"
+                then request_path
+                else path_mod.join request_path "index.html"
 
-            io.read_file_to_array file_path
+            do contents = io.read_file_to_array file_path
+            wrap (contents, file_path)
 
         do result = http.io_handler (io.catch (map Ok open_file) (wrap << Err))
         match result with
-        | Ok contents ->
+        | Ok (contents, file_path) ->
+            let headers =
+                match content_type_for_file file_path with
+                | Some content_type -> [("Content-Type", string.as_bytes content_type)]
+                | None -> []
             do _ = http.write_response contents
-            wrap { status = http.status.ok, .. http.response }
+            wrap { status = http.status.ok, headers, .. http.response }
         | Err err ->
             if string.contains err "The system cannot find the file"
             then wrap { status = http.status.not_found, .. http.response }
             else
-                do _ = http.io_handler (io.eprintln ("Error opening file: " ++ file_path) *> io.eprintln err)
+                do _ = http.io_handler (io.eprintln ("Error opening file: " ++ request_path) *> io.eprintln err)
                 wrap { status = http.status.not_found, .. http.response }
 
 let array_body request : Request -> Handler (Array Byte) =
