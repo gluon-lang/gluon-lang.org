@@ -1,7 +1,14 @@
 use hyper;
 
-use std::path::PathBuf;
-use std::process::Command;
+extern crate gluon;
+
+use std::{fs, path::PathBuf, process::Command};
+
+use crate::gluon::{
+    new_vm,
+    vm::api::{Hole, OpaqueValue},
+    Compiler, RootedThread,
+};
 
 use futures::{future, Future};
 use tokio::runtime::current_thread::Runtime;
@@ -32,13 +39,41 @@ fn test_pages(pages: &[(&str, hyper::StatusCode)]) {
                 .block_on(future::lazy(move || {
                     let client = hyper::Client::new();
                     let strategy = FixedInterval::from_millis(500).take(20);
-                    Retry::spawn(strategy, move || {
-                        client.get(format!("http://localhost:4567{}", page).parse().unwrap())
+                    let url = format!("http://localhost:4567{}", page);
+                    Retry::spawn(strategy, {
+                        let url = url.clone();
+                        move || client.get(url.parse().unwrap())
                     })
-                    .map(move |response| assert_eq!(response.status(), *expected_status))
+                    .map(move |response| {
+                        assert_eq!(
+                            response.status(),
+                            *expected_status,
+                            "Unexpected status for {}",
+                            url
+                        )
+                    })
                 }))
                 .unwrap();
         }
     }
     child.kill().unwrap();
+}
+
+#[test]
+fn test_examples() {
+    let thread = new_vm();
+    let mut compiler = Compiler::new();
+
+    for example_path in fs::read_dir("public/examples").unwrap() {
+        let example_path = &example_path.as_ref().unwrap().path();
+        eprintln!("{}", example_path.display());
+        let contents = fs::read_to_string(example_path).unwrap();
+        compiler
+            .run_expr::<OpaqueValue<RootedThread, Hole>>(
+                &thread,
+                &example_path.display().to_string(),
+                &contents,
+            )
+            .unwrap_or_else(|err| panic!("{}", err));
+    }
 }
