@@ -10,7 +10,7 @@ else
 fi
 
 if [ "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH:-}}" == 'master' ] || [ -n "${RELEASE:-}" ] ; then
-    EXTRA_BUILD_ARGS+=(--build-arg 'RELEASE=--release')
+    EXTRA_BUILD_ARGS+=(--build-arg 'RELEASE=--release' --build-arg 'CARGO_INCREMENTAL=0')
 fi
 echo ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
 

@@ -26,6 +26,7 @@ RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && mkdir -p tests && touch tests/run.rs \
     && echo "fn main() { }" > build.rs
 ARG RELEASE=
+ARG CARGO_INCREMENTAL=
 RUN cargo build ${RELEASE} --tests --bins
 
 FROM dependencies as builder
