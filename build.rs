@@ -17,7 +17,18 @@ use regex::Regex;
 const LOCK_FILE: &str = include_str!("Cargo.lock");
 
 fn git_master_version() -> String {
-    Regex::new("git\\+[^#]+gluon#([^\"]+)")
+    Regex::new(r#"git\+[^#]+gluon#([^"]+)"#)
+        .unwrap()
+        .captures(LOCK_FILE)
+        .expect("gluon master version")
+        .get(1)
+        .unwrap()
+        .as_str()
+        .to_string()
+}
+
+fn crates_io_version() -> String {
+    Regex::new(r"gluon ([^ ]+) \(registry\+")
         .unwrap()
         .captures(LOCK_FILE)
         .expect("gluon master version")
@@ -42,7 +53,7 @@ fn gluon_git_path() -> Result<PathBuf, failure::Error> {
 
 fn gluon_crates_io_path() -> Result<PathBuf, failure::Error> {
     let std_glob_path = home::cargo_home()?
-        .join(&format!("registry/src/*/gluon-*/",))
+        .join(&format!("registry/src/*/gluon-{}/", crates_io_version()))
         .display()
         .to_string();
     Ok(glob::glob(&std_glob_path)?
@@ -71,6 +82,11 @@ fn generate_doc_for_dir_(
     generate_doc: &mut dyn FnMut(&Path, &Path) -> Result<(), failure::Error>,
 ) -> Result<(), failure::Error> {
     {
+        eprintln!(
+            "Generating gluon doc: {} -> {}",
+            in_dir.display(),
+            out_dir.display()
+        );
         if Path::new("target/std").exists() {
             fs::remove_dir_all("target/std")?;
         }

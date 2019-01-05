@@ -1,8 +1,8 @@
 let { map } = import! std.functor
 let { (<<), (<|), (|>) } = import! std.function
-let { (*>), wrap } = import! std.applicative
+let { (<*), (*>), wrap } = import! std.applicative
 let { empty, (<|>) } = import! std.alternative
-let http @ { Handler, Response, Request, get, post, path, is_match, uri, ? } = import! std.http.http
+let http @ { HttpEffect, Response, Request, get, post, path, is_match, uri, ? } = import! std.http
 let io @ { ? } = import! std.io
 let string = import! std.string
 let { ? } = import! std.array
@@ -21,13 +21,15 @@ let result = import! std.result
 let { for } = import! std.traversable
 let process = import! std.process
 let thread = import! std.thread
+let { Eff, ? } = import! std.effect
+let { lift } = import! std.effect.lift
 
 let try_gluon = import! gluon.try
 let try_gluon_master = import! gluon.try.master
 let github_mod = import! github
-let { Opts } = import! gluon.http_server
+let { Opts, log } = import! gluon.http_server
 
-let hello_world : Handler Response =
+let hello_world : Eff (HttpEffect r) Response =
     http.write_response (string.as_bytes "Hello World")
         *> (wrap { status = http.status.ok, .. http.response })
 
@@ -39,7 +41,36 @@ let content_type_for_file file =
     | "css" -> Some "text/css"
     | _ -> None
 
-let static base : String -> Handler Response =
+let serve_file request_path : String -> Eff (HttpEffect r) Response =
+    let open_file =
+        do metadata = path_mod.metadata request_path
+        let file_path =
+            if fs.metadata.is_file metadata
+            then request_path
+            else path_mod.join request_path "index.html"
+
+        do contents = io.read_file_to_array file_path
+        wrap (contents, file_path)
+
+    do result = http.io_handler (io.catch (map Ok open_file) (wrap << Err))
+    match result with
+    | Ok (contents, file_path) ->
+        let headers =
+            match content_type_for_file file_path with
+            | Some content_type -> [("Content-Type", string.as_bytes content_type)]
+            | None -> []
+        do _ = http.write_response contents
+        wrap { status = http.status.ok, headers, .. http.response }
+    | Err err ->
+        if string.contains err "The system cannot find the file"
+        then
+            do _ = serve_file "./dist/404.html"
+            wrap { status = http.status.not_found, .. http.response }
+        else
+            do _ = http.io_handler (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
+            wrap { status = http.status.internal_server_error, .. http.response }
+
+let static base : String -> Eff (HttpEffect r) Response =
     let detect_path_traversal uri : String -> Bool =
         any (\c ->
             match c with
@@ -48,39 +79,14 @@ let static base : String -> Handler Response =
             (path_mod.components uri)
 
     do request = http.get_request
-    let uri = string.trim_left_matches (uri.path request.uri) "/"
+    let uri = string.trim_start_matches (uri.path request.uri) "/"
     if detect_path_traversal uri then
-            wrap { status = http.status.bad_request, .. http.response }
+        wrap { status = http.status.bad_request, .. http.response }
     else
         let request_path = path_mod.join base uri
+        serve_file request_path
 
-        let open_file =
-            do metadata = path_mod.metadata request_path
-            let file_path =
-                if fs.metadata.is_file metadata
-                then request_path
-                else path_mod.join request_path "index.html"
-
-            do contents = io.read_file_to_array file_path
-            wrap (contents, file_path)
-
-        do result = http.io_handler (io.catch (map Ok open_file) (wrap << Err))
-        match result with
-        | Ok (contents, file_path) ->
-            let headers =
-                match content_type_for_file file_path with
-                | Some content_type -> [("Content-Type", string.as_bytes content_type)]
-                | None -> []
-            do _ = http.write_response contents
-            wrap { status = http.status.ok, headers, .. http.response }
-        | Err err ->
-            if string.contains err "The system cannot find the file"
-            then wrap { status = http.status.not_found, .. http.response }
-            else
-                do _ = http.io_handler (io.eprintln ("Error opening file: " ++ request_path) *> io.eprintln err)
-                wrap { status = http.status.not_found, .. http.response }
-
-let array_body request : Request -> Handler (Array Byte) =
+let array_body request : Request -> Eff (HttpEffect r) (Array Byte) =
     do chunk = http.io_handler (http.read_chunk request.body)
     match chunk with
     | Some chunk ->
@@ -92,7 +98,7 @@ let array_body request : Request -> Handler (Array Byte) =
 let try_vm_released = try_gluon.make_eval_vm ()
 let try_vm_master = try_gluon_master.make_eval_vm ()
 
-let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Handler Response =
+let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Eff (HttpEffect r) Response =
     do request = http.get_request
     do body = array_body request
     match string.from_utf8 body with
@@ -128,7 +134,7 @@ let share_handler opts : Opts -> _ =
     | Some gist_access_token ->
         let github = github_mod.new_github gist_access_token
         gluon_handler (\gist_str ->
-            do gist = json_de.deserialize json_de.deserializer gist_str
+            do gist = json_de.deserialize gist_str
             github_mod.share github gist
         )
     | None ->
@@ -218,6 +224,11 @@ let start opts : Opts -> IO () =
             post *> path "/try/master/format"
                 *> gluon_handler (\code -> try_gluon_master.format_expr try_vm_master code)]
 
+    let handler =
+        http.io_handler (log.debug "Received request")
+            *> handler
+            <* http.io_handler (log.debug "Responded to request")
+
     let port =
         match opts.port with
         | None -> if opts.https then 443 else 80
@@ -227,7 +238,7 @@ let start opts : Opts -> IO () =
         do _ = setup_cert opts
 
         let http_server_settings = { port = 80, tls_cert = None }
-        let http_redirect_handler : Handler Response =
+        let http_redirect_handler : Eff (HttpEffect r) Response =
             wrap {
                 status = http.status.permanent_redirect,
                 headers = [("Location", string.as_bytes ("https://" ++ opts.host))],

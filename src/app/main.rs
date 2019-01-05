@@ -211,7 +211,25 @@ fn main_() -> Result<(), failure::Error> {
         ExternModule::new(
             vm,
             record! {
-                type Opts => Opts
+                type Opts => Opts,
+                log => record! {
+                    error => primitive!(1, "log.error", |s: &str| {
+                        error!("{}", s);
+                        IO::Value(())
+                    }),
+                    warn => primitive!(1, "log.warn", |s: &str| {
+                        warn!("{}", s);
+                        IO::Value(())
+                    }),
+                    info => primitive!(1, "log.info", |s: &str| {
+                        info!("{}", s);
+                        IO::Value(())
+                    }),
+                    debug => primitive!(1, "log.debug", |s: &str| {
+                        debug!("{}", s);
+                        IO::Value(())
+                    })
+                }
             },
         )
     });
