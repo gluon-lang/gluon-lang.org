@@ -8,7 +8,6 @@ before_script:
   - >
       if [ "${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_BRANCH:-}}" == 'master' ]; then
         docker pull marwes/try_gluon:builder || true
-        docker pull marwes/try_gluon || true
       fi
 
 script:
