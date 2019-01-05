@@ -62,7 +62,8 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
         do _ = http.write_response contents
         wrap { status = http.status.ok, headers, .. http.response }
     | Err err ->
-        if string.contains err "The system cannot find the file"
+        if string.contains err "The system cannot find the file" ||
+               string.contains err "No such file"
         then
             do _ = serve_file "./dist/404.html"
             wrap { status = http.status.not_found, .. http.response }

@@ -4,7 +4,7 @@ set -eux
 USE_CACHE=${1:-}
 if [ "$USE_CACHE" == 'cache' ];
 then
-    EXTRA_BUILD_ARGS=(--network host --build-arg=RUSTC_WRAPPER=./sccache)
+    EXTRA_BUILD_ARGS=(--network host --build-arg=RUSTC_WRAPPER=sccache)
 else
     EXTRA_BUILD_ARGS=()
 fi
