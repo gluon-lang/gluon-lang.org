@@ -482,7 +482,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "gluon"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan-reporting 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -548,7 +548,7 @@ dependencies = [
 [[package]]
 name = "gluon_base"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "anymap 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -596,7 +596,7 @@ dependencies = [
 [[package]]
 name = "gluon_check"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan-reporting 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -636,7 +636,7 @@ dependencies = [
 [[package]]
 name = "gluon_codegen"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -667,7 +667,7 @@ dependencies = [
 [[package]]
 name = "gluon_doc"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -717,7 +717,7 @@ dependencies = [
 [[package]]
 name = "gluon_format"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gluon_base 0.10.0 (git+https://github.com/gluon-lang/gluon)",
@@ -752,7 +752,7 @@ dependencies = [
 [[package]]
 name = "gluon_parser"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan-reporting 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -788,7 +788,7 @@ dependencies = [
 [[package]]
 name = "gluon_vm"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
+source = "git+https://github.com/gluon-lang/gluon#ee1e70555c551f300ede602d358c6bc10acb1fe3"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
