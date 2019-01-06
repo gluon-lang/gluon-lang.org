@@ -385,7 +385,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "synstructure 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -482,7 +482,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "gluon"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan-reporting 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -548,7 +548,7 @@ dependencies = [
 [[package]]
 name = "gluon_base"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "anymap 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -596,7 +596,7 @@ dependencies = [
 [[package]]
 name = "gluon_check"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan-reporting 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -636,11 +636,11 @@ dependencies = [
 [[package]]
 name = "gluon_codegen"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -650,7 +650,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -667,7 +667,7 @@ dependencies = [
 [[package]]
 name = "gluon_doc"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -717,7 +717,7 @@ dependencies = [
 [[package]]
 name = "gluon_format"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gluon_base 0.10.0 (git+https://github.com/gluon-lang/gluon)",
@@ -752,7 +752,7 @@ dependencies = [
 [[package]]
 name = "gluon_parser"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan-reporting 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -788,7 +788,7 @@ dependencies = [
 [[package]]
 name = "gluon_vm"
 version = "0.10.0"
-source = "git+https://github.com/gluon-lang/gluon#4e4078c155ae09ffb4f374d0f8caae5c8acdc09f"
+source = "git+https://github.com/gluon-lang/gluon#b19653c5e524d636d397b819aeb33d6639756899"
 dependencies = [
  "bitflags 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "codespan 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1355,7 +1355,7 @@ dependencies = [
  "pest_meta 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1710,7 +1710,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1858,7 +1858,7 @@ dependencies = [
  "heck 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1873,7 +1873,7 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "0.15.23"
+version = "0.15.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1888,7 +1888,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -2567,7 +2567,7 @@ dependencies = [
 "checksum structopt 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)" = "670ad348dc73012fcf78c71f06f9d942232cdd4c859d4b6975e27836c3efc0c3"
 "checksum structopt-derive 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)" = "ef98172b1a00b0bec738508d3726540edcbd186d50dfd326f2b1febbb3559f04"
 "checksum syn 0.14.9 (registry+https://github.com/rust-lang/crates.io-index)" = "261ae9ecaa397c42b960649561949d69311f08eeaea86a65696e6e46517cf741"
-"checksum syn 0.15.23 (registry+https://github.com/rust-lang/crates.io-index)" = "9545a6a093a3f0bd59adb472700acc08cad3776f860f16a897dfce8c88721cbc"
+"checksum syn 0.15.24 (registry+https://github.com/rust-lang/crates.io-index)" = "734ecc29cd36e8123850d9bf21dfd62ef8300aaa8f879aabaa899721808be37c"
 "checksum synstructure 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)" = "73687139bf99285483c96ac0add482c3776528beac1d97d444f6e91f203a2015"
 "checksum tempfile 3.0.5 (registry+https://github.com/rust-lang/crates.io-index)" = "7e91405c14320e5c79b3d148e1c86f40749a36e490642202a31689cb1a3452b2"
 "checksum term 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)" = "fa63644f74ce96fbeb9b794f66aff2a52d601cbd5e80f4b97123e3899f4570f1"
