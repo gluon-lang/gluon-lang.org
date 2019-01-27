@@ -7,7 +7,7 @@ type Vec = { x : Float, y : Float, name : Option String }
 
 let result = 
     let input = r#"{ "x": 123, "y": 456.78, "name": null }"#
-    do v = de.deserialize input with
+    do v = de.deserialize input
     let v : Vec = v
     let updated = { x = v.x, y = v.y, name = Some "Vector" }
     ser.to_string_pretty updated
