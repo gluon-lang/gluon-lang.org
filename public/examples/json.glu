@@ -5,12 +5,13 @@ let { Result, ? } = import! std.result
 #[derive(Serialize, Deserialize)]
 type Vec = { x : Float, y : Float, name : Option String }
 
-let input = r#"{ "x": 123, "y": 456.78, "name": null }"#
-match de.deserialize input with
-| Err err -> err
-| Ok v ->
+let result = 
+    let input = r#"{ "x": 123, "y": 456.78, "name": null }"#
+    do v = de.deserialize input with
     let v : Vec = v
     let updated = { x = v.x, y = v.y, name = Some "Vector" }
-    match ser.to_string_pretty updated with
-    | Err err -> err
-    | Ok s -> s
+    ser.to_string_pretty updated
+
+match result with
+| Ok s -> s
+| Err err -> err
