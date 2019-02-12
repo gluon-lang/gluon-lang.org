@@ -1,7 +1,7 @@
-# try_gluon
+# gluon-lang.org
 
-A webserver for experimenting with the [Gluon](https://github.com/gluon-lang/gluon)
-programming language.
+Source for the https://gluon-lang.org website which contains the documentation for the [Gluon](https://github.com/gluon-lang/gluon)
+programming language as well as a service which lets you run gluon scripts from your browser.
 
 To run the server:
 
