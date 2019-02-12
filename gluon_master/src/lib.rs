@@ -33,6 +33,8 @@ impl KindEnv for EmptyEnv {
 }
 
 impl TypeEnv for EmptyEnv {
+    type Type = ArcType;
+
     fn find_type(&self, _id: &SymbolRef) -> Option<&ArcType> {
         None
     }
