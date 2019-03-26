@@ -1,4 +1,4 @@
-FROM rust:1.32.0-slim-stretch as dependencies
+FROM rust:1.33.0-slim-stretch as dependencies
 
 WORKDIR /usr/src/try_gluon
 
