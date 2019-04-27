@@ -91,15 +91,8 @@ fn generate_doc_for_dir_(
             fs::remove_dir_all("target/std")?;
         }
 
-        let exit_status = Command::new("cp")
-            .args(&["-r", &in_dir.join("std").to_string_lossy(), "target/"])
-            .status()?;
-        if !exit_status.success() {
-            return Err(failure::err_msg("Error copying docs"));
-        }
-
         let before = env::current_dir()?;
-        env::set_current_dir("target")?;
+        env::set_current_dir(in_dir)?;
         generate_doc(Path::new("std"), &Path::new("..").join(out_dir).join("std"))?;
         env::set_current_dir(before)?;
     }
@@ -130,14 +123,29 @@ fn generate_doc_for_dir_(
 }
 
 fn create_docs() -> Result<(), failure::Error> {
-    let git_dir = gluon_git_path()?;
-    generate_doc_for_dir(&git_dir, "dist/doc/nightly", gluon_master::generate_doc)?;
-    let crates_io_dir = gluon_crates_io_path()?;
-    generate_doc_for_dir(
-        &crates_io_dir,
-        "dist/doc/crates_io",
-        gluon_crates_io::generate_doc,
-    )?;
+    {
+        let git_dir = gluon_git_path()?;
+        generate_doc_for_dir(&git_dir, "dist/doc/nightly", |input, output| {
+            let src_url = Some(format!(
+                "https://github.com/gluon-lang/gluon/blob/{}",
+                git_master_version()
+            ));
+            gluon_master::generate_doc(&gluon_master::gluon_doc::Options {
+                input: input.to_owned(),
+                output: output.to_owned(),
+                src_url,
+            })
+        })?;
+    }
+
+    {
+        let crates_io_dir = gluon_crates_io_path()?;
+        generate_doc_for_dir(
+            &crates_io_dir,
+            "dist/doc/crates_io",
+            gluon_crates_io::generate_doc,
+        )?;
+    }
 
     Ok(())
 }
