@@ -136,6 +136,7 @@ fn create_docs() -> Result<(), failure::Error> {
                 src_url,
             })
         })?;
+        assert!(Path::new("dist/doc/nightly/std/std.html").exists());
     }
 
     {
@@ -145,6 +146,7 @@ fn create_docs() -> Result<(), failure::Error> {
             "dist/doc/crates_io",
             gluon_crates_io::generate_doc,
         )?;
+        assert!(Path::new("dist/doc/crates_io/std/std.html").exists());
     }
 
     Ok(())
