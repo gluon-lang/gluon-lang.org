@@ -9,6 +9,7 @@ Dockerfile
 
 node_modules
 target
+dist
 elm-stuff
 std
 

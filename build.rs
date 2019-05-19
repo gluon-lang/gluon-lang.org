@@ -93,7 +93,7 @@ fn generate_doc_for_dir_(
 
         let before = env::current_dir()?;
         env::set_current_dir(in_dir)?;
-        generate_doc(Path::new("std"), &Path::new("..").join(out_dir).join("std"))?;
+        generate_doc(Path::new("std"), &before.join(out_dir).join("std"))?;
         env::set_current_dir(before)?;
     }
 
