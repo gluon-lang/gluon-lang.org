@@ -89,6 +89,8 @@ pub fn make_eval_vm() -> Result<RootedThread> {
     add_extern_module(&vm, "std.io.prim", crate::std_lib::io::load);
     add_extern_module(&vm, "std.process.prim", crate::std_lib::process::load);
 
+    add_extern_module(&vm, "std.json.prim", crate::vm::api::json::load);
+
     Ok(vm)
 }
 

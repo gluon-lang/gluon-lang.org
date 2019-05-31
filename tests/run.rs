@@ -1,17 +1,9 @@
 use hyper;
 
-extern crate gluon;
-
 use std::{
     fs,
     path::PathBuf,
     process::{Child, Command},
-};
-
-use crate::gluon::{
-    new_vm,
-    vm::api::{Hole, OpaqueValue},
-    Compiler, RootedThread,
 };
 
 use futures::{future, Future};
@@ -67,8 +59,38 @@ fn test_pages() {
 }
 
 #[test]
-fn test_examples() {
-    let thread = new_vm();
+fn test_examples_master() {
+    use gluon_master::{
+        make_eval_vm,
+        vm::api::{Hole, OpaqueValue},
+        Compiler, RootedThread,
+    };
+
+    let thread = make_eval_vm().unwrap();
+    let mut compiler = Compiler::new();
+
+    for example_path in fs::read_dir("public/examples").unwrap() {
+        let example_path = &example_path.as_ref().unwrap().path();
+        eprintln!("{}", example_path.display());
+        let contents = fs::read_to_string(example_path).unwrap();
+        compiler
+            .run_expr::<OpaqueValue<RootedThread, Hole>>(
+                &thread,
+                &example_path.display().to_string(),
+                &contents,
+            )
+            .unwrap_or_else(|err| panic!("{}", err));
+    }
+}
+
+#[test]
+fn test_examples_crates_io() {
+    use gluon_crates_io::{
+        make_eval_vm,
+        vm::api::{Hole, OpaqueValue},
+        Compiler, RootedThread,
+    };
+    let thread = make_eval_vm().unwrap();
     let mut compiler = Compiler::new();
 
     for example_path in fs::read_dir("public/examples").unwrap() {
