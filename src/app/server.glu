@@ -29,6 +29,8 @@ let try_gluon_master = import! gluon.try.master
 let github_mod = import! github
 let { Opts, log } = import! gluon.http_server
 
+let dist_dir = "./target/dist/"
+
 let hello_world : Eff (HttpEffect r) Response =
     http.write_response (string.as_bytes "Hello World")
         *> (wrap { status = http.status.ok, .. http.response })
@@ -59,19 +61,19 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
             match content_type_for_file file_path with
             | Some content_type -> [("Content-Type", string.as_bytes content_type)]
             | None -> []
-        do _ = http.write_response contents
+        seq http.write_response contents
         wrap { status = http.status.ok, headers, .. http.response }
     | Err err ->
         if string.contains err "The system cannot find the file" ||
                string.contains err "No such file"
         then
-            do _ = serve_file "./dist/404.html"
+            seq serve_file (path_mod.join dist_dir "404.html")
             wrap { status = http.status.not_found, .. http.response }
         else
-            do _ = http.io_handler (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
+            seq http.io_handler (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
             wrap { status = http.status.internal_server_error, .. http.response }
 
-let static base : String -> Eff (HttpEffect r) Response =
+let static_files base : String -> Eff (HttpEffect r) Response =
     let detect_path_traversal uri : String -> Bool =
         any (\c ->
             match c with
@@ -104,7 +106,7 @@ let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Eff (Ht
     do body = array_body request
     match string.from_utf8 body with
     | Err err ->
-        do _ = http.write_response (string.as_bytes "Invalid UTF-8")
+        seq http.write_response (string.as_bytes "Invalid UTF-8")
         wrap { status = http.status.bad_request, .. http.response }
     | Ok code ->
         let (response_body, status) =
@@ -115,7 +117,7 @@ let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Eff (Ht
                 | Err s -> (s, http.status.internal_server_error)
             | Err response_body -> (response_body, http.status.internal_server_error)
 
-        do _ = http.write_response <| string.as_bytes response_body
+        seq http.write_response <| string.as_bytes response_body
         wrap { status, .. http.response }
 
 
@@ -199,12 +201,12 @@ let setup_cert opts : Opts -> IO () =
         else
             base_args
     do status = process.execute (process.proc "certbot" args)
-    do _ = when (status /= Some 0) (\_ -> error "Unable to retrieve the certificate")
+    seq when (status /= Some 0) (\_ -> error "Unable to retrieve the certificate")
 
     do status = process.execute (process.proc "openssl"
     ["pkcs12", "-out", tls_cert, "-inkey", path_mod.join cert_path "privkey.pem", "-in", path_mod.join cert_path "fullchain.pem", "-export", "-passout", "pass:"]
         )
-    do _ = when (status /= Some 0) (\_ -> error ("Unable to convert the certificate: " ++ show status))
+    seq when (status /= Some 0) (\_ -> error ("Unable to convert the certificate: " ++ show status))
     wrap ()
 
 let start opts : Opts -> IO () =
@@ -214,7 +216,7 @@ let start opts : Opts -> IO () =
         foldl (<|>) empty
             [get *> path "/try/config"
                 *> http.write_response (string.as_bytes config) *> wrap { status = http.status.ok, .. http.response },
-            get *> is_match "^/.*" *> static "./dist",
+            get *> is_match "^/.*" *> static_files dist_dir,
             post *> path "/try/share" *> share_handler opts,
             post *> path "/try/eval"
                 *> gluon_handler (\code -> try_gluon.eval try_vm_released code),
@@ -236,7 +238,7 @@ let start opts : Opts -> IO () =
         | Some port -> port
 
     if opts.https then
-        do _ = setup_cert opts
+        seq setup_cert opts
 
         let http_server_settings = { port = 80, tls_cert = None }
         let http_redirect_handler : Eff (HttpEffect r) Response =
@@ -248,14 +250,14 @@ let start opts : Opts -> IO () =
 
         let https_server_settings = { port, tls_cert = Some tls_cert }
 
-        do _ = io.println ("Opening https server on port " ++ show port)
+        seq io.println ("Opening https server on port " ++ show port)
         thread.join
             (http.listen http_server_settings http_redirect_handler)
             (http.listen https_server_settings handler)
                 *> wrap ()
     else
         let server_settings = { port, tls_cert = None }
-        do _ = io.println ("Opening http server on port " ++ show port)
+        seq io.println ("Opening http server on port " ++ show port)
         http.listen server_settings handler
 
 start

@@ -15,7 +15,7 @@ module.exports = function (env, args) {
     mode: args.mode,
 
     output: {
-      path: path.resolve(__dirname + '/dist'),
+      path: path.resolve(__dirname + '/target/dist'),
       filename: '[name].js',
     },
 
