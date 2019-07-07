@@ -1,6 +1,6 @@
 let { map } = import! std.functor
 let { (<<), (<|), (|>) } = import! std.function
-let { (<*), (*>), wrap } = import! std.applicative
+let { (<*), (*>), when, wrap } = import! std.applicative
 let { empty, (<|>) } = import! std.alternative
 let http @ { HttpEffect, Response, Request, get, post, path, is_match, uri, ? } = import! std.http
 let io @ { ? } = import! std.io
@@ -67,7 +67,8 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
         if string.contains err "The system cannot find the file" ||
                string.contains err "No such file"
         then
-            seq serve_file (path_mod.join dist_dir "404.html")
+            let path_404 = path_mod.join dist_dir "404.html"
+            seq when (request_path /= path_404) (serve_file path_404 *> wrap ())
             wrap { status = http.status.not_found, .. http.response }
         else
             seq http.io_handler (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
