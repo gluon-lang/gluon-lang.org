@@ -144,7 +144,17 @@ fn create_docs() -> Result<(), failure::Error> {
         generate_doc_for_dir(
             &crates_io_dir,
             "target/dist/doc/crates_io",
-            gluon_crates_io::generate_doc,
+            |input, output| {
+                let src_url = Some(format!(
+                    "https://github.com/gluon-lang/gluon/blob/{}",
+                    crates_io_version()
+                ));
+                gluon_crates_io::generate_doc(&gluon_crates_io::gluon_doc::Options {
+                    input: input.to_owned(),
+                    output: output.to_owned(),
+                    src_url,
+                })
+            },
         )?;
         assert!(Path::new("target/dist/doc/crates_io/std/std.html").exists());
     }

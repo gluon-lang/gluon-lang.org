@@ -42,7 +42,9 @@ use gluon::{
 use structopt::StructOpt;
 
 pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
-    #[derive(Debug, Userdata)]
+    #[derive(Debug, VmType, Userdata, Trace)]
+    #[gluon(vm_type = "MasterTryThread")]
+    #[gluon_trace(skip)]
     pub struct TryThread(gluon_master::RootedThread);
 
     impl Deref for TryThread {
@@ -68,7 +70,9 @@ pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
 }
 
 pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
-    #[derive(Debug, Userdata)]
+    #[derive(Debug, VmType, Userdata, Trace)]
+    #[gluon(vm_type = "TryThread")]
+    #[gluon_trace(skip)]
     pub struct TryThread(gluon_crates_io::RootedThread);
 
     impl Deref for TryThread {
@@ -104,7 +108,9 @@ pub struct PostGist {
     pub html_url: String,
 }
 
-#[derive(Debug, Userdata)]
+#[derive(Debug, VmType, Userdata, Trace)]
+#[gluon(vm_type = "Github")]
+#[gluon_trace(skip)]
 struct Github(hubcaps::Github<HttpsConnector<HttpConnector>>);
 
 fn new_github(gist_access_token: &str) -> Github {
@@ -246,7 +252,7 @@ fn main_() -> Result<(), failure::Error> {
 
     let server_source = fs::read_to_string("src/app/server.glu")?;
 
-    runtime.block_on(
+    let (_, _) = runtime.block_on(
         future::lazy(move || {
             gluon::Compiler::new()
                 .run_expr_async::<OwnedFunction<fn(Opts) -> IO<()>>>(

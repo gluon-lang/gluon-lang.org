@@ -1,10 +1,10 @@
 use failure;
 
 use gluon;
-use gluon_doc;
+pub use gluon_doc;
 use gluon_format;
 
-use std::{path::Path, result::Result as StdResult, time::Instant};
+use std::{result::Result as StdResult, time::Instant};
 
 use futures::Async;
 
@@ -86,8 +86,8 @@ pub fn make_eval_vm() -> Result<RootedThread> {
     // add_extern_module(&vm, "std.channel.prim", crate::vm::channel::load_channel);
     // add_extern_module(&vm, "std.thread.prim", crate::vm::channel::load_thread);
     // add_extern_module(&vm, "std.debug.prim", crate::vm::debug::load);
-    add_extern_module(&vm, "std.io.prim", crate::io::load);
-    add_extern_module(&vm, "std.process.prim", crate::process::load);
+    add_extern_module(&vm, "std.io.prim", crate::std_lib::io::load);
+    add_extern_module(&vm, "std.process.prim", crate::std_lib::process::load);
 
     add_extern_module(&vm, "std.json.prim", crate::vm::api::json::load);
 
@@ -146,10 +146,6 @@ pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
         .map_err(|err| err.to_string())
 }
 
-pub fn generate_doc<P, Q>(input: &P, out: &Q) -> StdResult<(), failure::Error>
-where
-    P: ?Sized + AsRef<Path>,
-    Q: ?Sized + AsRef<Path>,
-{
-    gluon_doc::generate_for_path(&gluon::new_vm(), input, out)
+pub fn generate_doc(options: &gluon_doc::Options) -> StdResult<(), failure::Error> {
+    gluon_doc::generate(options, &gluon::new_vm())
 }
