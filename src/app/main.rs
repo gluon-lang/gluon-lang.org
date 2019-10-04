@@ -1,34 +1,17 @@
-use env_logger;
-use failure;
-
-use gluon;
-use hubcaps;
-
 #[macro_use]
 extern crate log;
-#[macro_use]
-extern crate serde_derive;
 
-#[allow(unused_imports)]
-#[macro_use]
-extern crate structopt;
-use tokio;
+use std::{fs, ops::Deref};
 
-use gluon_crates_io;
-use gluon_master;
+use {
+    futures::{future, prelude::*},
+    hyper::client::HttpConnector,
+    hyper_tls::HttpsConnector,
+    serde::Serialize,
+};
 
-#[macro_use]
-extern crate gluon_vm;
-#[macro_use]
-extern crate gluon_codegen;
-
-use std::fs;
-use std::ops::Deref;
-
-use futures::{future, prelude::*};
-
-use hyper::client::HttpConnector;
-use hyper_tls::HttpsConnector;
+use gluon_codegen::{Getable, Pushable, Trace, Userdata, VmType};
+use gluon_vm::{primitive, record};
 
 use gluon::{
     vm::{
