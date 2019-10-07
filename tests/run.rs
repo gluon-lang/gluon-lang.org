@@ -63,19 +63,17 @@ fn test_examples_master() {
     use gluon_master::{
         make_eval_vm,
         vm::api::{Hole, OpaqueValue},
-        Compiler, RootedThread,
+        RootedThread, ThreadExt,
     };
 
     let thread = make_eval_vm().unwrap();
-    let mut compiler = Compiler::new();
 
     for example_path in fs::read_dir("public/examples").unwrap() {
         let example_path = &example_path.as_ref().unwrap().path();
         eprintln!("{}", example_path.display());
         let contents = fs::read_to_string(example_path).unwrap();
-        compiler
+        thread
             .run_expr::<OpaqueValue<RootedThread, Hole>>(
-                &thread,
                 &example_path.display().to_string(),
                 &contents,
             )
