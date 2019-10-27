@@ -3,7 +3,8 @@ let { (<<), (<|), (|>) } = import! std.function
 let { (<*), (*>), when, wrap } = import! std.applicative
 let { empty, (<|>) } = import! std.alternative
 let http @ { HttpEffect, Response, Request, get, post, path, is_match, uri, ? } = import! std.http
-let io @ { ? } = import! std.io
+let io = import! std.effect.io
+let monad_io @ { ? } = import! std.io
 let string = import! std.string
 let { ? } = import! std.array
 let path_mod @ { Component } = import! std.path
@@ -22,7 +23,7 @@ let { for } = import! std.traversable
 let process = import! std.process
 let thread = import! std.thread
 let { Eff, ? } = import! std.effect
-let { lift } = import! std.effect.lift
+let { Lift, lift, run_lift } = import! std.effect.lift
 
 let try_gluon = import! gluon.try
 let try_gluon_master = import! gluon.try.master
@@ -51,10 +52,10 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
             then request_path
             else path_mod.join request_path "index.html"
 
-        do contents = io.read_file_to_array file_path
+        do contents = monad_io.read_file_to_array file_path
         wrap (contents, file_path)
 
-    do result = http.io_handler (io.catch (map Ok open_file) (wrap << Err))
+    do result = io.catch (map Ok open_file) (wrap << Err)
     match result with
     | Ok (contents, file_path) ->
         let headers =
@@ -71,7 +72,7 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
             seq when (request_path /= path_404) (serve_file path_404 *> wrap ())
             wrap { status = http.status.not_found, .. http.response }
         else
-            seq http.io_handler (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
+            seq lift (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
             wrap { status = http.status.internal_server_error, .. http.response }
 
 let static_files base : String -> Eff (HttpEffect r) Response =
@@ -91,7 +92,7 @@ let static_files base : String -> Eff (HttpEffect r) Response =
         serve_file request_path
 
 let array_body request : Request -> Eff (HttpEffect r) (Array Byte) =
-    do chunk = http.io_handler (http.read_chunk request.body)
+    do chunk = http.read_chunk request.body
     match chunk with
     | Some chunk ->
         do rest = array_body request
@@ -147,7 +148,7 @@ let share_handler opts : Opts -> _ =
 
 
 let load_config =
-    do lock_file_contents = io.read_file_to_string "Cargo.lock"
+    do lock_file_contents = monad_io.read_file_to_string "Cargo.lock"
     let get_version_by_regex re_str : String -> String =
         let match_ =
             regex.new re_str
@@ -168,7 +169,7 @@ let load_config =
         for dir_entries (\entry ->
             let example_path = fs.dir_entry.path entry
             let name = path_mod.file_stem example_path |> option.unwrap
-            do src = io.read_file_to_string example_path
+            do src = monad_io.read_file_to_string example_path
             wrap { name, src })
 
     #[derive(Serialize)]
@@ -229,9 +230,9 @@ let start opts : Opts -> IO () =
                 *> gluon_handler (\code -> try_gluon_master.format_expr try_vm_master code)]
 
     let handler =
-        http.io_handler (log.debug "Received request")
+        lift (log.debug "Received request")
             *> handler
-            <* http.io_handler (log.debug "Responded to request")
+            <* lift (log.debug "Responded to request")
 
     let port =
         match opts.port with
@@ -251,14 +252,14 @@ let start opts : Opts -> IO () =
 
         let https_server_settings = { port, tls_cert = Some tls_cert }
 
-        seq io.println ("Opening https server on port " ++ show port)
+        seq monad_io.println ("Opening https server on port " ++ show port)
         thread.join
-            (http.listen http_server_settings http_redirect_handler)
-            (http.listen https_server_settings handler)
+            (run_lift <| http.listen http_server_settings http_redirect_handler)
+            (run_lift <| http.listen https_server_settings handler)
                 *> wrap ()
     else
         let server_settings = { port, tls_cert = None }
-        seq io.println ("Opening http server on port " ++ show port)
-        http.listen server_settings handler
+        seq monad_io.println ("Opening http server on port " ++ show port)
+        run_lift (http.listen server_settings handler)
 
 start

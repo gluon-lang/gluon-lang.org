@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate log;
-
 use std::{fs, ops::Deref};
 
 use {
@@ -11,15 +8,14 @@ use {
 };
 
 use gluon_codegen::{Getable, Pushable, Trace, Userdata, VmType};
-use gluon_vm::{primitive, record};
 
 use gluon::{
     vm::{
         self,
         api::{OwnedFunction, RuntimeResult, IO},
-        ExternModule,
+        primitive, record, ExternModule,
     },
-    Thread,
+    Thread, ThreadExt,
 };
 
 use structopt::StructOpt;
@@ -107,7 +103,7 @@ fn share(
     github: &Github,
     gist: Gist<'_>,
 ) -> impl Future<Item = Result<PostGist, String>, Error = vm::Error> {
-    info!("Share: `{}`", gist.code);
+    log::info!("Share: `{}`", gist.code);
 
     github
         .0
@@ -203,19 +199,19 @@ fn main_() -> Result<(), failure::Error> {
                 type Opts => Opts,
                 log => record! {
                     error => primitive!(1, "log.error", |s: &str| {
-                        error!("{}", s);
+                        log::error!("{}", s);
                         IO::Value(())
                     }),
                     warn => primitive!(1, "log.warn", |s: &str| {
-                        warn!("{}", s);
+                        log::warn!("{}", s);
                         IO::Value(())
                     }),
                     info => primitive!(1, "log.info", |s: &str| {
-                        info!("{}", s);
+                        log::info!("{}", s);
                         IO::Value(())
                     }),
                     debug => primitive!(1, "log.debug", |s: &str| {
-                        debug!("{}", s);
+                        log::debug!("{}", s);
                         IO::Value(())
                     })
                 }
@@ -237,12 +233,7 @@ fn main_() -> Result<(), failure::Error> {
 
     let (_, _) = runtime.block_on(
         future::lazy(move || {
-            gluon::Compiler::new()
-                .run_expr_async::<OwnedFunction<fn(Opts) -> IO<()>>>(
-                    &vm,
-                    "src.app.server",
-                    &server_source,
-                )
+            vm.run_expr_async::<OwnedFunction<fn(Opts) -> IO<()>>>("src.app.server", &server_source)
                 .and_then(|(mut f, _)| f.call_async(opts).from_err())
                 .map_err(|err| failure::Error::from(err))
                 .map(|_| ())

@@ -1,8 +1,4 @@
-use failure;
-
-use gluon;
 pub use gluon_doc;
-use gluon_format;
 
 use std::{result::Result as StdResult, time::Instant};
 

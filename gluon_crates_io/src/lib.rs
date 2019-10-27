@@ -1,17 +1,15 @@
-use failure;
-
-use gluon;
 pub use gluon_doc;
-use gluon_format;
 
 use std::{result::Result as StdResult, time::Instant};
 
 use futures::Async;
 
 pub use gluon::{
-    base::kind::{ArcKind, KindEnv},
-    base::symbol::{Symbol, SymbolRef},
-    base::types::{Alias, ArcType, TypeEnv},
+    base::{
+        kind::{ArcKind, KindEnv},
+        symbol::{Symbol, SymbolRef},
+        types::{Alias, ArcType, TypeEnv},
+    },
     import::{add_extern_module, DefaultImporter, Import},
     vm::{
         self,
@@ -35,10 +33,10 @@ impl KindEnv for EmptyEnv {
 impl TypeEnv for EmptyEnv {
     type Type = ArcType;
 
-    fn find_type(&self, _id: &SymbolRef) -> Option<&ArcType> {
+    fn find_type(&self, _id: &SymbolRef) -> Option<ArcType> {
         None
     }
-    fn find_type_info(&self, _id: &SymbolRef) -> Option<&Alias<Symbol, ArcType>> {
+    fn find_type_info(&self, _id: &SymbolRef) -> Option<Alias<Symbol, ArcType>> {
         None
     }
 }
@@ -58,18 +56,15 @@ pub fn make_eval_vm() -> Result<RootedThread> {
     // other modules
     add_extern_module(&vm, "std.prim", crate::vm::primitives::load);
 
-    Compiler::new()
-        .implicit_prelude(false)
-        .run_expr::<OpaqueValue<&Thread, Hole>>(
-            &vm,
-            "",
-            r#"
-                    let _ = import! std.types
-                    let _ = import! std.prim
-                    ()
-                "#,
-        )
-        .unwrap_or_else(|err| panic!("{}", err));
+    vm.run_expr::<OpaqueValue<&Thread, Hole>>(
+        "",
+        r#"//@NO-IMPLICIT-PRELUDE
+           let _ = import! std.types
+           let _ = import! std.prim
+           ()
+        "#,
+    )
+    .unwrap_or_else(|err| panic!("{}", err));
 
     add_extern_module(&vm, "std.byte.prim", crate::vm::primitives::load_byte);
     add_extern_module(&vm, "std.int.prim", crate::vm::primitives::load_int);
@@ -122,11 +117,10 @@ pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
         })));
     }
 
-    let (value, typ) =
-        match Compiler::new().run_expr::<OpaqueValue<&Thread, Hole>>(&vm, "<top>", &body) {
-            Ok(value) => value,
-            Err(err) => return Ok(format!("{}", err)),
-        };
+    let (value, typ) = match vm.run_expr::<OpaqueValue<&Thread, Hole>>("<top>", &body) {
+        Ok(value) => value,
+        Err(err) => return Ok(format!("{}", err)),
+    };
 
     Ok(format!(
         "{} : {}",
@@ -136,13 +130,8 @@ pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
 }
 
 pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
-    Compiler::new()
-        .format_expr(
-            &mut gluon_format::Formatter::default(),
-            thread,
-            "try",
-            input,
-        )
+    thread
+        .format_expr(&mut gluon_format::Formatter::default(), "try", input)
         .map_err(|err| err.to_string())
 }
 
