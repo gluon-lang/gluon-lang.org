@@ -152,6 +152,9 @@ struct Opts {
         help = "Whether to use letsencrypt's staging environment"
     )]
     staging: bool,
+
+    #[structopt(long = "num-threads", help = "How many threads to run the server with")]
+    num_threads: Option<usize>,
 }
 
 fn main() {
@@ -187,7 +190,13 @@ fn main_() -> Result<(), failure::Error> {
 
     let opts = Opts::from_args();
 
-    let mut runtime = tokio::runtime::Runtime::new()?;
+    let mut runtime = {
+        let mut builder = tokio::runtime::Builder::new();
+        if let Some(num_threads) = opts.num_threads {
+            builder.core_threads(num_threads);
+        }
+        builder.build()?
+    };
 
     let vm = gluon::new_vm();
     gluon::import::add_extern_module(&vm, "gluon.try", load);
