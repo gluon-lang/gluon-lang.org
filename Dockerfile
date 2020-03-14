@@ -1,4 +1,4 @@
-FROM rust:1.38.0-slim-stretch as dependencies
+FROM rust:1.41.1-slim-stretch as dependencies
 
 WORKDIR /usr/src/try_gluon
 
@@ -15,7 +15,7 @@ RUN npm ci
 COPY ./scripts/setup_cache.sh .
 ARG RUSTC_WRAPPER
 ENV SCCACHE_REDIS=redis://localhost
-RUN . ./setup_cache.sh 
+RUN . ./setup_cache.sh
 # Cache the built dependencies
 COPY gluon_master/Cargo.toml gluon_master/
 COPY gluon_crates_io/Cargo.toml gluon_crates_io/
@@ -32,7 +32,7 @@ RUN cargo build ${RELEASE} --tests --bins
 FROM dependencies as builder
 
 COPY ./scripts/build_docs.sh ./scripts/
-RUN ./scripts/build_docs.sh 
+RUN ./scripts/build_docs.sh
 
 COPY . .
 
@@ -43,7 +43,7 @@ RUN touch gluon_master/src/lib.rs && \
     cargo build ${RELEASE} --tests --bins && \
     cargo install --path . --root target/try_gluon $([ -n "${RELEASE:-}" ] && echo ${RELEASE} || echo --debug)
 
-FROM rust:1.31.1-slim-stretch
+FROM rust:1.41.1-slim-stretch
 
 WORKDIR /root/
 
