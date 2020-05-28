@@ -1,4 +1,4 @@
-FROM rust:1.41.1-slim-stretch as dependencies
+FROM rust:1.43.1-slim-stretch as dependencies
 
 WORKDIR /usr/src/try_gluon
 
@@ -43,7 +43,7 @@ RUN touch gluon_master/src/lib.rs && \
     cargo build ${RELEASE} --tests --bins && \
     cargo install --path . --root target/try_gluon $([ -n "${RELEASE:-}" ] && echo ${RELEASE} || echo --debug)
 
-FROM rust:1.41.1-slim-stretch
+FROM rust:1.43.1-slim-stretch
 
 WORKDIR /root/
 
