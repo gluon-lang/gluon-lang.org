@@ -1,7 +1,7 @@
 use std::{fs, ops::Deref};
 
 use {
-    futures::{future, prelude::*, stream},
+    futures::{future, prelude::*},
     serde::Serialize,
 };
 
@@ -129,7 +129,7 @@ fn share(github: &Github, gist: Gist<'_>) -> impl Future<Output = Result<PostGis
 #[cfg(unix)]
 async fn exit_server() -> Result<(), failure::Error> {
     use tokio::signal::unix::{signal, SignalKind};
-    let mut stream = stream::select(
+    let mut stream = futures::stream::select(
         signal(SignalKind::interrupt())?,
         signal(SignalKind::terminate())?,
     );
@@ -143,7 +143,7 @@ async fn exit_server() -> Result<(), failure::Error> {
 
 #[cfg(not(unix))]
 async fn exit_server() -> Result<(), failure::Error> {
-    Ok(tokio::signal::ctrl_c()?)
+    Ok(tokio::signal::ctrl_c().await?)
 }
 
 #[derive(StructOpt, Pushable, VmType)]
