@@ -53,7 +53,7 @@ FROM alpine:3.12
 
 WORKDIR /root/
 
-RUN apk add certbot
+RUN apk add certbot openssl
 
 RUN mkdir -p ./target/dist
 COPY --from=builder /usr/src/try_gluon/target/try_gluon/bin/try_gluon .
