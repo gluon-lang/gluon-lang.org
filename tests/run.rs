@@ -7,8 +7,7 @@ use std::{
     time::Duration,
 };
 
-use futures::{compat::*, prelude::*};
-use tokio::runtime::Runtime;
+use futures::prelude::*;
 
 struct DropKill(Child);
 
