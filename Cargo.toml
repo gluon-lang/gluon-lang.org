@@ -7,6 +7,8 @@ license = "MIT"
 
 edition = "2018"
 
+default-run = "try_gluon"
+
 [workspace]
 members = ["gluon_master"]
 
