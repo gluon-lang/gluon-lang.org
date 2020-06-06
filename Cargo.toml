@@ -15,22 +15,20 @@ name = "try_gluon"
 path = "src/app/main.rs"
 
 [dependencies]
-env_logger = "0.6"
+env_logger = "0.7"
 failure = "0.1"
-futures = "0.1.0"
-hubcaps = "0.5"
+futures = { version = "0.3", features = ["compat"] }
+hubcaps = { version = "0.5", git = "https://github.com/Marwes/hubcaps", branch = "std_future" }
 log = "0.4"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
-structopt = "0.2"
-tokio = "0.1"
-tokio-signal = "0.2.7"
-hyper = "0.12"
-hyper-tls = "0.3"
+structopt = "0.3"
+tokio = { version = "0.2", features = ["signal", "rt-core", "rt-threaded"] }
+hyper = "0.13"
 
-gluon = { version = "0.13.1", features = ["serialization", "web", "regex", "rand"] }
-gluon_codegen = { version = "0.13.1" }
+gluon = { version = "0.15", features = ["serialization", "web", "regex", "rand"] }
+gluon_codegen = { version = "0.15" }
 
 #gluon = { path = "../gluon", features = ["serialization", "web", "regex", "rand"] }
 #gluon_codegen = { path = "../gluon/codegen" }
@@ -39,15 +37,14 @@ gluon_master = { path = "gluon_master" }
 gluon_crates_io = { path = "gluon_crates_io" }
 
 [build-dependencies]
-env_logger = "0.6"
+env_logger = "0.7"
 failure = "0.1"
-glob = "0.2"
-home = "0.3"
+glob = "0.3"
+home = "0.5"
 regex = "1"
 
 gluon_master = { path = "gluon_master" }
 gluon_crates_io = { path = "gluon_crates_io" }
 
 [dev-dependencies]
-tokio-retry = "0.2"
-
+tokio = { version = "0.2", features = ["macros"] }

@@ -4,11 +4,11 @@ use std::{
     fs,
     path::PathBuf,
     process::{Child, Command},
+    time::Duration,
 };
 
-use futures::{future, Future};
-use tokio::runtime::current_thread::Runtime;
-use tokio_retry::{strategy::FixedInterval, Retry};
+use futures::{compat::*, prelude::*};
+use tokio::runtime::Runtime;
 
 struct DropKill(Child);
 
@@ -18,8 +18,28 @@ impl Drop for DropKill {
     }
 }
 
-#[test]
-fn test_pages() {
+async fn retry<F, T, E>(
+    strategy: impl IntoIterator<Item = Duration>,
+    mut f: impl FnMut() -> F,
+) -> F::Output
+where
+    F: Future<Output = Result<T, E>>,
+{
+    let mut last_error = None;
+    for t in strategy {
+        match f().await {
+            Ok(response) => return Ok(response),
+            Err(err) => {
+                tokio::time::delay_for(t).await;
+                last_error = Some(err);
+            }
+        }
+    }
+    Err(last_error.unwrap())
+}
+
+#[tokio::test]
+async fn test_pages() {
     let pages = &[
         ("", hyper::StatusCode::OK),
         ("/not_existing.html", hyper::StatusCode::NOT_FOUND),
@@ -33,28 +53,21 @@ fn test_pages() {
         .expect("server executable")
         .join(env!("CARGO_PKG_NAME"));
     let _child = DropKill(Command::new(exe).args(&["--port", "4567"]).spawn().unwrap());
-    let mut runtime = Runtime::new().unwrap();
 
+    let client = hyper::Client::new();
     for (page, expected_status) in pages {
-        runtime
-            .block_on(future::lazy(move || {
-                let client = hyper::Client::new();
-                let strategy = FixedInterval::from_millis(500).take(20);
-                let url = format!("http://localhost:4567{}", page);
-                Retry::spawn(strategy, {
-                    let url = url.clone();
-                    move || client.get(url.parse().unwrap())
-                })
-                .map(move |response| {
-                    assert_eq!(
-                        response.status(),
-                        *expected_status,
-                        "Unexpected status for {}",
-                        url
-                    )
-                })
-            }))
+        let strategy = std::iter::repeat(Duration::from_millis(500)).take(20);
+        let url = format!("http://localhost:4567{}", page);
+
+        let response = retry(strategy, || client.get(url.parse().unwrap()))
+            .await
             .unwrap();
+        assert_eq!(
+            response.status(),
+            *expected_status,
+            "Unexpected status for {}",
+            url
+        );
     }
 }
 

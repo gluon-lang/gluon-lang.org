@@ -104,18 +104,19 @@ fn generate_doc_for_dir_(
             Err(err)
         }
     })?;
+
+    let dest_dir = env::current_dir()?.join(out_dir).join("book");
     let mut command = Command::new("mdbook");
     command.args(&[
         "build",
         "--dest-dir",
-        &env::current_dir()?
-            .join(out_dir)
-            .join("book")
-            .to_string_lossy(),
+        &dest_dir.to_string_lossy(),
         &in_dir.join("book").to_string_lossy(),
     ]);
     eprintln!("Building book: {:?}", command);
-    let exit_status = command.status()?;
+    let exit_status = command
+        .status()
+        .map_err(|err| failure::format_err!("Unable to execute mdbook: {}", err))?;
     if !exit_status.success() {
         return Err(failure::err_msg("Error building book docs"));
     }
