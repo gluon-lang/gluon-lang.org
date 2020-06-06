@@ -33,8 +33,9 @@ let { Opts, log } = import! gluon.http_server
 let dist_dir = "./target/dist/"
 
 let hello_world : Eff (HttpEffect r) Response =
-    http.write_response (string.as_bytes "Hello World")
-        *> (wrap { status = http.status.ok, .. http.response })
+    http.write_response (string.as_bytes "Hello World") *> (wrap { status = http.status.ok,
+                .. http.response
+            })
 
 let content_type_for_file file =
     do ext = path_mod.extension file
@@ -48,8 +49,7 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
     let open_file =
         do metadata = path_mod.metadata request_path
         let file_path =
-            if fs.metadata.is_file metadata
-            then request_path
+            if fs.metadata.is_file metadata then request_path
             else path_mod.join request_path "index.html"
 
         do contents = monad_io.read_file_to_array file_path
@@ -63,17 +63,23 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
             | Some content_type -> [("Content-Type", string.as_bytes content_type)]
             | None -> []
         seq http.write_response contents
-        wrap { status = http.status.ok, headers, .. http.response }
+        wrap { status = http.status.ok, headers,
+                .. http.response
+            }
     | Err err ->
-        if string.contains err "The system cannot find the file" ||
-               string.contains err "No such file"
+        if string.contains err "The system cannot find the file"
+            || string.contains err "No such file"
         then
             let path_404 = path_mod.join dist_dir "404.html"
             seq when (request_path /= path_404) (serve_file path_404 *> wrap ())
-            wrap { status = http.status.not_found, .. http.response }
+            wrap { status = http.status.not_found,
+                    .. http.response
+                }
         else
             seq lift (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
-            wrap { status = http.status.internal_server_error, .. http.response }
+            wrap { status = http.status.internal_server_error,
+                    .. http.response
+                }
 
 let static_files base : String -> Eff (HttpEffect r) Response =
     let detect_path_traversal uri : String -> Bool =
@@ -86,7 +92,9 @@ let static_files base : String -> Eff (HttpEffect r) Response =
     do request = http.get_request
     let uri = string.trim_start_matches (uri.path request.uri) "/"
     if detect_path_traversal uri then
-        wrap { status = http.status.bad_request, .. http.response }
+        wrap { status = http.status.bad_request,
+                .. http.response
+            }
     else
         let request_path = path_mod.join base uri
         serve_file request_path
@@ -103,13 +111,16 @@ let array_body request : Request -> Eff (HttpEffect r) (Array Byte) =
 let try_vm_released = try_gluon.make_eval_vm ()
 let try_vm_master = try_gluon_master.make_eval_vm ()
 
-let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Eff (HttpEffect r) Response =
+let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Eff (HttpEffect r) Response
+    =
     do request = http.get_request
     do body = array_body request
     match string.from_utf8 body with
     | Err err ->
         seq http.write_response (string.as_bytes "Invalid UTF-8")
-        wrap { status = http.status.bad_request, .. http.response }
+        wrap { status = http.status.bad_request,
+                .. http.response
+            }
     | Ok code ->
         let (response_body, status) =
             match eval code with
@@ -120,19 +131,16 @@ let gluon_handler eval : [Serialize a] -> (String -> Result String a) -> Eff (Ht
             | Err response_body -> (response_body, http.status.internal_server_error)
 
         seq http.write_response <| string.as_bytes response_body
-        wrap { status, .. http.response }
+        wrap { status,
+                .. http.response
+            }
 
 
 #[derive(Deserialize)]
-type Gist = {
-    code : String,
-}
+type Gist = { code : String }
 
 #[derive(Serialize)]
-type PostGist = {
-    id : String,
-    html_url : String,
-}
+type PostGist = { id : String, html_url : String }
 
 let share_handler opts : Opts -> _ =
     match opts.gist_access_token with
@@ -140,20 +148,24 @@ let share_handler opts : Opts -> _ =
         let github = github_mod.new_github gist_access_token
         gluon_handler (\gist_str ->
             do gist = json_de.deserialize gist_str
-            github_mod.share github gist
-        )
+            github_mod.share github gist)
     | None ->
         http.write_response (string.as_bytes "Sharing is not enabled")
-            *> wrap { status = http.status.internal_server_error, .. http.response }
+            *> wrap { status = http.status.internal_server_error,
+                    .. http.response
+                }
 
 
 let load_config =
-    do lock_file_contents = monad_io.read_file_to_string "Cargo.lock"
+    do lock_file_result
+        = monad_io.catch (map Ok (monad_io.read_file_to_string "Cargo.lock")) (wrap << Err)
+    let lock_file_contents =
+        match lock_file_result with
+        | Ok x -> x
+        | Err err -> error ("Unable to open `Cargo.lock`: " <> show err)
     let get_version_by_regex re_str : String -> String =
         let match_ =
-            regex.new re_str
-                |> result.unwrap_ok
-                |> (\re -> regex.captures re lock_file_contents)
+            regex.new re_str |> result.unwrap_ok |> (\re -> regex.captures re lock_file_contents)
                 |> option.unwrap
                 |> (\captures -> array.index captures 1)
                 |> option.unwrap
@@ -176,11 +188,7 @@ let load_config =
     type Example = { name : String, src : String }
 
     #[derive(Serialize)]
-    type Config = {
-        last_release : String,
-        git_master : String,
-        examples : Array Example 
-    }
+    type Config = { last_release : String, git_master : String, examples : Array Example }
 
     let config : Config = {
         last_release,
@@ -196,18 +204,31 @@ let when b f : [Monad m] -> Bool -> (() -> m ()) -> m () =
 let tls_cert = "identity.p12"
 let setup_cert opts : Opts -> IO () =
     let cert_path = path_mod.join "/etc/letsencrypt/live/" opts.host
-    let base_args = ["certonly", "--standalone", "-d", opts.host, "-m", "marwes91@gmail.com", "--agree-tos", "-n"]
+    let base_args = ["certonly",
+        "--standalone",
+        "-d",
+        opts.host,
+        "-m",
+        "marwes91@gmail.com",
+        "--agree-tos",
+        "-n"]
     let args =
-        if opts.staging then
-            base_args <> ["--staging"]
-        else
-            base_args
+        if opts.staging then base_args <> ["--staging"]
+        else base_args
     do status = process.execute (process.proc "certbot" args)
     seq when (status /= Some 0) (\_ -> error "Unable to retrieve the certificate")
 
     do status = process.execute (process.proc "openssl"
-    ["pkcs12", "-out", tls_cert, "-inkey", path_mod.join cert_path "privkey.pem", "-in", path_mod.join cert_path "fullchain.pem", "-export", "-passout", "pass:"]
-        )
+                ["pkcs12",
+                "-out",
+                tls_cert,
+                "-inkey",
+                path_mod.join cert_path "privkey.pem",
+                "-in",
+                path_mod.join cert_path "fullchain.pem",
+                "-export",
+                "-passout",
+                "pass:"])
     seq when (status /= Some 0) (\_ -> error ("Unable to convert the certificate: " ++ show status))
     wrap ()
 
@@ -216,10 +237,14 @@ let start opts : Opts -> IO () =
 
     let handler =
         foldl (<|>) empty
-            [get *> path "/try/config"
-                *> http.write_response (string.as_bytes config) *> wrap { status = http.status.ok, .. http.response },
-            get *> is_match "^/.*" *> static_files dist_dir,
-            post *> path "/try/share" *> share_handler opts,
+            [get *> path "/try/config" *> http.write_response (string.as_bytes config)
+                *> wrap { status = http.status.ok,
+                        .. http.response
+                    },
+            get *> is_match "^/.*"
+                *> static_files dist_dir,
+            post *> path "/try/share"
+                *> share_handler opts,
             post *> path "/try/eval"
                 *> gluon_handler (\code -> try_gluon.eval try_vm_released code),
             post *> path "/try/format"
@@ -230,8 +255,7 @@ let start opts : Opts -> IO () =
                 *> gluon_handler (\code -> try_gluon_master.format_expr try_vm_master code)]
 
     let handler =
-        lift (log.debug "Received request")
-            *> handler
+        lift (log.debug "Received request") *> handler
             <* lift (log.debug "Responded to request")
 
     let port =
@@ -245,10 +269,11 @@ let start opts : Opts -> IO () =
         let http_server_settings = { port = 80, tls_cert = None }
         let http_redirect_handler : Eff (HttpEffect r) Response =
             wrap {
-                status = http.status.permanent_redirect,
-                headers = [("Location", string.as_bytes ("https://" ++ opts.host))],
-                .. http.response 
-            }
+                    status = http.status.permanent_redirect,
+                    headers = [("Location", string.as_bytes ("https://" ++ opts.host))],
+                    ..
+                    http.response
+                }
 
         let https_server_settings = { port, tls_cert = Some tls_cert }
 
@@ -256,7 +281,7 @@ let start opts : Opts -> IO () =
         thread.join
             (run_lift <| http.listen http_server_settings http_redirect_handler)
             (run_lift <| http.listen https_server_settings handler)
-                *> wrap ()
+            *> wrap ()
     else
         let server_settings = { port, tls_cert = None }
         seq monad_io.println ("Opening http server on port " ++ show port)
