@@ -18,7 +18,7 @@ docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --target dependencies \
     --tag marwes/try_gluon:dependencies \
-    --cache-from rust:1.31.1-slim-stretch \
+    --cache-from ekidd/rust-musl-builder:1.44.0 \
     --cache-from marwes/try_gluon:dependencies \
     .
 
@@ -30,7 +30,7 @@ docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --target builder \
     --tag marwes/try_gluon:builder \
-    --cache-from rust:1.31.1-slim-stretch \
+    --cache-from ekidd/rust-musl-builder:1.44.0 \
     --cache-from marwes/try_gluon:dependencies \
     --cache-from marwes/try_gluon:builder \
     .
@@ -42,7 +42,7 @@ fi
 docker build \
     ${EXTRA_BUILD_ARGS[@]+"${EXTRA_BUILD_ARGS[@]}"} \
     --tag marwes/try_gluon \
-    --cache-from rust:1.31.1-slim-stretch \
+    --cache-from ekidd/rust-musl-builder:1.44.0 \
     --cache-from marwes/try_gluon:dependencies \
     --cache-from marwes/try_gluon:builder \
     --cache-from marwes/try_gluon \
@@ -54,7 +54,7 @@ if [ -z ${BUILD_ONLY:-} ]; then
         -it \
         --env=RUST_BACKTRACE \
         marwes/try_gluon:builder \
-        cargo test ${RELEASE:-}
+        cargo test --target=x86_64-unknown-linux-musl --all-features ${RELEASE:-}
 
     docker run \
         --rm \
