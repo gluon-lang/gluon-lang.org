@@ -14,7 +14,7 @@ use std::{
 
 use regex::Regex;
 
-const LOCK_FILE: &str = include_str!("Cargo.lock");
+const LOCK_FILE: &str = include_str!("../../Cargo.lock");
 
 fn git_master_version() -> String {
     Regex::new(r#"git\+[^#]+gluon#([^"]+)"#)
@@ -170,6 +170,4 @@ fn main() {
         eprintln!("{}\n{}", err.backtrace(), err);
         process::exit(1);
     }
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=Cargo.lock");
 }
