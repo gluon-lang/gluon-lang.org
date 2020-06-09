@@ -155,14 +155,14 @@ let share_handler opts : Opts -> _ =
                     .. http.response
                 }
 
-let pretty_error action msg : IO a -> String -> IO a =
-   do result = monad_io.catch (map Ok action) (wrap << Err)
-   match result with
-   | Ok x -> wrap x
-   | Err err -> error (msg <> ": " <> show err)
 
 let load_config =
-    do lock_file_contents = pretty_error (monad_io.read_file_to_string "Cargo.lock") "Unable to open `Cargo.lock`"
+    do lock_file_result
+        = monad_io.catch (map Ok (monad_io.read_file_to_string "Cargo.lock")) (wrap << Err)
+    let lock_file_contents =
+        match lock_file_result with
+        | Ok x -> x
+        | Err err -> error ("Unable to open `Cargo.lock`: " <> show err)
     let get_version_by_regex re_str : String -> String =
         let match_ =
             regex.new re_str |> result.unwrap_ok |> (\re -> regex.captures re lock_file_contents)
@@ -218,9 +218,7 @@ let setup_cert opts : Opts -> IO () =
     do status = process.execute (process.proc "certbot" args)
     seq when (status /= Some 0) (\_ -> error "Unable to retrieve the certificate")
 
-    do status =
-        pretty_error (
-            process.execute (process.proc "openssl"
+    do status = process.execute (process.proc "openssl"
                 ["pkcs12",
                 "-out",
                 tls_cert,
@@ -231,7 +229,6 @@ let setup_cert opts : Opts -> IO () =
                 "-export",
                 "-passout",
                 "pass:"])
-        ) "Unable to run `openssl`"
     seq when (status /= Some 0) (\_ -> error ("Unable to convert the certificate: " ++ show status))
     wrap ()
 
