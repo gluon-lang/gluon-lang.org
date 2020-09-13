@@ -18,6 +18,8 @@ use gluon::{
 
 use structopt::StructOpt;
 
+type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
+
 pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     #[derive(Debug, VmType, Userdata, Trace)]
     #[gluon(vm_type = "MasterTryThread")]
@@ -127,7 +129,7 @@ fn share(github: &Github, gist: Gist<'_>) -> impl Future<Output = Result<PostGis
 }
 
 #[cfg(unix)]
-async fn exit_server() -> Result<(), failure::Error> {
+async fn exit_server() -> Result<()> {
     use tokio::signal::unix::{signal, SignalKind};
     let mut stream = futures::stream::select(
         signal(SignalKind::interrupt())?,
@@ -142,7 +144,7 @@ async fn exit_server() -> Result<(), failure::Error> {
 }
 
 #[cfg(not(unix))]
-async fn exit_server() -> Result<(), failure::Error> {
+async fn exit_server() -> Result<()> {
     Ok(tokio::signal::ctrl_c().await?)
 }
 
@@ -188,11 +190,11 @@ fn main() {
         runtime.block_on(main_(opts))
     })();
     if let Err(err) = result {
-        eprintln!("{}\n{}", err, err.backtrace());
+        eprintln!("{}", err);
     }
 }
 
-async fn main_(opts: Opts) -> Result<(), failure::Error> {
+async fn main_(opts: Opts) -> Result<()> {
     env_logger::init();
 
     let vm = gluon::new_vm_async().await;

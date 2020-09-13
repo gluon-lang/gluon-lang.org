@@ -22,7 +22,7 @@ required-features = ["glob", "home", "regex"]
 
 [dependencies]
 env_logger = "0.7"
-failure = "0.1"
+anyhow = "1"
 futures = "0.3"
 hubcaps = { version = "0.5", git = "https://github.com/Marwes/hubcaps", branch = "std_future" }
 log = "0.4"
