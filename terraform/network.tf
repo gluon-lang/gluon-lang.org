@@ -13,12 +13,29 @@ resource "aws_subnet" "gluon-lang" {
   map_public_ip_on_launch = true
 }
 
+resource "aws_eip" "nat" {
+  vpc = true
+
+  depends_on = [aws_internet_gateway.gluon-lang]
+}
+
+resource "aws_nat_gateway" "nat_gateway" {
+  allocation_id = aws_eip.nat.id
+  subnet_id = aws_subnet.gluon-lang.id
+
+  depends_on = [aws_internet_gateway.gluon-lang]
+}
+
 resource "aws_internet_gateway" "gluon-lang" {
   vpc_id = aws_vpc.aws-vpc.id
 }
 
 resource "aws_route_table" "gluon-lang" {
   vpc_id = aws_vpc.aws-vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gateway.id
+  }
 }
 
 resource "aws_route" "default" {
