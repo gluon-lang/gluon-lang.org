@@ -18,7 +18,8 @@ use gluon::{
 
 use structopt::StructOpt;
 
-type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
+type Error = anyhow::Error;
+type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
     #[derive(Debug, VmType, Userdata, Trace)]
@@ -174,6 +175,12 @@ struct Opts {
 
     #[structopt(long = "num-threads", help = "How many threads to run the server with")]
     num_threads: Option<usize>,
+
+    #[structopt(
+        long = "lambda",
+        help = "Whether to run the server as a lambda function"
+    )]
+    lambda: bool,
 }
 
 fn main() {
@@ -187,10 +194,29 @@ fn main() {
             }
             builder.enable_all().threaded_scheduler().build()?
         };
-        runtime.block_on(main_(opts))
+
+        if opts.lambda {
+            lambda_runtime::lambda!(LambdaHandler { runtime });
+        } else {
+            runtime.block_on(main_(opts))?;
+        }
+        Ok::<_, Error>(())
     })();
     if let Err(err) = result {
         eprintln!("{}", err);
+    }
+}
+
+struct LambdaHandler {
+    runtime: tokio::runtime::Runtime,
+}
+impl lambda_runtime::Handler<(), (), lambda_runtime::error::HandlerError> for LambdaHandler {
+    fn run(
+        &mut self,
+        _event: (),
+        ctx: lambda_runtime::Context,
+    ) -> Result<(), lambda_runtime::error::HandlerError> {
+        Ok(())
     }
 }
 
