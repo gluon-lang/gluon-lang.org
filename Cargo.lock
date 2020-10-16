@@ -775,12 +775,8 @@ dependencies = [
  "gluon_format 0.17.1 (git+https://github.com/gluon-lang/gluon)",
  "gluon_parser 0.17.1 (git+https://github.com/gluon-lang/gluon)",
  "gluon_vm 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "http 0.2.1",
- "hyper 0.13.7",
  "itertools",
  "log",
- "native-tls",
- "pin-project-lite",
  "quick-error",
  "rand",
  "rand_xorshift",
@@ -789,8 +785,6 @@ dependencies = [
  "serde_derive_state",
  "serde_state",
  "tokio 0.2.22",
- "tokio-native-tls",
- "tower-service",
  "walkdir",
 ]
 
