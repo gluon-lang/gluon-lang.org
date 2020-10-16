@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./try_gluon --lambda
