@@ -3,6 +3,7 @@ use std::{fs, ops::Deref};
 use {
     futures::{future, prelude::*},
     serde::Serialize,
+    structopt::StructOpt,
 };
 
 use gluon_codegen::{Getable, Pushable, Trace, Userdata, VmType};
@@ -15,8 +16,6 @@ use gluon::{
     },
     Thread, ThreadExt,
 };
-
-use structopt::StructOpt;
 
 type Error = anyhow::Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
@@ -184,6 +183,8 @@ struct Opts {
 }
 
 fn main() {
+    env_logger::init();
+
     let opts = Opts::from_args();
 
     let result = (|| {
@@ -196,7 +197,9 @@ fn main() {
         };
 
         if opts.lambda {
-            lambda_runtime::lambda!(LambdaHandler { runtime });
+            runtime
+                .block_on(lambda_runtime::run(lambda_runtime::handler_fn(handler)))
+                .unwrap();
         } else {
             runtime.block_on(main_(opts))?;
         }
@@ -207,22 +210,12 @@ fn main() {
     }
 }
 
-struct LambdaHandler {
-    runtime: tokio::runtime::Runtime,
-}
-impl lambda_runtime::Handler<(), (), lambda_runtime::error::HandlerError> for LambdaHandler {
-    fn run(
-        &mut self,
-        _event: (),
-        ctx: lambda_runtime::Context,
-    ) -> Result<(), lambda_runtime::error::HandlerError> {
-        Ok(())
-    }
+async fn handler(v: serde_json::Value, _ctx: lambda_runtime::Context) -> Result<serde_json::Value> {
+    eprintln!("{}", v);
+    Ok(v)
 }
 
 async fn main_(opts: Opts) -> Result<()> {
-    env_logger::init();
-
     let vm = gluon::new_vm_async().await;
     gluon::import::add_extern_module(&vm, "gluon.try", load);
     gluon::import::add_extern_module(&vm, "gluon.try.master", load_master);

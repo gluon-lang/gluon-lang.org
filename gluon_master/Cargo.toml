@@ -6,7 +6,7 @@ authors = ["Markus Westerlind <marwes91@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-gluon = { git = "https://github.com/gluon-lang/gluon", features = ["serialization", "regex", "rand"] }
+gluon = { git = "https://github.com/gluon-lang/gluon", features = ["serialization", "regex", "rand", "web"] }
 gluon_doc = { git = "https://github.com/gluon-lang/gluon" }
 gluon_format = { git = "https://github.com/gluon-lang/gluon" }
 

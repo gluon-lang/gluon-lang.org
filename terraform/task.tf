@@ -36,11 +36,12 @@ resource "aws_lambda_function" "gluon-lang" {
     function_name = "gluon-lang"
 
     filename = "../target/lambda.zip"
+    source_code_hash = filebase64sha256("../target/lambda.zip")
 
     # "main" is the filename within the zip file (main.js) and "handler"
     # is the name of the property under which the handler function was
     # exported in that file.
-    runtime = "provided"
+    runtime = "provided.al2"
     handler = "main"
 
     role = aws_iam_role.lambda_exec.arn
