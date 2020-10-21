@@ -1,6 +1,8 @@
 #!/bin/bash
 
-cp bootstrap /lib/x86_64-linux-gnu/libssl.so* target/release/ \
-    && cd target/release \
-    && zip lambda.zip libssl.so* bootstrap try_gluon
+rm target/lambda.zip \
+    && docker run --volume $(pwd):/root/mount --rm try_gluon cp /root/try_gluon /root/mount/target/try_gluon \
+    && cp bootstrap target/ \
+    && cd target \
+    && zip lambda.zip bootstrap try_gluon
 

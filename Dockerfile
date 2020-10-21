@@ -1,4 +1,4 @@
-FROM ekidd/rust-musl-builder:1.44.0 as dependencies
+FROM ekidd/rust-musl-builder:1.47.0 as dependencies
 
 WORKDIR /usr/src/try_gluon
 
@@ -35,6 +35,8 @@ ARG CARGO_INCREMENTAL=
 RUN cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
 
 FROM dependencies as builder
+ARG RELEASE=
+ARG CARGO_INCREMENTAL=
 
 COPY ./scripts/build_docs.sh ./scripts/
 RUN ./scripts/build_docs.sh
@@ -47,7 +49,7 @@ RUN touch gluon_master/src/lib.rs && \
     touch gluon_crates_io/src/lib.rs && \
     cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features && \
     cargo run --target=x86_64-unknown-linux-musl ${RELEASE} --all-features --bin generate_docs && \
-    cargo install --target=x86_64-unknown-linux-musl --path . --root target/try_gluon $([ -n "${RELEASE:-}" ] && echo ${RELEASE} || echo --debug)
+    cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --bin try_gluon --all-features
 
 FROM alpine:3.12
 
@@ -56,7 +58,7 @@ WORKDIR /root/
 RUN apk add certbot openssl
 
 RUN mkdir -p ./target/dist
-COPY --from=builder /usr/src/try_gluon/target/try_gluon/bin/try_gluon .
+COPY --from=builder /usr/src/try_gluon/target/x86_64-unknown-linux-musl/release/try_gluon .
 COPY --from=builder /usr/src/try_gluon/target/dist ./target/dist
 COPY --from=builder /usr/src/try_gluon/public/ ./public
 COPY --from=builder /usr/src/try_gluon/src/ ./src
