@@ -1,4 +1,4 @@
 provider "aws" {
   version = "~> 3"
-  region = "eu-central-1"
+  region = "us-east-1"
 }

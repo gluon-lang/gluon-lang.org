@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./try_gluon --lambda
+RUST_LOG=try_gluon=debug,warn ./try_gluon --lambda

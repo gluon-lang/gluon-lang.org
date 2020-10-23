@@ -38,8 +38,8 @@ FROM dependencies as builder
 ARG RELEASE=
 ARG CARGO_INCREMENTAL=
 
-# COPY ./scripts/build_docs.sh ./scripts/
-# RUN ./scripts/build_docs.sh
+COPY ./scripts/build_docs.sh ./scripts/
+RUN ./scripts/build_docs.sh
 
 COPY . .
 
@@ -48,7 +48,7 @@ RUN npx webpack-cli --mode=production
 RUN touch gluon_master/src/lib.rs && \
     touch gluon_crates_io/src/lib.rs && \
     cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
-# RUN cargo run --target=x86_64-unknown-linux-musl ${RELEASE} --all-features --bin generate_docs
+RUN cargo run --target=x86_64-unknown-linux-musl ${RELEASE} --all-features --bin generate_docs
 
 FROM alpine:3.12
 
