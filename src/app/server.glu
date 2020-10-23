@@ -174,7 +174,7 @@ let load_config =
     let git_master =
         get_version_by_regex "git\\+[^#]+gluon#([^\"]+)"
             |> (\revision -> string.slice revision 0 6)
-    let last_release = get_version_by_regex "checksum gluon ([^ ]+).+(registry|git)"
+    let last_release = "FIXME" // get_version_by_regex "checksum gluon ([^ ]+).+(registry|git)"
 
     do examples =
         do dir_entries = fs.read_dir "public/examples"
@@ -232,7 +232,7 @@ let setup_cert opts : Opts -> IO () =
     seq when (status /= Some 0) (\_ -> error ("Unable to convert the certificate: " ++ show status))
     wrap ()
 
-let start opts : Opts -> IO () =
+let load_handler opts : Opts -> IO _ =
     do config = load_config
 
     let handler =
@@ -257,6 +257,11 @@ let start opts : Opts -> IO () =
     let handler =
         lift (log.debug "Received request") *> handler
             <* lift (log.debug "Responded to request")
+
+    wrap handler
+
+let start opts : Opts -> IO () =
+    do handler = load_handler opts
 
     let port =
         match opts.port with
@@ -287,4 +292,7 @@ let start opts : Opts -> IO () =
         seq monad_io.println ("Opening http server on port " ++ show port)
         run_lift (http.listen server_settings handler)
 
-start
+{
+    start,
+    load_handler,
+}

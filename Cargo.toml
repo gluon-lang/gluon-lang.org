@@ -21,6 +21,7 @@ name = "generate_docs"
 required-features = ["glob", "home", "regex"]
 
 [dependencies]
+aws_lambda_events = "0.3"
 env_logger = "0.7"
 anyhow = "1"
 futures = "0.3"
@@ -53,3 +54,18 @@ tokio = { version = "0.2", features = ["macros"] }
 
 [features]
 server = ["gluon/web"]
+
+[patch.crates-io]
+# gluon = { version = "0.17", path = "../gluon" }
+# gluon_base = { version = "0.17", path = "../gluon/base" }
+# gluon_check = { version = "0.17", path = "../gluon/check" }
+# gluon_vm = { version = "0.17", path = "../gluon/vm" }
+# gluon_doc = { version = "0.17", path = "../gluon/doc" }
+# gluon_format = { version = "0.17", path = "../gluon/format" }
+
+gluon = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+gluon_base = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+gluon_check = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+gluon_vm = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+gluon_doc = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+gluon_format = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
