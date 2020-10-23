@@ -11,32 +11,58 @@ use std::{
     process::{self, Command},
 };
 
-use {regex::Regex, anyhow::anyhow};
+use {anyhow::anyhow, serde::Deserialize};
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
 
 const LOCK_FILE: &str = include_str!("../../Cargo.lock");
 
+#[derive(Deserialize)]
+struct Lockfile {
+    package: Vec<Package>,
+}
+
+#[derive(Deserialize)]
+struct Package {
+    name: String,
+    version: String,
+    source: Option<String>,
+}
 fn git_master_version() -> String {
-    Regex::new(r#"git\+[^#]+gluon#([^"]+)"#)
-        .unwrap()
-        .captures(LOCK_FILE)
+    toml::de::from_str::<Lockfile>(LOCK_FILE)
+        .unwrap_or_else(|err| panic!("{}", err))
+        .package
+        .into_iter()
+        .find(|package| {
+            package.name == "gluon"
+                && package
+                    .source
+                    .as_ref()
+                    .map_or(false, |source| source.contains("git"))
+        })
         .expect("gluon master version")
-        .get(1)
+        .source
         .unwrap()
-        .as_str()
-        .to_string()
+        .rsplit('#')
+        .next()
+        .unwrap()
+        .into()
 }
 
 fn crates_io_version() -> String {
-    Regex::new(r"gluon ([^ ]+) \(registry\+")
-        .unwrap()
-        .captures(LOCK_FILE)
-        .expect("gluon master version")
-        .get(1)
-        .unwrap()
-        .as_str()
-        .to_string()
+    toml::de::from_str::<Lockfile>(LOCK_FILE)
+        .unwrap_or_else(|err| panic!("{}", err))
+        .package
+        .into_iter()
+        .find(|package| {
+            package.name == "gluon"
+                && package
+                    .source
+                    .as_ref()
+                    .map_or(false, |source| source.contains("crates.io"))
+        })
+        .expect("crates.io version")
+        .version
 }
 
 fn gluon_git_path() -> Result<PathBuf> {
@@ -63,11 +89,7 @@ fn gluon_crates_io_path() -> Result<PathBuf> {
         .expect("crates io entry in cargo home"))
 }
 
-fn generate_doc_for_dir<P, Q, F>(
-    in_dir: &P,
-    out_dir: &Q,
-    mut generate_doc: F,
-) -> Result<(), >
+fn generate_doc_for_dir<P, Q, F>(in_dir: &P, out_dir: &Q, mut generate_doc: F) -> Result<()>
 where
     P: AsRef<Path> + ?Sized,
     Q: AsRef<Path> + ?Sized,

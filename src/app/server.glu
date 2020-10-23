@@ -71,15 +71,23 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
             || string.contains err "No such file"
         then
             let path_404 = path_mod.join dist_dir "404.html"
-            seq when (request_path /= path_404) (serve_file path_404 *> wrap ())
-            wrap { status = http.status.not_found,
+            if request_path /= path_404 then
+                do response = serve_file path_404
+                wrap {
+                    status = http.status.not_found,
+                    headers = response.headers,
+                }
+            else
+                wrap {
+                    status = http.status.not_found,
                     .. http.response
                 }
         else
             seq lift (log.info ("Error opening file: " ++ request_path ++ "\n" ++ err))
-            wrap { status = http.status.internal_server_error,
-                    .. http.response
-                }
+            wrap {
+                status = http.status.internal_server_error,
+                .. http.response
+            }
 
 let static_files base : String -> Eff (HttpEffect r) Response =
     let detect_path_traversal uri : String -> Bool =

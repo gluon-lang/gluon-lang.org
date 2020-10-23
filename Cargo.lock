@@ -742,7 +742,7 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 [[package]]
 name = "gluon"
 version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
+source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
 dependencies = [
  "async-trait",
  "codespan",
@@ -751,12 +751,12 @@ dependencies = [
  "either",
  "futures 0.3.6",
  "gluon-salsa",
- "gluon_base 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_check 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_codegen 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_format 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_parser 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_vm 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon_base 0.17.1",
+ "gluon_check 0.17.1",
+ "gluon_codegen 0.17.1",
+ "gluon_format 0.17.1",
+ "gluon_parser 0.17.1",
+ "gluon_vm 0.17.1",
  "http",
  "hyper",
  "itertools",
@@ -778,8 +778,9 @@ dependencies = [
 
 [[package]]
 name = "gluon"
-version = "0.17.1"
-source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "268e1d6205e87e79bd9d6f18f85e55d892c354395f3a00e600fc98fd4f5da584"
 dependencies = [
  "async-trait",
  "codespan",
@@ -788,12 +789,12 @@ dependencies = [
  "either",
  "futures 0.3.6",
  "gluon-salsa",
- "gluon_base 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_check 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_codegen 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_format 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_parser 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_vm 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.17.2",
+ "gluon_check 0.17.2",
+ "gluon_codegen 0.17.2",
+ "gluon_format 0.17.2",
+ "gluon_parser 0.17.2",
+ "gluon_vm 0.17.2",
  "http",
  "hyper",
  "itertools",
@@ -847,7 +848,7 @@ dependencies = [
 [[package]]
 name = "gluon_base"
 version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
+source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
 dependencies = [
  "anymap",
  "bitflags",
@@ -856,7 +857,7 @@ dependencies = [
  "collect-mac",
  "either",
  "fnv",
- "gluon_codegen 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon_codegen 0.17.1",
  "hashbrown 0.8.2",
  "itertools",
  "log",
@@ -874,8 +875,9 @@ dependencies = [
 
 [[package]]
 name = "gluon_base"
-version = "0.17.1"
-source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60e22691ead91365f5b1641eee9c21d5b794a5ff0cb6671272a844ced44e30de"
 dependencies = [
  "anymap",
  "bitflags",
@@ -884,7 +886,7 @@ dependencies = [
  "collect-mac",
  "either",
  "fnv",
- "gluon_codegen 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_codegen 0.17.2",
  "hashbrown 0.8.2",
  "itertools",
  "log",
@@ -903,14 +905,14 @@ dependencies = [
 [[package]]
 name = "gluon_check"
 version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
+source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "collect-mac",
  "ena",
- "gluon_base 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_codegen 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon_base 0.17.1",
+ "gluon_codegen 0.17.1",
  "itertools",
  "log",
  "pretty",
@@ -922,15 +924,16 @@ dependencies = [
 
 [[package]]
 name = "gluon_check"
-version = "0.17.1"
-source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e005ef6f8085599dc3edaa3f2ae97945312c230fd3937998816802e62216d229"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "collect-mac",
  "ena",
- "gluon_base 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_codegen 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.17.2",
+ "gluon_codegen 0.17.2",
  "itertools",
  "log",
  "pretty",
@@ -943,28 +946,18 @@ dependencies = [
 [[package]]
 name = "gluon_codegen"
 version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c11dc4e79138a18df511fd44729a35c57af9d739ab0400de87e2fa30aaa37c1"
-dependencies = [
- "proc-macro2 1.0.24",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "gluon_codegen"
-version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
-dependencies = [
- "proc-macro2 1.0.24",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "gluon_codegen"
-version = "0.17.1"
 source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "gluon_codegen"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ad77fad378e1a0156134c1fefdc8692cdb31ffa6c5bf40e30bed8aee1de53a2"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote",
@@ -974,11 +967,12 @@ dependencies = [
 [[package]]
 name = "gluon_completion"
 version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a087133e955e7da67b07139538a3d571aefa795780fd9fd545e0ef8fe67cf70"
 dependencies = [
  "codespan",
  "either",
- "gluon_base 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon_base 0.17.2",
  "itertools",
  "walkdir",
 ]
@@ -990,7 +984,7 @@ source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e2
 dependencies = [
  "codespan",
  "either",
- "gluon_base 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.17.1",
  "itertools",
  "walkdir",
 ]
@@ -1001,22 +995,23 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.6",
- "gluon 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_doc 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_format 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon 0.17.2",
+ "gluon_doc 0.17.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_format 0.17.2",
 ]
 
 [[package]]
 name = "gluon_doc"
 version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5858f80cebd3a3f6a5ddf41d25922e279d2467edbdd63f56345e1cbccf35dab"
 dependencies = [
  "anyhow",
  "clap",
  "env_logger",
  "futures 0.3.6",
- "gluon 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_completion 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon 0.17.2",
+ "gluon_completion 0.17.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "handlebars",
  "itertools",
  "lazy_static",
@@ -1042,7 +1037,7 @@ dependencies = [
  "clap",
  "env_logger",
  "futures 0.3.6",
- "gluon 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon 0.17.1",
  "gluon_completion 0.17.1 (git+https://github.com/gluon-lang/gluon)",
  "handlebars",
  "itertools",
@@ -1063,10 +1058,10 @@ dependencies = [
 [[package]]
 name = "gluon_format"
 version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
+source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
 dependencies = [
  "codespan",
- "gluon_base 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon_base 0.17.1",
  "itertools",
  "log",
  "pretty",
@@ -1074,11 +1069,12 @@ dependencies = [
 
 [[package]]
 name = "gluon_format"
-version = "0.17.1"
-source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dda2b7cece2002340bcd47de0b945019c4030f40a9d4a10ebe3a65d0d4319fb1"
 dependencies = [
  "codespan",
- "gluon_base 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.17.2",
  "itertools",
  "log",
  "pretty",
@@ -1090,26 +1086,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.6",
- "gluon 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon 0.17.1",
  "gluon_doc 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_format 0.17.1 (git+https://github.com/gluon-lang/gluon)",
-]
-
-[[package]]
-name = "gluon_parser"
-version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
-dependencies = [
- "codespan",
- "codespan-reporting",
- "collect-mac",
- "gluon_base 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "itertools",
- "lalrpop",
- "lalrpop-util",
- "log",
- "ordered-float",
- "quick-error",
+ "gluon_format 0.17.1",
 ]
 
 [[package]]
@@ -1120,7 +1099,25 @@ dependencies = [
  "codespan",
  "codespan-reporting",
  "collect-mac",
- "gluon_base 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.17.1",
+ "itertools",
+ "lalrpop",
+ "lalrpop-util",
+ "log",
+ "ordered-float",
+ "quick-error",
+]
+
+[[package]]
+name = "gluon_parser"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8060f7e81f98391ecc7d045923be48f1d06235f3500bc359b59b3220086cb6c4"
+dependencies = [
+ "codespan",
+ "codespan-reporting",
+ "collect-mac",
+ "gluon_base 0.17.2",
  "itertools",
  "lalrpop",
  "lalrpop-util",
@@ -1132,7 +1129,7 @@ dependencies = [
 [[package]]
 name = "gluon_vm"
 version = "0.17.1"
-source = "git+https://github.com/Marwes/gluon?branch=http#33b00fa61cfff4abcb6af819b09e6bcd000d4477"
+source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
 dependencies = [
  "async-trait",
  "bitflags",
@@ -1143,9 +1140,9 @@ dependencies = [
  "downcast-rs",
  "frunk_core",
  "futures 0.3.6",
- "gluon_base 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_check 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_codegen 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
+ "gluon_base 0.17.1",
+ "gluon_check 0.17.1",
+ "gluon_codegen 0.17.1",
  "itertools",
  "log",
  "ordered-float",
@@ -1165,8 +1162,9 @@ dependencies = [
 
 [[package]]
 name = "gluon_vm"
-version = "0.17.1"
-source = "git+https://github.com/gluon-lang/gluon#c56510dcb9829e20c018d4d67290e267af00975a"
+version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14bed68cb204682626f56a4728759fc1feb7fd9b3af3173496b70e8bd690a8ef"
 dependencies = [
  "async-trait",
  "bitflags",
@@ -1177,9 +1175,9 @@ dependencies = [
  "downcast-rs",
  "frunk_core",
  "futures 0.3.6",
- "gluon_base 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_check 0.17.1 (git+https://github.com/gluon-lang/gluon)",
- "gluon_codegen 0.17.1 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.17.2",
+ "gluon_check 0.17.2",
+ "gluon_codegen 0.17.2",
  "itertools",
  "log",
  "ordered-float",
@@ -2770,6 +2768,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml"
+version = "0.5.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75cf45bb0bef80604d001caaec0d09da99611b3c0fd39d3080468875cdb65645"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "tower-service"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2854,8 +2861,8 @@ dependencies = [
  "env_logger",
  "futures 0.3.6",
  "glob",
- "gluon 0.17.1 (git+https://github.com/Marwes/gluon?branch=http)",
- "gluon_codegen 0.17.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon 0.17.2",
+ "gluon_codegen 0.17.2",
  "gluon_crates_io",
  "gluon_master",
  "home",
@@ -2863,12 +2870,12 @@ dependencies = [
  "hyper",
  "lambda",
  "log",
- "regex",
  "serde",
  "serde_derive",
  "serde_json",
  "structopt",
  "tokio",
+ "toml",
 ]
 
 [[package]]

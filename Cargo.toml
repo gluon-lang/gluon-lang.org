@@ -18,7 +18,7 @@ path = "src/app/main.rs"
 
 [[bin]]
 name = "generate_docs"
-required-features = ["glob", "home", "regex"]
+required-features = ["glob", "home"]
 
 [dependencies]
 aws_lambda_events = "0.3"
@@ -33,10 +33,11 @@ serde_derive = "1"
 serde_json = "1"
 structopt = "0.3"
 tokio = { version = "0.2", features = ["signal", "rt-core", "rt-threaded"] }
+toml = "0.5"
 hyper = "0.13"
 
-gluon = { version = "0.17", features = ["serialization", "regex", "rand", "web"] }
-gluon_codegen = { version = "0.17" }
+gluon = { version = "0.17.2", features = ["serialization", "regex", "rand", "web"] }
+gluon_codegen = { version = "0.17.2" }
 
 #gluon = { path = "../gluon", features = ["serialization", "web", "regex", "rand"] }
 #gluon_codegen = { path = "../gluon/codegen" }
@@ -47,7 +48,6 @@ gluon_crates_io = { path = "gluon_crates_io" }
 
 glob = { version = "0.3", optional = true }
 home = { version = "0.5", optional = true }
-regex = { version = "1", optional = true }
 
 [dev-dependencies]
 tokio = { version = "0.2", features = ["macros"] }
@@ -63,9 +63,9 @@ server = ["gluon/web"]
 # gluon_doc = { version = "0.17", path = "../gluon/doc" }
 # gluon_format = { version = "0.17", path = "../gluon/format" }
 
-gluon = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
-gluon_base = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
-gluon_check = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
-gluon_vm = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
-gluon_doc = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
-gluon_format = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_base = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_check = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_vm = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_doc = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_format = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
