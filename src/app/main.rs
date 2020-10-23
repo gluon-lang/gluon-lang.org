@@ -1,6 +1,7 @@
-use std::{fs, ops::Deref};
+use std::{collections::HashMap, fs, ops::Deref};
 
 use {
+    anyhow::anyhow,
     futures::{future, prelude::*},
     serde::Serialize,
     structopt::StructOpt,
@@ -11,18 +12,19 @@ use gluon_codegen::{Getable, Pushable, Trace, Userdata, VmType};
 use gluon::{
     vm::{
         self,
-        api::{OwnedFunction, RuntimeResult, IO},
+        api::{Function, OwnedFunction, RuntimeResult, IO},
         primitive, record, ExternModule,
     },
-    Thread, ThreadExt,
+    RootedThread, Thread, ThreadExt,
 };
 
 type Error = anyhow::Error;
 type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
-    #[derive(Debug, VmType, Userdata, Trace)]
+    #[derive(Debug, VmType, Userdata, Trace, Clone)]
     #[gluon(vm_type = "MasterTryThread")]
+    #[gluon_userdata(clone)]
     #[gluon_trace(skip)]
     pub struct TryThread(gluon_master::RootedThread);
 
@@ -49,8 +51,9 @@ pub fn load_master(thread: &Thread) -> vm::Result<ExternModule> {
 }
 
 pub fn load(thread: &Thread) -> vm::Result<ExternModule> {
-    #[derive(Debug, VmType, Userdata, Trace)]
+    #[derive(Debug, VmType, Userdata, Trace, Clone)]
     #[gluon(vm_type = "TryThread")]
+    #[gluon_userdata(clone)]
     #[gluon_trace(skip)]
     pub struct TryThread(gluon_crates_io::RootedThread);
 
@@ -87,8 +90,9 @@ pub struct PostGist {
     pub html_url: String,
 }
 
-#[derive(Debug, VmType, Userdata, Trace)]
+#[derive(Debug, VmType, Userdata, Trace, Clone)]
 #[gluon(vm_type = "Github")]
+#[gluon_userdata(clone)]
 #[gluon_trace(skip)]
 struct Github(hubcaps::Github);
 
@@ -198,8 +202,11 @@ fn main() {
 
         if opts.lambda {
             runtime
-                .block_on(lambda_runtime::run(lambda_runtime::handler_fn(handler)))
-                .unwrap();
+                .block_on(async {
+                    let handler = lambda_runtime::handler_fn(mk_handler(opts).await?);
+                    lambda_runtime::run(handler).await
+                })
+                .map_err(|err| anyhow!(err))?;
         } else {
             runtime.block_on(main_(opts))?;
         }
@@ -207,15 +214,77 @@ fn main() {
     })();
     if let Err(err) = result {
         eprintln!("{}", err);
+        std::process::exit(1);
     }
 }
 
-async fn handler(v: serde_json::Value, _ctx: lambda_runtime::Context) -> Result<serde_json::Value> {
-    eprintln!("{}", v);
-    Ok(v)
+use aws_lambda_events::event::apigw;
+async fn mk_handler(
+    opts: Opts,
+) -> Result<
+    impl Fn(
+        apigw::ApiGatewayProxyRequest,
+        lambda_runtime::Context,
+    ) -> future::BoxFuture<'static, Result<apigw::ApiGatewayProxyResponse>>,
+> {
+    let vm = new_vm().await;
+    let server_source = fs::read_to_string("src/app/server.glu")?;
+
+    vm.load_script_async("src.app.server", &server_source)
+        .await?;
+    let mut load_handler: Function<RootedThread, fn(Opts) -> IO<_>> =
+        vm.get_global("src.app.server.load_handler")?;
+    let h = load_handler
+        .call_async(opts)
+        .await?
+        .into_result()
+        .map_err(|err| anyhow!(err))?;
+
+    let http_handler = gluon::std_lib::http::Handler::new(&vm, h);
+
+    Ok(move |req, ctx| handler(http_handler.clone(), req, ctx).boxed())
 }
 
-async fn main_(opts: Opts) -> Result<()> {
+async fn handler(
+    mut handler: gluon::std_lib::http::Handler,
+    req: apigw::ApiGatewayProxyRequest,
+    _ctx: lambda_runtime::Context,
+) -> Result<apigw::ApiGatewayProxyResponse> {
+    eprintln!("{}", serde_json::to_string(&req).unwrap());
+
+    let mut response = handler
+        .handle(
+            req.http_method
+                .ok_or_else(|| anyhow!("Missing method"))?
+                .parse()?,
+            req.path.ok_or_else(|| anyhow!("Missing path"))?.parse()?,
+            stream::iter(req.body.into_iter().map(From::from).map(Ok::<_, String>)),
+        )
+        .await?;
+
+    let mut body = Vec::new();
+    while let Some(chunk) = response.body_mut().try_next().await? {
+        body.extend_from_slice(&chunk);
+    }
+
+    let mut multi_value_headers =
+        HashMap::<String, Vec<String>>::with_capacity(response.headers().len());
+    for (key, value) in response.headers() {
+        multi_value_headers
+            .entry(String::from(key.as_str()))
+            .or_default()
+            .push(String::from(value.to_str()?));
+    }
+    Ok(apigw::ApiGatewayProxyResponse {
+        status_code: response.status().as_u16().into(),
+        headers: Default::default(),
+        multi_value_headers,
+        body: Some(String::from_utf8(body)?),
+        is_base64_encoded: None,
+    })
+}
+
+async fn new_vm() -> RootedThread {
     let vm = gluon::new_vm_async().await;
     gluon::import::add_extern_module(&vm, "gluon.try", load);
     gluon::import::add_extern_module(&vm, "gluon.try.master", load_master);
@@ -256,16 +325,20 @@ async fn main_(opts: Opts) -> Result<()> {
         )
     });
 
+    vm
+}
+
+async fn main_(opts: Opts) -> Result<()> {
+    let vm = new_vm().await;
+
     let server_source = fs::read_to_string("src/app/server.glu")?;
 
     future::try_select(
         Box::pin(async move {
-            let (mut f, _) = vm
-                .run_expr_async::<OwnedFunction<fn(Opts) -> IO<()>>>(
-                    "src.app.server",
-                    &server_source,
-                )
+            vm.load_script_async("src.app.server", &server_source)
                 .await?;
+            let mut f: OwnedFunction<fn(Opts) -> IO<()>> =
+                vm.get_global("src.app.server.load_handler")?;
             f.call_async(opts).await?;
             Ok(())
         }),
