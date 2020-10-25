@@ -182,7 +182,7 @@ let load_config =
     let git_master =
         get_version_by_regex "git\\+[^#]+gluon#([^\"]+)"
             |> (\revision -> string.slice revision 0 6)
-    let last_release = "FIXME" // get_version_by_regex "checksum gluon ([^ ]+).+(registry|git)"
+    let last_release = get_version_by_regex r#""gluon"\s+version = "([^ ]+).+"\s+source = "registry"#
 
     do examples =
         do dir_entries = fs.read_dir "public/examples"
