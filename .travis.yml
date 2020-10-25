@@ -18,6 +18,6 @@ after_script:
 
 deploy:
   provider: script
-  script: ./scripts/docker_push.sh
+  script: ./scripts/terraform_apply.sh
   on:
     branch: master
