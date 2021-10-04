@@ -135,15 +135,13 @@ fn share(github: &Github, gist: Gist<'_>) -> impl Future<Output = Result<PostGis
 #[cfg(unix)]
 async fn exit_server() -> Result<()> {
     use tokio::signal::unix::{signal, SignalKind};
-    let mut stream = futures::stream::select(
-        signal(SignalKind::interrupt())?,
-        signal(SignalKind::terminate())?,
-    );
-
-    match stream.next().await {
-        Some(()) => eprintln!("Signal received. Shutting down"),
-        None => eprintln!("Signal handler shutdown. Shutting down"),
+    let mut interrupt = signal(SignalKind::interrupt())?;
+    let mut terminate = signal(SignalKind::terminate())?;
+    tokio::select! {
+        _ = interrupt.recv() => eprintln!("Signal received. Shutting down"),
+        _ = terminate.recv() => eprintln!("Signal received. Shutting down"),
     }
+
     Ok(())
 }
 
@@ -192,12 +190,12 @@ fn main() {
     let opts = Opts::from_args();
 
     let result = (|| {
-        let mut runtime = {
-            let mut builder = tokio::runtime::Builder::new();
+        let runtime = {
+            let mut builder = tokio::runtime::Builder::new_multi_thread();
             if let Some(num_threads) = opts.num_threads {
-                builder.core_threads(num_threads);
+                builder.worker_threads(num_threads);
             }
-            builder.enable_all().threaded_scheduler().build()?
+            builder.enable_all().build()?
         };
 
         if opts.lambda {
@@ -368,11 +366,7 @@ async fn handler_fn(
 ) -> Result<apigw::ApiGatewayV2httpResponse> {
     let mut response = handler
         .handle(
-            req.request_context
-                .http
-                .method
-                .ok_or_else(|| anyhow!("Missing method"))?
-                .parse()?,
+            req.request_context.http.method,
             req.request_context
                 .http
                 .path
@@ -387,27 +381,13 @@ async fn handler_fn(
         body.extend_from_slice(&chunk);
     }
 
-    let mut headers = HashMap::<String, String>::with_capacity(response.headers().len());
-    for (key, value) in response.headers() {
-        use std::collections::hash_map;
-
-        let value = String::from(value.to_str()?);
-        match headers.entry(String::from(key.as_str())) {
-            hash_map::Entry::Vacant(entry) => {
-                entry.insert(value);
-            }
-            hash_map::Entry::Occupied(entry) => {
-                use std::fmt::Write;
-                write!(entry.into_mut(), ",{}", value).unwrap();
-            }
-        }
-    }
+    let headers = response.headers().clone();
 
     let response = apigw::ApiGatewayV2httpResponse {
         status_code: response.status().as_u16().into(),
         headers,
         multi_value_headers: Default::default(),
-        body: Some(String::from_utf8(body)?),
+        body: Some(String::from_utf8(body)?.into()),
         is_base64_encoded: Some(false),
         cookies: Vec::new(),
     };
