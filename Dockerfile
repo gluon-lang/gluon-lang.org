@@ -1,17 +1,17 @@
-FROM ekidd/rust-musl-builder:1.47.0 as dependencies
+FROM ekidd/rust-musl-builder:1.51.0 as dependencies
 
 WORKDIR /usr/src/try_gluon
 
 USER root
 
-RUN apt-get update && apt-get install -y curl gnupg make g++ git pkg-config
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
-    apt-get install -y nodejs
+RUN apt-get update && apt-get install -y curl gnupg make g++ git pkg-config libgnutls30
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
+    apt-get update && apt-get install -y nodejs
 
 RUN curl -L https://github.com/rust-lang-nursery/mdBook/releases/download/v0.1.2/mdbook-v0.1.2-x86_64-unknown-linux-gnu.tar.gz | tar -xvz && \
     mv mdbook /usr/local/bin/
 
-RUN rustup default 1.44.0 && rustup target add x86_64-unknown-linux-musl
+RUN rustup default 1.51.0 && rustup target add x86_64-unknown-linux-musl
 
 COPY package.json package-lock.json ./
 RUN npm ci
