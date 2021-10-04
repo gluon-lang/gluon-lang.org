@@ -4,3 +4,7 @@ node_modules
 target
 std
 try_gluon.env
+
+.terraform
+**.tfstate*
+

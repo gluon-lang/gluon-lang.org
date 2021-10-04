@@ -7,6 +7,8 @@ license = "MIT"
 
 edition = "2018"
 
+default-run = "try_gluon"
+
 [workspace]
 members = ["gluon_master"]
 
@@ -14,23 +16,28 @@ members = ["gluon_master"]
 name = "try_gluon"
 path = "src/app/main.rs"
 
+[[bin]]
+name = "generate_docs"
+required-features = ["glob", "home"]
+
 [dependencies]
-env_logger = "0.6"
-failure = "0.1"
-futures = "0.1.0"
-hubcaps = "0.5"
+aws_lambda_events = "0.5.0"
+env_logger = "0.9.0"
+anyhow = "1"
+futures = "0.3"
+hubcaps = { version = "0.6", git = "https://github.com/Marwes/hubcaps", branch = "std_future" }
+lambda_runtime = "0.4"
 log = "0.4"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
-structopt = "0.2"
-tokio = "0.1"
-tokio-signal = "0.2.7"
-hyper = "0.12"
-hyper-tls = "0.3"
+structopt = "0.3"
+tokio = { version = "1.12.0", features = ["signal", "rt", "rt-multi-thread"] }
+toml = "0.5"
+hyper = "0.14.13"
 
-gluon = { version = "0.13.1", features = ["serialization", "web", "regex", "rand"] }
-gluon_codegen = { version = "0.13.1" }
+gluon = { version = "0.18.1", features = ["serialization", "regex", "rand", "web"] }
+gluon_codegen = "0.18.0"
 
 #gluon = { path = "../gluon", features = ["serialization", "web", "regex", "rand"] }
 #gluon_codegen = { path = "../gluon/codegen" }
@@ -38,16 +45,27 @@ gluon_codegen = { version = "0.13.1" }
 gluon_master = { path = "gluon_master" }
 gluon_crates_io = { path = "gluon_crates_io" }
 
-[build-dependencies]
-env_logger = "0.6"
-failure = "0.1"
-glob = "0.2"
-home = "0.3"
-regex = "1"
 
-gluon_master = { path = "gluon_master" }
-gluon_crates_io = { path = "gluon_crates_io" }
+glob = { version = "0.3", optional = true }
+home = { version = "0.5", optional = true }
 
 [dev-dependencies]
-tokio-retry = "0.2"
+tokio = { version = "1.12.0", features = ["macros"] }
 
+[features]
+server = ["gluon/web"]
+
+[patch.crates-io]
+# gluon = { version = "0.17", path = "../gluon" }
+# gluon_base = { version = "0.17", path = "../gluon/base" }
+# gluon_check = { version = "0.17", path = "../gluon/check" }
+# gluon_vm = { version = "0.17", path = "../gluon/vm" }
+# gluon_doc = { version = "0.17", path = "../gluon/doc" }
+# gluon_format = { version = "0.17", path = "../gluon/format" }
+
+# gluon = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_base = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_check = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_vm = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_doc = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }
+# gluon_format = { version = "0.17", git = "https://github.com/Marwes/gluon", branch = "http" }

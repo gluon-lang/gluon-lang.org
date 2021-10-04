@@ -134,6 +134,6 @@ pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
         .map_err(|err| err.to_string())
 }
 
-pub fn generate_doc(options: &gluon_doc::Options) -> StdResult<(), failure::Error> {
+pub fn generate_doc(options: &gluon_doc::Options) -> StdResult<(), anyhow::Error> {
     gluon_doc::generate(options, &gluon::new_vm())
 }
