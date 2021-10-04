@@ -6,9 +6,9 @@ authors = ["Markus Westerlind <marwes91@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-gluon = { version = "0.17", features = ["serialization", "regex", "rand", "web"] }
-gluon_format = { version = "0.17" }
-gluon_doc = { version = "0.17" }
+gluon = { version = "0.18", features = ["serialization", "regex", "rand", "web"] }
+gluon_format = { version = "0.18" }
+gluon_doc = { version = "0.18" }
 
 futures = "0.3"
 anyhow = "1"
