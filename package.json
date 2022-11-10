@@ -4,7 +4,7 @@
     "description": "",
     "main": "src/client/index.js",
     "dependencies": {
-        "ajv": ">=6.0.0",
+        "ajv": ">=6.12.3",
         "bootstrap": "^4.3.1",
         "buffertools": "^2.1.6",
         "webpack-closure-compiler": "^2.1.6",
