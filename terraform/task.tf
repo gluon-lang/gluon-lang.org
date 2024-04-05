@@ -35,10 +35,11 @@ resource "aws_apigatewayv2_api" "gluon-lang" {
     protocol_type = "HTTP"
 }
 
+
 resource "aws_apigatewayv2_api_mapping" "gluon-lang" {
-    api_id = aws_apigatewayv2_api.gluon-lang.id
-    domain_name = aws_apigatewayv2_domain_name.gluon-lang.id
-    stage = "$default"
+  api_id          = "c85hocb4n1"
+  domain_name     = "gluon-lang.org"
+  stage           = "$default"
 }
 
 resource "aws_s3_bucket" "gluon-lang-doc" {
@@ -158,7 +159,8 @@ resource "aws_apigatewayv2_domain_name" "gluon-lang" {
 resource "aws_lambda_permission" "apigw" {
    statement_id  = "AllowAPIGatewayInvoke"
    action        = "lambda:InvokeFunction"
-   function_name = aws_lambda_function.gluon-lang.function_name
+   // Avoid churn when importing, but it shouldn't otherwise need to use the arn
+   function_name = "arn:aws:lambda:us-east-1:872228236375:function:gluon-lang"
    principal     = "apigateway.amazonaws.com"
 
    # The "/*/*" portion grants access from any method on any resource
