@@ -1,8 +1,6 @@
 pub use gluon_doc;
 
-use std::{result::Result as StdResult, time::Instant};
-
-use futures::Async;
+use std::{result::Result as StdResult, task::Poll, time::Instant};
 
 pub use gluon::{
     base::{
@@ -107,13 +105,13 @@ pub fn eval(global_vm: &Thread, body: &str) -> StdResult<String, String> {
         // Prevent infinite loops from running forever
         let start = Instant::now();
         context.set_hook(Some(Box::new(move |_, _| {
-            if start.elapsed().as_secs() < 10 {
-                Ok(Async::Ready(()))
+            Poll::Ready(if start.elapsed().as_secs() < 10 {
+                Ok(())
             } else {
                 Err(vm::Error::Message(
                     "Thread has exceeded the allowed exection time".into(),
                 ))
-            }
+            })
         })));
     }
 
@@ -135,6 +133,6 @@ pub fn format_expr(thread: &Thread, input: &str) -> StdResult<String, String> {
         .map_err(|err| err.to_string())
 }
 
-pub fn generate_doc(options: &gluon_doc::Options) -> StdResult<(), failure::Error> {
+pub fn generate_doc(options: &gluon_doc::Options) -> StdResult<(), anyhow::Error> {
     gluon_doc::generate(options, &gluon::new_vm())
 }

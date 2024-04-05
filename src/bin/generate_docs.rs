@@ -1,5 +1,4 @@
 use env_logger;
-use failure;
 use glob;
 use home;
 
@@ -12,33 +11,61 @@ use std::{
     process::{self, Command},
 };
 
-use regex::Regex;
+use {anyhow::anyhow, serde::Deserialize};
 
-const LOCK_FILE: &str = include_str!("Cargo.lock");
+type Result<T> = std::result::Result<T, anyhow::Error>;
 
+const LOCK_FILE: &str = include_str!("../../Cargo.lock");
+
+#[derive(Deserialize)]
+struct Lockfile {
+    package: Vec<Package>,
+}
+
+#[derive(Deserialize)]
+struct Package {
+    name: String,
+    version: String,
+    source: Option<String>,
+}
 fn git_master_version() -> String {
-    Regex::new(r#"git\+[^#]+gluon#([^"]+)"#)
-        .unwrap()
-        .captures(LOCK_FILE)
+    toml::de::from_str::<Lockfile>(LOCK_FILE)
+        .unwrap_or_else(|err| panic!("{}", err))
+        .package
+        .into_iter()
+        .find(|package| {
+            package.name == "gluon"
+                && package
+                    .source
+                    .as_ref()
+                    .map_or(false, |source| source.contains("git"))
+        })
         .expect("gluon master version")
-        .get(1)
+        .source
         .unwrap()
-        .as_str()
-        .to_string()
+        .rsplit('#')
+        .next()
+        .unwrap()
+        .into()
 }
 
 fn crates_io_version() -> String {
-    Regex::new(r"gluon ([^ ]+) \(registry\+")
-        .unwrap()
-        .captures(LOCK_FILE)
-        .expect("gluon master version")
-        .get(1)
-        .unwrap()
-        .as_str()
-        .to_string()
+    toml::de::from_str::<Lockfile>(LOCK_FILE)
+        .unwrap_or_else(|err| panic!("{}", err))
+        .package
+        .into_iter()
+        .find(|package| {
+            package.name == "gluon"
+                && package
+                    .source
+                    .as_ref()
+                    .map_or(false, |source| source.contains("crates.io"))
+        })
+        .expect("crates.io version")
+        .version
 }
 
-fn gluon_git_path() -> Result<PathBuf, failure::Error> {
+fn gluon_git_path() -> Result<PathBuf> {
     let std_glob_path = home::cargo_home()?
         .join(&format!(
             "git/checkouts/gluon-*/{}",
@@ -51,7 +78,7 @@ fn gluon_git_path() -> Result<PathBuf, failure::Error> {
         .expect("git repo in cargo home")?)
 }
 
-fn gluon_crates_io_path() -> Result<PathBuf, failure::Error> {
+fn gluon_crates_io_path() -> Result<PathBuf> {
     let std_glob_path = home::cargo_home()?
         .join(&format!("registry/src/*/gluon-{}/", crates_io_version()))
         .display()
@@ -62,16 +89,12 @@ fn gluon_crates_io_path() -> Result<PathBuf, failure::Error> {
         .expect("crates io entry in cargo home"))
 }
 
-fn generate_doc_for_dir<P, Q, F>(
-    in_dir: &P,
-    out_dir: &Q,
-    mut generate_doc: F,
-) -> Result<(), failure::Error>
+fn generate_doc_for_dir<P, Q, F>(in_dir: &P, out_dir: &Q, mut generate_doc: F) -> Result<()>
 where
     P: AsRef<Path> + ?Sized,
     Q: AsRef<Path> + ?Sized,
 
-    F: FnMut(&Path, &Path) -> Result<(), failure::Error>,
+    F: FnMut(&Path, &Path) -> Result<()>,
 {
     generate_doc_for_dir_(in_dir.as_ref(), out_dir.as_ref(), &mut generate_doc)
 }
@@ -79,8 +102,8 @@ where
 fn generate_doc_for_dir_(
     in_dir: &Path,
     out_dir: &Path,
-    generate_doc: &mut dyn FnMut(&Path, &Path) -> Result<(), failure::Error>,
-) -> Result<(), failure::Error> {
+    generate_doc: &mut dyn FnMut(&Path, &Path) -> Result<()>,
+) -> Result<()> {
     {
         eprintln!(
             "Generating gluon doc: {} -> {}",
@@ -104,25 +127,26 @@ fn generate_doc_for_dir_(
             Err(err)
         }
     })?;
+
+    let dest_dir = env::current_dir()?.join(out_dir).join("book");
     let mut command = Command::new("mdbook");
     command.args(&[
         "build",
         "--dest-dir",
-        &env::current_dir()?
-            .join(out_dir)
-            .join("book")
-            .to_string_lossy(),
+        &dest_dir.to_string_lossy(),
         &in_dir.join("book").to_string_lossy(),
     ]);
     eprintln!("Building book: {:?}", command);
-    let exit_status = command.status()?;
+    let exit_status = command
+        .status()
+        .map_err(|err| anyhow!("Unable to execute mdbook: {}", err))?;
     if !exit_status.success() {
-        return Err(failure::err_msg("Error building book docs"));
+        return Err(anyhow!("Error building book docs"));
     }
     Ok(())
 }
 
-fn create_docs() -> Result<(), failure::Error> {
+fn create_docs() -> Result<()> {
     {
         let git_dir = gluon_git_path()?;
         generate_doc_for_dir(&git_dir, "target/dist/doc/nightly", |input, output| {
@@ -166,9 +190,7 @@ fn main() {
     env_logger::init();
 
     if let Err(err) = create_docs() {
-        eprintln!("{}\n{}", err.backtrace(), err);
+        eprintln!("{}", err);
         process::exit(1);
     }
-    println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=Cargo.lock");
 }
