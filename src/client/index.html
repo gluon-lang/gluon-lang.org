@@ -32,7 +32,7 @@ let { Result, ? } = import! std.result
 #[derive(Serialize, Deserialize)]
 type Vec = { x : Float, y : Float, name : Option String }
 
-let result = 
+let result =
     let input = r#"{ "x": 123, "y": 456.78, "name": null }"#
     do v = de.deserialize input
     let v : Vec = v
