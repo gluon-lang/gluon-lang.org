@@ -79,7 +79,7 @@ data "aws_iam_policy_document" "site_public_access" {
 
 resource "null_resource" "remove_and_upload_to_s3" {
     provisioner "local-exec" {
-      command = "aws s3 sync ../target/doc s3://${aws_s3_bucket.gluon-lang-doc.id}"
+      command = "aws s3 sync ../target/dist/doc s3://${aws_s3_bucket.gluon-lang-doc.id}"
     }
 }
 

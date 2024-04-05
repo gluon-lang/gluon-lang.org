@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ID=$(docker create try_gluon)
+ID=$(docker create marwes/try_gluon)
 rm -f target/lambda.zip \
-    && docker run --volume $(pwd):/outside --rm try_gluon cp -r /root/{Cargo.lock,public,src,target,try_gluon} /outside/target/ \
+    && docker run --volume $(pwd):/outside --rm marwes/try_gluon cp -r /root/{Cargo.lock,public,src,target,try_gluon} /outside/target/ \
     && cp bootstrap target/ \
     && cd target \
     && sudo chown -R $USER target/dist \
