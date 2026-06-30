@@ -25,7 +25,7 @@ docker build \
     --cache-from marwes/try_gluon:dependencies \
     .
 
-if [ -n "${REGISTRY_PASS:-}" ]; then
+if [ -n "${PUSH_DOCKER_CACHE:-}" ]; then
     docker push marwes/try_gluon:dependencies
 fi
 
@@ -38,7 +38,7 @@ docker build \
     --cache-from marwes/try_gluon:builder \
     .
 
-if [ -n "${REGISTRY_PASS:-}" ]; then
+if [ -n "${PUSH_DOCKER_CACHE:-}" ]; then
     docker push marwes/try_gluon:builder
 fi
 
