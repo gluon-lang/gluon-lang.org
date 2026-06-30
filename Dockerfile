@@ -31,7 +31,7 @@ RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && echo "fn main() { }" > build.rs
 ARG RELEASE=
 ARG CARGO_INCREMENTAL=
-RUN cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
+RUN cross build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
 
 FROM dependencies AS builder
 ARG RELEASE=
@@ -46,8 +46,8 @@ RUN npx webpack-cli --mode=production
 
 RUN touch gluon_master/src/lib.rs && \
     touch gluon_crates_io/src/lib.rs && \
-    cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
-RUN cargo run --target=x86_64-unknown-linux-musl ${RELEASE} --all-features --bin generate_docs
+    cross build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
+RUN cross run --target=x86_64-unknown-linux-musl ${RELEASE} --all-features --bin generate_docs
 
 FROM alpine:3.12
 
