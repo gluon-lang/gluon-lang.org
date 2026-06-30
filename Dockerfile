@@ -1,5 +1,8 @@
-ARG CROSS_BASE_IMAGE=ghcr.io/cross-rs/x86_64-unknown-linux-musl:main
-FROM ${CROSS_BASE_IMAGE} AS dependencies
+FROM rust:1.94.1 AS dependencies
+
+ENV CROSS_CONTAINER_IN_CONTAINER=1
+
+RUN cargo install cross
 
 WORKDIR /usr/src/try_gluon
 
