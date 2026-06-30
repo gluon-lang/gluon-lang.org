@@ -1,5 +1,5 @@
 ARG RUST_VERSION=1.96.1
-FROM ekidd/rust-musl-builder:${RUST_VERSION} as dependencies
+FROM ekidd/rust-musl-builder:${RUST_VERSION} AS dependencies
 
 WORKDIR /usr/src/try_gluon
 
@@ -35,7 +35,7 @@ ARG RELEASE=
 ARG CARGO_INCREMENTAL=
 RUN cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
 
-FROM dependencies as builder
+FROM dependencies AS builder
 ARG RELEASE=
 ARG CARGO_INCREMENTAL=
 
