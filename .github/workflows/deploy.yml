@@ -1,0 +1,36 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  RUST_BACKTRACE: "1"
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+      REGISTRY_PASS: ${{ secrets.REGISTRY_PASS }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker registry
+        if: ${{ env.REGISTRY_PASS != '' }}
+        run: echo "$REGISTRY_PASS" | docker login -u "$REGISTRY_USER" --password-stdin
+
+      - name: Run Terraform deploy
+        run: ./scripts/terraform_apply.sh
