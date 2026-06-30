@@ -1,4 +1,5 @@
-FROM ekidd/rust-musl-builder:1.51.0 as dependencies
+ARG RUST_VERSION=1.96.1
+FROM ekidd/rust-musl-builder:${RUST_VERSION} as dependencies
 
 WORKDIR /usr/src/try_gluon
 
@@ -11,7 +12,7 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
 RUN curl -L https://github.com/rust-lang-nursery/mdBook/releases/download/v0.1.2/mdbook-v0.1.2-x86_64-unknown-linux-gnu.tar.gz | tar -xvz && \
     mv mdbook /usr/local/bin/
 
-RUN rustup default 1.51.0 && rustup target add x86_64-unknown-linux-musl
+RUN rustup default ${RUST_VERSION} && rustup target add x86_64-unknown-linux-musl
 
 COPY package.json package-lock.json ./
 RUN npm ci
