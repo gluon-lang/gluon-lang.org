@@ -1,4 +1,8 @@
-FROM ekidd/rust-musl-builder:1.51.0 as dependencies
+FROM rust:1.94.1 AS dependencies
+
+ENV CROSS_CONTAINER_IN_CONTAINER=1
+
+RUN cargo install cross
 
 WORKDIR /usr/src/try_gluon
 
@@ -10,8 +14,6 @@ RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - && \
 
 RUN curl -L https://github.com/rust-lang-nursery/mdBook/releases/download/v0.1.2/mdbook-v0.1.2-x86_64-unknown-linux-gnu.tar.gz | tar -xvz && \
     mv mdbook /usr/local/bin/
-
-RUN rustup default 1.51.0 && rustup target add x86_64-unknown-linux-musl
 
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -32,9 +34,9 @@ RUN mkdir -p gluon_master/src && touch gluon_master/src/lib.rs \
     && echo "fn main() { }" > build.rs
 ARG RELEASE=
 ARG CARGO_INCREMENTAL=
-RUN cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
+RUN cross build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
 
-FROM dependencies as builder
+FROM dependencies AS builder
 ARG RELEASE=
 ARG CARGO_INCREMENTAL=
 
@@ -47,8 +49,8 @@ RUN npx webpack-cli --mode=production
 
 RUN touch gluon_master/src/lib.rs && \
     touch gluon_crates_io/src/lib.rs && \
-    cargo build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
-RUN cargo run --target=x86_64-unknown-linux-musl ${RELEASE} --all-features --bin generate_docs
+    cross build --target=x86_64-unknown-linux-musl ${RELEASE} --tests --bins --all-features
+RUN cross run --target=x86_64-unknown-linux-musl ${RELEASE} --all-features --bin generate_docs
 
 FROM alpine:3.12
 
