@@ -6,6 +6,7 @@ on:
 
 env:
   RUST_BACKTRACE: "1"
+  CROSS_VERSION: "0.2.5"
 
 jobs:
   build-test:
@@ -21,13 +22,17 @@ jobs:
         if: ${{ env.PULL_DOCKER_CACHE == '1' || env.PUSH_DOCKER_CACHE == '1' }}
         run: echo "${{ secrets.REGISTRY_PASS }}" | docker login -u "${{ secrets.REGISTRY_USER }}" --password-stdin
 
-      - name: Pull dependencies image cache
-        if: ${{ env.PULL_DOCKER_CACHE == '1' }}
-        run: docker pull marwes/try_gluon:dependencies || true
+      - name: Cache cross binary
+        id: cache-cross
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cross
+          key: cross-${{ runner.os }}-${{ env.CROSS_VERSION }}
 
-      - name: Pull builder image cache on master
-        if: ${{ github.base_ref == 'master' || github.ref_name == 'master' }}
-        run: docker pull marwes/try_gluon:builder || true
+      - name: Install cross
+        if: ${{ steps.cache-cross.outputs.cache-hit != 'true' }}
+        run: cargo install cross --version "${CROSS_VERSION}" --locked
+
 
       - name: Run CI script
         run: ./scripts/ci.sh
