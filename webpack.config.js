@@ -1,5 +1,4 @@
 const path = require("path");
-const ClosureCompilerPlugin = require('webpack-closure-compiler');
 
 module.exports = function (env, args) {
   return {
