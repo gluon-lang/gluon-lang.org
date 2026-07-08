@@ -1,7 +1,6 @@
 pub use gluon_doc;
 
-use std::{result::Result as StdResult, time::Instant, task::Poll};
-
+use std::{result::Result as StdResult, task::Poll, time::Instant};
 
 pub use gluon::{
     base::{

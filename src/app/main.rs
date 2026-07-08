@@ -1,9 +1,12 @@
-use std::{collections::HashMap, fs, ops::Deref};
+use std::{convert::Infallible, fs, ops::Deref};
 
 use {
     anyhow::anyhow,
+    bytes::Bytes,
     futures::{future, prelude::*},
-    serde::{Deserialize, Deserializer, Serialize},
+    http_body_util::BodyExt,
+    lambda_runtime::Diagnostic,
+    serde::Serialize,
     structopt::StructOpt,
 };
 
@@ -158,7 +161,12 @@ struct Opts {
         help = "The access tokens used to create gists"
     )]
     gist_access_token: Option<String>,
-    #[structopt(short = "p", long = "port", help = "The port to start the server on")]
+    #[structopt(
+        short = "p",
+        long = "port",
+        env = "PORT",
+        help = "The port to start the server on"
+    )]
     port: Option<u16>,
     #[structopt(long = "https", help = "Whether to run the server with https")]
     https: bool,
@@ -174,9 +182,6 @@ struct Opts {
     )]
     staging: bool,
 
-    #[structopt(long = "num-threads", help = "How many threads to run the server with")]
-    num_threads: Option<usize>,
-
     #[structopt(
         long = "lambda",
         help = "Whether to run the server as a lambda function"
@@ -184,158 +189,41 @@ struct Opts {
     lambda: bool,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
 
     let opts = Opts::from_args();
 
-    let result = (|| {
-        let runtime = {
-            let mut builder = tokio::runtime::Builder::new_multi_thread();
-            if let Some(num_threads) = opts.num_threads {
-                builder.worker_threads(num_threads);
-            }
-            builder.enable_all().build()?
-        };
-
+    let result = async {
         if opts.lambda {
-            runtime
-                .block_on(async {
-                    let handler = lambda_runtime::handler_fn(mk_handler(opts).await?);
-                    lambda_runtime::run(handler).await
-                })
-                .map_err(|err| anyhow!(err))?;
+            let handler = mk_handler(opts).await?;
+            lambda_http::run(lambda_http::service_fn(handler))
+                .await
+                .map_err(|err| anyhow!(err))
         } else {
-            runtime.block_on(main_(opts))?;
+            main_(opts).await
         }
-        Ok::<_, Error>(())
-    })();
+    }
+    .await;
     if let Err(err) = result {
         eprintln!("{}", err);
         std::process::exit(1);
     }
 }
 
-use aws_lambda_events::event::apigw::{self, *};
-
-pub(crate) fn deserialize_lambda_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    match Option::deserialize(deserializer)? {
-        Some(s) => {
-            if s == "" {
-                Ok(None)
-            } else {
-                Ok(Some(s))
-            }
-        }
-        None => Ok(None),
-    }
-}
-
-/// Deserializes `HashMap<_>`, mapping JSON `null` to an empty map.
-pub(crate) fn deserialize_lambda_map<'de, D, K, V>(
-    deserializer: D,
-) -> Result<HashMap<K, V>, D::Error>
-where
-    D: Deserializer<'de>,
-    K: serde::Deserialize<'de>,
-    K: std::hash::Hash,
-    K: std::cmp::Eq,
-    V: serde::Deserialize<'de>,
-{
-    // https://github.com/serde-rs/serde/issues/1098
-    let opt = Option::deserialize(deserializer)?;
-    Ok(opt.unwrap_or(HashMap::default()))
-}
-
-/// `ApiGatewayV2httpRequest` contains data coming from the new HTTP API Gateway
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct ApiGatewayV2httpRequest {
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    pub version: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "routeKey")]
-    pub route_key: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "rawPath")]
-    pub raw_path: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "rawQueryString")]
-    pub raw_query_string: Option<String>,
-    pub cookies: Option<Vec<String>>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
-    #[serde(default)]
-    pub headers: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
-    #[serde(default)]
-    #[serde(rename = "queryStringParameters")]
-    pub query_string_parameters: HashMap<String, String>,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
-    #[serde(default)]
-    #[serde(rename = "pathParameters")]
-    pub path_parameters: HashMap<String, String>,
-    #[serde(rename = "requestContext")]
-    pub request_context: ApiGatewayV2httpRequestContext,
-    #[serde(deserialize_with = "deserialize_lambda_map")]
-    #[serde(default)]
-    #[serde(rename = "stageVariables")]
-    pub stage_variables: HashMap<String, String>,
-    pub body: Option<String>,
-    #[serde(rename = "isBase64Encoded")]
-    pub is_base64_encoded: bool,
-}
-
-/// `ApiGatewayV2httpRequestContext` contains the information to identify the AWS account and resources invoking the Lambda function.
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-pub struct ApiGatewayV2httpRequestContext {
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "routeKey")]
-    pub route_key: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "accountId")]
-    pub account_id: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    pub stage: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "requestId")]
-    pub request_id: Option<String>,
-    pub authorizer: Option<ApiGatewayV2httpRequestContextAuthorizerDescription>,
-    /// The API Gateway HTTP API Id
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "apiId")]
-    pub apiid: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "domainName")]
-    pub domain_name: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    #[serde(rename = "domainPrefix")]
-    pub domain_prefix: Option<String>,
-    #[serde(deserialize_with = "deserialize_lambda_string")]
-    #[serde(default)]
-    pub time: Option<String>,
-    pub http: ApiGatewayV2httpRequestContextHttpDescription,
-}
-
 async fn mk_handler(
     opts: Opts,
 ) -> Result<
     impl Fn(
-        ApiGatewayV2httpRequest,
-        lambda_runtime::Context,
-    ) -> future::BoxFuture<'static, Result<apigw::ApiGatewayV2httpResponse>>,
+        lambda_http::Request,
+    ) -> future::BoxFuture<
+        'static,
+        Result<
+            lambda_http::Response<http_body_util::combinators::BoxBody<Bytes, Infallible>>,
+            Diagnostic,
+        >,
+    >,
 > {
     let vm = new_vm().await;
     let server_source = fs::read_to_string("src/app/server.glu")?;
@@ -352,46 +240,34 @@ async fn mk_handler(
 
     let handler = gluon::std_lib::http::Handler::new(&vm, h);
 
-    Ok(move |req, _ctx| {
+    Ok(move |req| {
         let handler = handler.clone();
-        async move { handler_fn(handler, req).await }
+        handler_fn(handler, req)
             .inspect_err(|err| log::error!("{}", err))
+            .map_err(|err| Diagnostic {
+                error_type: "HandlerError".into(),
+                error_message: err.to_string(),
+            })
             .boxed()
     })
 }
 
 async fn handler_fn(
     mut handler: gluon::std_lib::http::Handler,
-    req: ApiGatewayV2httpRequest,
-) -> Result<apigw::ApiGatewayV2httpResponse> {
-    let mut response = handler
-        .handle(
-            req.request_context.http.method,
-            req.request_context
-                .http
-                .path
-                .ok_or_else(|| anyhow!("Missing path"))?
-                .parse()?,
-            stream::iter(req.body.into_iter().map(From::from).map(Ok::<_, String>)),
-        )
+    req: lambda_http::Request,
+) -> Result<lambda_http::Response<http_body_util::combinators::BoxBody<Bytes, Infallible>>> {
+    let (parts, body) = req.into_parts();
+    let response = handler
+        .handle(parts.method, parts.uri, body.into_data_stream())
         .await?;
 
-    let mut body = Vec::new();
-    while let Some(chunk) = response.body_mut().try_next().await? {
-        body.extend_from_slice(&chunk);
-    }
+    let (parts, body) = response.into_parts();
 
-    let headers = response.headers().clone();
-
-    let response = apigw::ApiGatewayV2httpResponse {
-        status_code: response.status().as_u16().into(),
-        headers,
-        multi_value_headers: Default::default(),
-        body: Some(String::from_utf8(body)?.into()),
-        is_base64_encoded: Some(false),
-        cookies: Vec::new(),
+    let response = {
+        let mut builder = lambda_http::Response::builder().status(parts.status);
+        *builder.headers_mut().unwrap() = parts.headers;
+        builder.body(body).unwrap()
     };
-    log::debug!("{}", serde_json::to_string(&response).unwrap());
     Ok(response)
 }
 
