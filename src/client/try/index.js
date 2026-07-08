@@ -1,6 +1,5 @@
 'use strict';
 
-require('./index.html');
 require('./styles.scss');
 
 import('./Main.elm').then(Elm => {

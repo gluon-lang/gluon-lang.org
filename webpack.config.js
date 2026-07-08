@@ -1,4 +1,6 @@
 const path = require("path");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = function (env, args) {
   return {
@@ -23,8 +25,8 @@ module.exports = function (env, args) {
         {
           test: /\.(css|scss)$/,
           exclude: [/elm-stuff/, /node_modules/],
-            use: [
-            'style-loader',
+          use: [
+            MiniCssExtractPlugin.loader,
             'css-loader',
             {
               loader: 'sass-loader',
@@ -35,19 +37,6 @@ module.exports = function (env, args) {
               },
             },
           ]
-        },
-        {
-          test: /\.html$/,
-          exclude: [/elm-stuff/, /node_modules/],
-          use: {
-            loader: 'file-loader',
-            options: {
-              name: (file) => {
-                  let prefix = /src[\/\\]client(.*[\/\\]).+$/.exec(file)[1]
-                  return prefix + '[name].[ext]';
-              }
-            }
-          }
         },
         {
           test: /\.elm$/,
@@ -62,24 +51,43 @@ module.exports = function (env, args) {
         {
           test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
           exclude: [/elm-stuff/, /node_modules/],
-          use: 'url-loader?limit=10000&mimetype=application/font-woff',
+          type: 'asset',
+          parser: {
+            dataUrlCondition: {
+              maxSize: 10000,
+            },
+          },
         },
         {
           test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
           exclude: [/elm-stuff/, /node_modules/],
-          use: 'file-loader',
+          type: 'asset/resource',
         },
       ],
 
       noParse: /\.elm$/,
     },
 
-    devServer: {
-      inline: true,
-      stats: { colors: true },
-    },
-
-    plugins: [],
+    plugins: [
+      new HtmlWebpackPlugin({
+        filename: 'index.html',
+        template: 'src/client/index.html',
+        chunks: ['gluon-lang'],
+      }),
+      new HtmlWebpackPlugin({
+        filename: 'try/index.html',
+        template: 'src/client/try/index.html',
+        chunks: ['try/app'],
+      }),
+      new HtmlWebpackPlugin({
+        filename: '404.html',
+        template: 'src/client/404.html',
+        inject: false,
+      }),
+      new MiniCssExtractPlugin({
+        filename: '[name].css',
+      }),
+    ],
 
     watchOptions: {
         ignored: /node_modules/
