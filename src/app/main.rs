@@ -3,11 +3,11 @@ use std::{convert::Infallible, fs, ops::Deref};
 use {
     anyhow::anyhow,
     bytes::Bytes,
+    clap::Parser,
     futures::{future, prelude::*},
     http_body_util::BodyExt,
     lambda_runtime::Diagnostic,
     serde::Serialize,
-    structopt::StructOpt,
 };
 
 use gluon_codegen::{Getable, Pushable, Trace, Userdata, VmType};
@@ -153,38 +153,40 @@ async fn exit_server() -> Result<()> {
     Ok(tokio::signal::ctrl_c().await?)
 }
 
-#[derive(StructOpt, Pushable, VmType)]
+#[derive(Parser, Pushable, VmType)]
 struct Opts {
-    #[structopt(
+    #[arg(
         long = "gist-access-token",
         env = "GIST_ACCESS_TOKEN",
         help = "The access tokens used to create gists"
     )]
     gist_access_token: Option<String>,
-    #[structopt(
-        short = "p",
+    #[arg(
+        short = 'p',
         long = "port",
         env = "PORT",
         help = "The port to start the server on"
     )]
     port: Option<u16>,
-    #[structopt(long = "https", help = "Whether to run the server with https")]
+    #[arg(long = "https", help = "Whether to run the server with https")]
     https: bool,
-    #[structopt(
+    #[arg(
         long = "host",
         default_value = "gluon-lang.org",
         help = "The hostname for the server"
     )]
     host: String,
-    #[structopt(
+    #[arg(
         long = "staging",
         help = "Whether to use letsencrypt's staging environment"
     )]
     staging: bool,
 
-    #[structopt(
-        long = "lambda",
-        help = "Whether to run the server as a lambda function"
+    #[arg(
+        long = "no-lambda",
+        help = "Whether to run the server as a lambda function",
+        default_value_t = true,
+        action = clap::ArgAction::SetFalse
     )]
     lambda: bool,
 }
@@ -193,7 +195,7 @@ struct Opts {
 async fn main() {
     env_logger::init();
 
-    let opts = Opts::from_args();
+    let opts = Opts::parse();
 
     let result = async {
         if opts.lambda {

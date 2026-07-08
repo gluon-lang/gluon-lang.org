@@ -36,7 +36,7 @@ log = "0.4"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
-structopt = "0.3"
+clap = { version = "4", features = ["derive", "env"] }
 tokio = { version = "1.12.0", features = ["signal", "rt", "rt-multi-thread"] }
 toml = "1"
 native-tls = { version = "0.2", features = ["vendored"] }
