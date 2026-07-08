@@ -1,10 +1,10 @@
 $font-size-root: 14px;
 
-@import '~bootstrap/scss/bootstrap';
+@use '~bootstrap/scss/bootstrap' as bootstrap;
 
 .editor {
-  font-size: $code-font-size;
-  font-family: $font-family-monospace;
+  font-size: bootstrap.$code-font-size;
+  font-family: bootstrap.$font-family-monospace;
 }
 
 .btn {

@@ -23,10 +23,17 @@ module.exports = function (env, args) {
         {
           test: /\.(css|scss)$/,
           exclude: [/elm-stuff/, /node_modules/],
-          use: [
+            use: [
             'style-loader',
             'css-loader',
-            'sass-loader',
+            {
+              loader: 'sass-loader',
+              options: {
+                sassOptions: {
+                  quietDeps: true,
+                },
+              },
+            },
           ]
         },
         {
