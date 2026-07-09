@@ -141,9 +141,10 @@ fn generate_doc_for_dir_(
 }
 
 fn create_docs() -> Result<()> {
+    let doc_dir = Path::new("target/doc");
     {
         let git_dir = gluon_git_path()?;
-        generate_doc_for_dir(&git_dir, "target/dist/doc/nightly", |input, output| {
+        generate_doc_for_dir(&git_dir, &doc_dir.join("nightly"), |input, output| {
             let src_url = Some(format!(
                 "https://github.com/gluon-lang/gluon/blob/{}",
                 git_master_version()
@@ -154,14 +155,14 @@ fn create_docs() -> Result<()> {
                 src_url,
             })
         })?;
-        assert!(Path::new("target/dist/doc/nightly/std/std.html").exists());
+        assert!(doc_dir.join("nightly/std/std.html").exists());
     }
 
     {
         let crates_io_dir = gluon_crates_io_path()?;
         generate_doc_for_dir(
             &crates_io_dir,
-            "target/dist/doc/crates_io",
+            &doc_dir.join("crates_io"),
             |input, output| {
                 let src_url = Some(format!(
                     "https://github.com/gluon-lang/gluon/blob/{}",
@@ -174,7 +175,7 @@ fn create_docs() -> Result<()> {
                 })
             },
         )?;
-        assert!(Path::new("target/dist/doc/crates_io/std/std.html").exists());
+        assert!(doc_dir.join("crates_io/std/std.html").exists());
     }
 
     Ok(())

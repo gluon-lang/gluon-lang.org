@@ -3,21 +3,16 @@ set -euo pipefail
 
 rm -f target/lambda.zip
 
-cp -r Cargo.lock public src target/x86_64-unknown-linux-gnu/release/try_gluon target/
-
 cp bootstrap target/
 
-cd target
+mkdir -p target/target
 
-# Move docs from webpack output to zip root if present
-if [ -d target/dist/doc ]; then
-  mv target/dist/doc ./doc
-fi
-
-zip --recurse-paths lambda.zip \
+zip --recurse-paths target/lambda.zip \
   bootstrap \
   Cargo.lock \
   public \
-  src \
-  try_gluon
+  src
 
+cp -r target/x86_64-unknown-linux-gnu/release/try_gluon target/
+cd target
+zip --recurse-paths lambda.zip dist doc try_gluon
