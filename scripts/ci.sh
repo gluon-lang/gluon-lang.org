@@ -17,3 +17,4 @@ until $(curl --output /dev/null --silent --fail http://localhost:3000); do
 done
 
 kill $TRY_GLUON_PID
+wait $TRY_GLUON_PID

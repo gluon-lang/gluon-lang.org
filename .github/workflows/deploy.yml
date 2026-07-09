@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build server
-        run: cargo lambda build --release
+        run: cargo lambda build --bin try_gluon --release --output-format zip
 
       - name: Build Frontend
         run: npm ci && npm run build
