@@ -16,8 +16,10 @@
         "webpack": "^5.108.4"
     },
     "devDependencies": {
+        "glob-all": "^3.3.1",
         "html-webpack-plugin": "^5.6.7",
         "mini-css-extract-plugin": "^2.10.2",
+        "purgecss-webpack-plugin": "^8.0.0",
         "webpack-cli": "^7.2.1"
     },
     "scripts": {

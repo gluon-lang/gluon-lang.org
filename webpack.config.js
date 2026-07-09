@@ -1,4 +1,6 @@
 const path = require("path");
+const { PurgeCSSPlugin } = require('purgecss-webpack-plugin');
+const glob = require('glob-all');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
@@ -84,6 +86,34 @@ module.exports = function (env, args) {
       new MiniCssExtractPlugin({
         filename: '[name].css',
       }),
+      ...(args.mode === 'production'
+        ? [
+            new PurgeCSSPlugin({
+              paths: glob.sync([
+                path.join(__dirname, 'src/client/**/*.js'),
+                path.join(__dirname, 'src/client/**/*.elm'),
+                path.join(__dirname, 'src/client/**/*.html'),
+              ]),
+              safelist: {
+                standard: [
+                  /^col-/,
+                  /^navbar-/,
+                  /^nav-/,
+                  /^card-/,
+                  /^btn-/,
+                  /^text-/,
+                  /^float-/,
+                  /^pull-/,
+                  /^mr-/,
+                  /^d-/,
+                  /^justify-content-/,
+                  /^align-items-/,
+                  /^flex-/,
+                ],
+              },
+            }),
+          ]
+        : []),
     ],
 
     watchOptions: {
