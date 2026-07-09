@@ -1,7 +1,5 @@
 'use strict';
 
-require('./styles.scss');
-
 import('./Main.elm').then(Elm => {
     var mountNode = document.getElementById('main');
 

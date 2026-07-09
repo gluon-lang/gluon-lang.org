@@ -5,12 +5,9 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = function (env, args) {
   return {
     entry: {
-      'try/app': [
-        './src/client/try/index.js'
-      ],
-      'gluon-lang': [
-          './src/client/index.js'
-      ]
+      'styles': './src/client/try/styles.scss',
+      'try/app': './src/client/try/index.js',
+      'gluon-lang': './src/client/index.js',
     },
 
     mode: args.mode,
@@ -72,12 +69,12 @@ module.exports = function (env, args) {
       new HtmlWebpackPlugin({
         filename: 'index.html',
         template: 'src/client/index.html',
-        chunks: ['gluon-lang'],
+        chunks: ['styles', 'gluon-lang'],
       }),
       new HtmlWebpackPlugin({
         filename: 'try/index.html',
         template: 'src/client/try/index.html',
-        chunks: ['try/app'],
+        chunks: ['styles', 'try/app'],
       }),
       new HtmlWebpackPlugin({
         filename: '404.html',
