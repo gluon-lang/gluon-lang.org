@@ -54,8 +54,22 @@ jobs:
       - name: Add zig to PATH
         run: echo "$HOME/.zig" >> $GITHUB_PATH
 
+      - name: Cache mdbook
+        id: cache-mdbook
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/mdbook
+          key: mdbook-${{ runner.os }}-0.5.4
+
+      - name: Install mdbook
+        if: steps.cache-mdbook.outputs.cache-hit != 'true'
+        run: curl -fsSL https://github.com/rust-lang/mdBook/releases/download/v0.5.4/mdbook-v0.5.4-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C ~/.cargo/bin
+
       - name: Build server
         run: cargo lambda build --bin try_gluon --release --output-format zip
+
+      - name: Build Frontend
+        run: cargo run --release --bin generate_docs
 
       - name: Build Frontend
         run: npm ci && npm run build

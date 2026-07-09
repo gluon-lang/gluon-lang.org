@@ -37,7 +37,7 @@ resource "aws_apigatewayv2_api" "gluon-lang" {
 
 
 resource "aws_apigatewayv2_api_mapping" "gluon-lang" {
-  api_id          = "c85hocb4n1"
+  api_id = aws_apigatewayv2_api.gluon-lang.id
   domain_name     = "gluon-lang.org"
   stage           = "$default"
 }

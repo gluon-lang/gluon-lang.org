@@ -22,14 +22,14 @@ struct Lockfile {
     package: Vec<Package>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct Package {
     name: String,
     version: String,
     source: Option<String>,
 }
 fn git_master_version() -> String {
-    toml::de::from_str::<Lockfile>(LOCK_FILE)
+    let package = toml::de::from_str::<Lockfile>(LOCK_FILE)
         .unwrap_or_else(|err| panic!("{}", err))
         .package
         .into_iter()
@@ -38,15 +38,10 @@ fn git_master_version() -> String {
                 && package
                     .source
                     .as_ref()
-                    .map_or(false, |source| source.contains("git"))
+                    .map_or(false, |source| source.starts_with("git"))
         })
-        .expect("gluon master version")
-        .source
-        .unwrap()
-        .rsplit('#')
-        .next()
-        .unwrap()
-        .into()
+        .expect("gluon master version");
+    package.source.unwrap().rsplit('#').next().unwrap().into()
 }
 
 fn crates_io_version() -> String {
@@ -66,16 +61,15 @@ fn crates_io_version() -> String {
 }
 
 fn gluon_git_path() -> Result<PathBuf> {
+    let version = git_master_version();
+
     let std_glob_path = home::cargo_home()?
-        .join(&format!(
-            "git/checkouts/gluon-*/{}",
-            &git_master_version()[..7]
-        ))
+        .join(&format!("git/checkouts/gluon-*/{}", &version[..7]))
         .display()
         .to_string();
     Ok(glob::glob(&std_glob_path)?
         .next()
-        .expect("git repo in cargo home")?)
+        .ok_or_else(|| anyhow!("git repo in cargo home").context(std_glob_path))??)
 }
 
 fn gluon_crates_io_path() -> Result<PathBuf> {
@@ -190,7 +184,7 @@ fn main() {
     env_logger::init();
 
     if let Err(err) = create_docs() {
-        eprintln!("{}", err);
+        eprintln!("{:#}", err);
         process::exit(1);
     }
 }
