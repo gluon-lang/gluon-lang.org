@@ -89,6 +89,9 @@ let serve_file request_path : String -> Eff (HttpEffect r) Response =
                 .. http.response
             }
 
+let add_headers headers response : Array (String, Array Byte) -> Response -> Response =
+    { headers = headers <> response.headers, .. response }
+
 let static_files base : String -> Eff (HttpEffect r) Response =
     let detect_path_traversal uri : String -> Bool =
         any (\c ->
@@ -105,7 +108,8 @@ let static_files base : String -> Eff (HttpEffect r) Response =
             }
     else
         let request_path = path_mod.join base uri
-        serve_file request_path
+        do response = serve_file request_path
+        wrap (add_headers [("Cache-Control", string.as_bytes "max-age=3600")] response)
 
 let array_body request : Request -> Eff (HttpEffect r) (Array Byte) =
     do chunk = http.read_chunk request.body
