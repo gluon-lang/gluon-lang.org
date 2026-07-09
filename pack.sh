@@ -19,6 +19,5 @@ zip --recurse-paths lambda.zip \
   Cargo.lock \
   public \
   src \
-  try_gluon \
-  target
+  try_gluon
 

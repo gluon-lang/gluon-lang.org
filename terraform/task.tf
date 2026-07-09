@@ -44,10 +44,20 @@ resource "aws_apigatewayv2_api_mapping" "gluon-lang" {
 
 resource "aws_s3_bucket" "gluon-lang-doc" {
     bucket = "gluon-lang-doc"
+}
+
+resource "aws_s3_bucket_acl" "gluon-lang-doc" {
+    bucket = aws_s3_bucket.gluon-lang-doc.id
     acl = "public-read"
-    website {
-      index_document = "index.html"
-      error_document = "404.html"
+}
+
+resource "aws_s3_bucket_website_configuration" "gluon-lang-doc" {
+    bucket = aws_s3_bucket.gluon-lang-doc.id
+    index_document {
+      suffix = "index.html"
+    }
+    error_document {
+      key = "404.html"
     }
 }
 
