@@ -1,12 +1,24 @@
 #!/bin/bash
+set -euo pipefail
 
-ID=$(docker create marwes/try_gluon)
-rm -f target/lambda.zip \
-    && docker run --volume $(pwd):/outside --rm marwes/try_gluon cp -r /root/{Cargo.lock,public,src,target,try_gluon} /outside/target/ \
-    && cp bootstrap target/ \
-    && cd target \
-    && sudo chown -R $USER target/dist \
-    && rm -rf doc \
-    && mv target/dist/doc ./ \
-    && zip --recurse-paths lambda.zip bootstrap Cargo.lock public src try_gluon target
+rm -f target/lambda.zip
+
+cp -r Cargo.lock public src target/x86_64-unknown-linux-gnu/release/try_gluon target/
+
+cp bootstrap target/
+
+cd target
+
+# Move docs from webpack output to zip root if present
+if [ -d target/dist/doc ]; then
+  mv target/dist/doc ./doc
+fi
+
+zip --recurse-paths lambda.zip \
+  bootstrap \
+  Cargo.lock \
+  public \
+  src \
+  try_gluon \
+  target
 
