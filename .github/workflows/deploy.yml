@@ -27,6 +27,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache cargo-lambda
+        id: cache-cargo-lambda
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-lambda
+          key: cargo-lambda-${{ runner.os }}
+
+      - name: Install cargo-lambda
+        if: steps.cache-cargo-lambda.outputs.cache-hit != 'true'
+        run: curl -fsSL https://cargo-lambda.info/install.sh | sh
+
       - name: Build server
         run: cargo lambda build --bin try_gluon --release --output-format zip
 
