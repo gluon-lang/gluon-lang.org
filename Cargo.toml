@@ -66,6 +66,10 @@ reqwest = { version = "0.12", features = ["json"] }
 [features]
 server = ["gluon/web"]
 
+[profile.release]
+strip = true
+opt-level = "z"
+
 [patch.crates-io]
 # gluon = { version = "0.17", path = "../gluon" }
 # gluon_base = { version = "0.17", path = "../gluon/base" }
