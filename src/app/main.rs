@@ -153,7 +153,7 @@ async fn exit_server() -> Result<()> {
     Ok(tokio::signal::ctrl_c().await?)
 }
 
-#[derive(Parser, Pushable, VmType)]
+#[derive(Default, Parser, Pushable, VmType)]
 struct Opts {
     #[arg(
         long = "gist-access-token",
@@ -204,7 +204,7 @@ async fn main() {
                 .await
                 .map_err(|err| anyhow!(err))
         } else {
-            main_(opts).await
+            main_(opts, exit_server()).await
         }
     }
     .await;
@@ -317,7 +317,7 @@ async fn new_vm() -> RootedThread {
     vm
 }
 
-async fn main_(opts: Opts) -> Result<()> {
+async fn main_(opts: Opts, quit: impl Future<Output = Result<()>>) -> Result<()> {
     let vm = new_vm().await;
 
     let server_source = fs::read_to_string("src/app/server.glu")?;
@@ -330,7 +330,7 @@ async fn main_(opts: Opts) -> Result<()> {
             f.call_async(opts).await?;
             Ok(())
         }),
-        Box::pin(exit_server()),
+        Box::pin(quit),
     )
     .map_err(|either| match either {
         futures::future::Either::Left((err, _)) | futures::future::Either::Right((err, _)) => err,
@@ -338,4 +338,32 @@ async fn main_(opts: Opts) -> Result<()> {
     .await?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_start_server() {
+        let (quitter, quit) = tokio::sync::oneshot::channel::<()>();
+        tokio::try_join!(
+            main_(
+                Opts {
+                    port: Some(3000),
+                    ..Opts::default()
+                },
+                quit.map(|_| Ok(())),
+            ),
+            async {
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+
+                let response = reqwest::get("http://localhost:3000").await.unwrap();
+                assert_eq!(response.status(), 200);
+                drop(quitter);
+                Ok::<_, Error>(())
+            }
+        )
+        .unwrap();
+    }
 }
