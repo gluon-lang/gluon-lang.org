@@ -11,32 +11,14 @@ env:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    env:
-      PULL_DOCKER_CACHE: false
-      PUSH_DOCKER_CACHE: ${{ secrets.REGISTRY_PASS != '' && '1' || '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Log in to Docker registry
-        if: ${{ env.PULL_DOCKER_CACHE == '1' || env.PUSH_DOCKER_CACHE == '1' }}
-        run: echo "${{ secrets.REGISTRY_PASS }}" | docker login -u "${{ secrets.REGISTRY_USER }}" --password-stdin
-
-      - name: Cache cross binary
-        id: cache-cross
-        uses: actions/cache@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
         with:
-          path: ~/.cargo/bin/cross
-          key: cross-${{ runner.os }}-${{ env.CROSS_VERSION }}
-
-      - name: Install cross
-        if: ${{ steps.cache-cross.outputs.cache-hit != 'true' }}
-        run: cargo install cross --version "${CROSS_VERSION}" --locked
-
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
 
       - name: Run CI script
         run: ./scripts/ci.sh
-
-      - name: List Docker images
-        if: always()
-        run: docker images

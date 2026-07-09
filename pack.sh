@@ -3,7 +3,7 @@ set -euo pipefail
 
 rm -f target/lambda.zip
 
-cp -r Cargo.lock public src target/release/try_gluon target/
+cp -r Cargo.lock public src target/x86_64-unknown-linux-gnu/release/try_gluon target/
 
 cp bootstrap target/
 
