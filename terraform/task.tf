@@ -243,6 +243,11 @@ resource "aws_iam_policy" "lambda_logging" {
 EOF
 }
 
+resource "aws_cloudwatch_log_group" "lambda-gluon-lang" {
+  name = "/aws/lambda/gluon-lang"
+  retention_in_days = "7"
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = aws_iam_policy.lambda_logging.arn
