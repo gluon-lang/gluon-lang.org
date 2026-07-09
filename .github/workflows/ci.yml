@@ -20,5 +20,11 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
 
+      - name: Build Frontend
+        run: npm ci && npm run build
+
+      - name: Generate docs
+        run: cargo run --bin generate_docs --all-features
+
       - name: Run CI script
         run: ./scripts/ci.sh
