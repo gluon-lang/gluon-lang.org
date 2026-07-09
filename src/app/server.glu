@@ -24,7 +24,6 @@ let process = import! std.process
 let thread = import! std.thread
 let { Eff, ? } = import! std.effect
 let { Lift, lift, run_lift } = import! std.effect.lift
-let { get, gets } = import! std.effect.state
 
 let try_gluon = import! gluon.try
 let try_gluon_master = import! gluon.try.master
@@ -308,7 +307,7 @@ let load_handler opts : Opts -> IO _ =
                 *> gluon_handler (\code -> try_gluon_master.format_expr try_vm_master code)]
 
     let handler =
-        do { request } = get
+        do request = http.get_request
         lift (log.debug ("Received request " <> request.method <> " " <> show request.uri))
             *> handler
             <* lift (log.debug "Responded to request")
