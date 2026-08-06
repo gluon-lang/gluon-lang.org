@@ -2,7 +2,7 @@
 set -eux
 cargo test --all-features --all-targets
 
-cargo run --bin try_gluon -- --port 3000 &
+cargo run --bin try_gluon -- --no-lambda --port 3000 &
 TRY_GLUON_PID=$!
 
 
