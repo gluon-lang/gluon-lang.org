@@ -25,9 +25,9 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "android_system_properties"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311"
+checksum = "ae221649c9976a6f6c56ae1facf410f3ddb33cc661c4b7b61020a912d4237fbc"
 dependencies = [
  "libc",
 ]
@@ -164,6 +164,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
+name = "aws-lc-rs"
+version = "1.17.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00bdb5da18dac48ca2cc7cd4a98e533e8635a58e2361d13a1a4ee3888e0d72f1"
+dependencies = [
+ "aws-lc-sys",
+ "zeroize",
+]
+
+[[package]]
+name = "aws-lc-sys"
+version = "0.43.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43103168cc76fe62678a375e722fc9cb3a0146159ac5828bc4f0dfd755c2224c"
+dependencies = [
+ "cc",
+ "cmake",
+ "dunce",
+ "fs_extra",
+ "pkg-config",
+]
+
+[[package]]
 name = "aws_lambda_events"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -294,6 +317,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5add81bb678e6cb321aff7fa0dc7689ad82b112dbc032cea19f91d6b8e3582b9"
 dependencies = [
  "find-msvc-tools",
+ "jobserver",
+ "libc",
  "shlex",
 ]
 
@@ -308,6 +333,12 @@ name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+
+[[package]]
+name = "cfg_aliases"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 
 [[package]]
 name = "chacha20"
@@ -375,6 +406,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
+name = "cmake"
+version = "0.1.58"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0f78a02292a74a88ac736019ab962ece0bc380e3f977bf72e376c5d78ff0678"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "codespan"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -406,6 +446,16 @@ name = "colorchoice"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d07550c9036bf2ae0c684c4297d503f838287c83c53686d05370d0e139ae570"
+
+[[package]]
+name = "combine"
+version = "4.6.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba5a308b75df32fe02788e748662718f03fde005016435c444eea572398219fd"
+dependencies = [
+ "bytes",
+ "memchr",
+]
 
 [[package]]
 name = "core-foundation"
@@ -688,6 +738,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "117240f60069e65410b3ae1bb213295bd828f707b5bec6596a1afc8793ce0cbc"
 
 [[package]]
+name = "dunce"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
+
+[[package]]
 name = "dyn-clone"
 version = "1.0.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -836,6 +892,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs_extra"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
+
+[[package]]
 name = "futures"
 version = "0.1.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -957,8 +1019,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0"
 dependencies = [
  "cfg-if 1.0.4",
+ "js-sys",
  "libc",
  "wasi",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -968,9 +1032,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099"
 dependencies = [
  "cfg-if 1.0.4",
+ "js-sys",
  "libc",
  "r-efi",
  "rand_core",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -981,9 +1047,9 @@ checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
 name = "gluon"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c65f0553314483dba34423078112c9fe1d503479a5683188b00753c1ce4bd632"
+checksum = "bc8b7a2618bb1e0b44b946d5edfa51aeea132814b183cd3cf5f5bb84195aae31"
 dependencies = [
  "async-trait",
  "codespan",
@@ -992,19 +1058,18 @@ dependencies = [
  "either",
  "futures 0.3.33",
  "gluon-salsa",
- "gluon_base 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_check 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_codegen 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_format 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_parser 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_vm 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_check 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_codegen 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_format 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_parser 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_vm 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "http 1.5.0",
  "http-body-util",
  "hyper 1.11.0",
  "hyper-util",
  "itertools 0.15.0",
  "log",
- "native-tls",
  "pin-project-lite",
  "quick-error",
  "rand",
@@ -1014,7 +1079,6 @@ dependencies = [
  "serde_derive_state",
  "serde_state",
  "tokio",
- "tokio-native-tls",
  "tokio-stream",
  "tower-service",
  "walkdir",
@@ -1022,8 +1086,8 @@ dependencies = [
 
 [[package]]
 name = "gluon"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "async-trait",
  "codespan",
@@ -1032,19 +1096,18 @@ dependencies = [
  "either",
  "futures 0.3.33",
  "gluon-salsa",
- "gluon_base 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_check 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_codegen 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_format 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_parser 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_vm 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_check 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_codegen 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_format 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_parser 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_vm 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "http 1.5.0",
  "http-body-util",
  "hyper 1.11.0",
  "hyper-util",
  "itertools 0.15.0",
  "log",
- "native-tls",
  "pin-project-lite",
  "quick-error",
  "rand",
@@ -1054,7 +1117,6 @@ dependencies = [
  "serde_derive_state",
  "serde_state",
  "tokio",
- "tokio-native-tls",
  "tokio-stream",
  "tower-service",
  "walkdir",
@@ -1075,7 +1137,7 @@ dependencies = [
  "log",
  "oorandom",
  "parking_lot 0.11.2",
- "rustc-hash",
+ "rustc-hash 1.1.0",
  "smallvec",
 ]
 
@@ -1093,9 +1155,9 @@ dependencies = [
 
 [[package]]
 name = "gluon_base"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "677aceec281d5f9e07ed0a7570291b7316a23f00b46fe0b9f76ece3da858165b"
+checksum = "96ce7e015da72bdd7141666d7f54cceab296b7a4ca09f067cfe30dc3cd646e88"
 dependencies = [
  "anymap",
  "bitflags 1.3.2",
@@ -1104,7 +1166,7 @@ dependencies = [
  "collect-mac",
  "either",
  "fnv",
- "gluon_codegen 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_codegen 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "hashbrown 0.17.1",
  "itertools 0.15.0",
  "log",
@@ -1122,8 +1184,8 @@ dependencies = [
 
 [[package]]
 name = "gluon_base"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "anymap",
  "bitflags 1.3.2",
@@ -1132,7 +1194,7 @@ dependencies = [
  "collect-mac",
  "either",
  "fnv",
- "gluon_codegen 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_codegen 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "hashbrown 0.17.1",
  "itertools 0.15.0",
  "log",
@@ -1150,16 +1212,16 @@ dependencies = [
 
 [[package]]
 name = "gluon_check"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6468abf400e6aa3c7f987d9bde284e1073955892b7f7492d16452e63b28f7b4e"
+checksum = "70adefdccc80e23ca56ecb93f8d2d5ef3df7b932eb921f1156eaa699be5023b0"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "collect-mac",
  "ena",
- "gluon_base 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_codegen 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_codegen 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.15.0",
  "log",
  "pretty",
@@ -1171,15 +1233,15 @@ dependencies = [
 
 [[package]]
 name = "gluon_check"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "collect-mac",
  "ena",
- "gluon_base 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_codegen 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_codegen 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "itertools 0.15.0",
  "log",
  "pretty",
@@ -1191,9 +1253,9 @@ dependencies = [
 
 [[package]]
 name = "gluon_codegen"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "676b167ddf8c63024fedf25ed40be1257c5313a25683279afd1212c86fb52ae9"
+checksum = "6565951942628fe3197eccf9918aff9aadab6c31230973489a4e6b89ce55d16d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1202,8 +1264,8 @@ dependencies = [
 
 [[package]]
 name = "gluon_codegen"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1212,25 +1274,25 @@ dependencies = [
 
 [[package]]
 name = "gluon_completion"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca6e4536061535cf23a44cc5d78871f34590442d576b4bc37b93149dce868d7f"
+checksum = "83da1730149af3008499eb3e59d381f5add60efe5214188d31b2c484c3e96c91"
 dependencies = [
  "codespan",
  "either",
- "gluon_base 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.15.0",
  "walkdir",
 ]
 
 [[package]]
 name = "gluon_completion"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "codespan",
  "either",
- "gluon_base 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "itertools 0.15.0",
  "walkdir",
 ]
@@ -1241,23 +1303,23 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.33",
- "gluon 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_doc 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_format 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_doc 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_format 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "gluon_doc"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43f4e250922235c144ed5d341b9ed1857b35c8f9820a87ce852766b888a5e30a"
+checksum = "23187cb169a8fae725ce4b814cbe9165e14f71b5b4bd622b1a78a7cf7655ca2f"
 dependencies = [
  "anyhow",
  "clap",
  "env_logger",
  "futures 0.3.33",
- "gluon 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_completion 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_completion 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "handlebars",
  "itertools 0.15.0",
  "lazy_static",
@@ -1275,15 +1337,15 @@ dependencies = [
 
 [[package]]
 name = "gluon_doc"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "anyhow",
  "clap",
  "env_logger",
  "futures 0.3.33",
- "gluon 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_completion 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_completion 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "handlebars",
  "itertools 0.15.0",
  "lazy_static",
@@ -1301,12 +1363,12 @@ dependencies = [
 
 [[package]]
 name = "gluon_format"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a3f8114e33b8a3cf72f3cbca1de20af7a9dd4201d1908e3350ed58ba79a6ed2"
+checksum = "f8c25d0edfd7bffbcaa9ec9055358c26e7d631d2565bd28b064386d33979f92b"
 dependencies = [
  "codespan",
- "gluon_base 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.15.0",
  "log",
  "pretty",
@@ -1314,11 +1376,11 @@ dependencies = [
 
 [[package]]
 name = "gluon_format"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "codespan",
- "gluon_base 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "itertools 0.15.0",
  "log",
  "pretty",
@@ -1330,21 +1392,21 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.33",
- "gluon 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_doc 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_format 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_doc 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_format 0.18.4 (git+https://github.com/gluon-lang/gluon)",
 ]
 
 [[package]]
 name = "gluon_parser"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed1c61e7a1c3e365d2fdbddfc5a9061d3c56144280824a382799ff4313326255"
+checksum = "1086007d8403cd51d33d64adf7fa3e789ee8bd31d67c5bc9815a581c011eb50f"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "collect-mac",
- "gluon_base 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.15.0",
  "lalrpop",
  "lalrpop-util",
@@ -1355,13 +1417,13 @@ dependencies = [
 
 [[package]]
 name = "gluon_parser"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "collect-mac",
- "gluon_base 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "itertools 0.15.0",
  "lalrpop",
  "lalrpop-util",
@@ -1372,9 +1434,9 @@ dependencies = [
 
 [[package]]
 name = "gluon_vm"
-version = "0.18.3"
+version = "0.18.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84f0b92ed06bed1726351628903cefdb42ba8aa7519999660dcc0ad65a34c6e7"
+checksum = "278df3dedc81d02da1495a2536211367c5d210e809b9a9818e23fb6872ab3d88"
 dependencies = [
  "async-trait",
  "bitflags 1.3.2",
@@ -1385,9 +1447,9 @@ dependencies = [
  "downcast-rs",
  "frunk_core",
  "futures 0.3.33",
- "gluon_base 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_check 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_codegen 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_base 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_check 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_codegen 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.15.0",
  "log",
  "ordered-float",
@@ -1407,8 +1469,8 @@ dependencies = [
 
 [[package]]
 name = "gluon_vm"
-version = "0.18.3"
-source = "git+https://github.com/gluon-lang/gluon#418c6b7de22b244746bfd0570f9fcfd6d738e542"
+version = "0.18.4"
+source = "git+https://github.com/gluon-lang/gluon#38ee70113b58b4950ca4924a5ddcf1146edf75f1"
 dependencies = [
  "async-trait",
  "bitflags 1.3.2",
@@ -1419,9 +1481,9 @@ dependencies = [
  "downcast-rs",
  "frunk_core",
  "futures 0.3.33",
- "gluon_base 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_check 0.18.3 (git+https://github.com/gluon-lang/gluon)",
- "gluon_codegen 0.18.3 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_base 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_check 0.18.4 (git+https://github.com/gluon-lang/gluon)",
+ "gluon_codegen 0.18.4 (git+https://github.com/gluon-lang/gluon)",
  "itertools 0.15.0",
  "log",
  "ordered-float",
@@ -1746,22 +1808,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyper-tls"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70206fc6890eaca9fde8a0bf71caa2ddfc9fe045ac9e5c70df101a7dbde866e0"
-dependencies = [
- "bytes",
- "http-body-util",
- "hyper 1.11.0",
- "hyper-util",
- "native-tls",
- "tokio",
- "tokio-native-tls",
- "tower-service",
-]
-
-[[package]]
 name = "hyper-util"
 version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2024,6 +2070,65 @@ dependencies = [
 ]
 
 [[package]]
+name = "jni"
+version = "0.22.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5efd9a482cf3a427f00d6b35f14332adc7902ce91efb778580e180ff90fa3498"
+dependencies = [
+ "cfg-if 1.0.4",
+ "combine",
+ "jni-macros",
+ "jni-sys",
+ "log",
+ "simd_cesu8",
+ "thiserror",
+ "walkdir",
+ "windows-link",
+]
+
+[[package]]
+name = "jni-macros"
+version = "0.22.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a00109accc170f0bdb141fed3e393c565b6f5e072365c3bd58f5b062591560a3"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "rustc_version",
+ "simd_cesu8",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "jni-sys"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6377a88cb3910bee9b0fa88d4f42e1d2da8e79915598f65fb0c7ee14c878af2"
+dependencies = [
+ "jni-sys-macros",
+]
+
+[[package]]
+name = "jni-sys-macros"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38c0b942f458fe50cdac086d2f946512305e5631e720728f2a61aabcd47a6264"
+dependencies = [
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "jobserver"
+version = "0.1.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c00acbd29eabad4a2392fa0e921c874934dbbf4194312ad20f04a0ed67a3cb3"
+dependencies = [
+ "getrandom 0.4.3",
+ "libc",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2201,6 +2306,12 @@ name = "log"
 version = "0.4.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
+
+[[package]]
+name = "lru-slab"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "matchers"
@@ -2681,6 +2792,63 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
 
 [[package]]
+name = "quinn"
+version = "0.11.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c1a41e437b6bbd489372cd4971de128e85c855f56c57f283d20ff016cf7c0a8"
+dependencies = [
+ "bytes",
+ "cfg_aliases",
+ "pin-project-lite",
+ "quinn-proto",
+ "quinn-udp",
+ "rustc-hash 2.1.3",
+ "rustls",
+ "socket2 0.6.5",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "web-time",
+]
+
+[[package]]
+name = "quinn-proto"
+version = "0.11.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f4bfc015262b9df63c8845072ce59068853ff5872180c2ce2f13038b970e560"
+dependencies = [
+ "aws-lc-rs",
+ "bytes",
+ "getrandom 0.4.3",
+ "lru-slab",
+ "rand",
+ "rand_pcg",
+ "ring 0.17.14",
+ "rustc-hash 2.1.3",
+ "rustls",
+ "rustls-pki-types",
+ "slab",
+ "thiserror",
+ "tinyvec",
+ "tracing",
+ "web-time",
+]
+
+[[package]]
+name = "quinn-udp"
+version = "0.5.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35a133f956daabe89a61a685c2649f13d82d5aa4bd5d12d1277e1072a21c0694"
+dependencies = [
+ "cfg_aliases",
+ "libc",
+ "once_cell",
+ "socket2 0.6.5",
+ "tracing",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2711,6 +2879,15 @@ name = "rand_core"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63b8176103e19a2643978565ca18b50549f6101881c443590420e4dc998a3c69"
+
+[[package]]
+name = "rand_pcg"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "caa0f4137e1c0a72f4c651489402276c8e8e1cf081f3b0ba156d2cbeef09e86a"
+dependencies = [
+ "rand_core",
+]
 
 [[package]]
 name = "rand_xorshift"
@@ -2793,9 +2970,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.4.16"
+version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fcfdb36bda0c880c5931cdc7a2bcdc8ba4556847b9d912bca70bc94708711ad"
+checksum = "ad8553b9b26413251cbf30e620595c7a41b3887f03da04579c0e6b0d6a06b4b2"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -2823,7 +3000,7 @@ dependencies = [
  "http 0.2.12",
  "http-body 0.4.6",
  "hyper 0.14.32",
- "hyper-tls 0.5.0",
+ "hyper-tls",
  "ipnet",
  "js-sys",
  "log",
@@ -2850,9 +3027,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.28"
+version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
+checksum = "219c5811de6525e5416c7d5d53bb656d3afdbc6c5af816e0802bcfa42dbdc1c3"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -2864,21 +3041,21 @@ dependencies = [
  "http-body-util",
  "hyper 1.11.0",
  "hyper-rustls",
- "hyper-tls 0.6.0",
  "hyper-util",
  "js-sys",
  "log",
  "mime",
- "native-tls",
  "percent-encoding",
  "pin-project-lite",
+ "quinn",
+ "rustls",
  "rustls-pki-types",
+ "rustls-platform-verifier",
  "serde",
  "serde_json",
- "serde_urlencoded",
  "sync_wrapper 1.0.2",
  "tokio",
- "tokio-native-tls",
+ "tokio-rustls",
  "tower",
  "tower-http",
  "tower-service",
@@ -2934,6 +3111,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
+name = "rustc-hash"
+version = "2.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d"
+
+[[package]]
+name = "rustc_version"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
+dependencies = [
+ "semver",
+]
+
+[[package]]
 name = "rustix"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2952,11 +3144,24 @@ version = "0.23.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0283386ce02abc0151e1761d08802dfe86c173b0b494af5cbc086574e453da06"
 dependencies = [
+ "aws-lc-rs",
  "once_cell",
  "rustls-pki-types",
  "rustls-webpki",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "rustls-native-certs"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dab5152771c58876a2146916e53e35057e1a4dfa2b9df0f0305b07f611fdea4d"
+dependencies = [
+ "openssl-probe",
+ "rustls-pki-types",
+ "schannel",
+ "security-framework",
 ]
 
 [[package]]
@@ -2974,8 +3179,36 @@ version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f4925028c7eb5d1fcdaf196971378ed9d2c1c4efc7dc5d011256f76c99c0a96"
 dependencies = [
+ "web-time",
  "zeroize",
 ]
+
+[[package]]
+name = "rustls-platform-verifier"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26d1e2536ce4f35f4846aa13bff16bd0ff40157cdb14cc056c7b14ba41233ba0"
+dependencies = [
+ "core-foundation 0.10.1",
+ "core-foundation-sys",
+ "jni",
+ "log",
+ "once_cell",
+ "rustls",
+ "rustls-native-certs",
+ "rustls-platform-verifier-android",
+ "rustls-webpki",
+ "security-framework",
+ "security-framework-sys",
+ "webpki-root-certs",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "rustls-platform-verifier-android"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
 
 [[package]]
 name = "rustls-webpki"
@@ -2983,6 +3216,7 @@ version = "0.103.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61c429a8649f110dddef65e2a5ad240f747e85f7758a6bccc7e5777bd33f756e"
 dependencies = [
+ "aws-lc-rs",
  "ring 0.17.14",
  "rustls-pki-types",
  "untrusted 0.9.0",
@@ -3070,6 +3304,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "semver"
+version = "1.0.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8a7852d02fc848982e0c167ef163aaff9cd91dc640ba85e263cb1ce46fae51cd"
 
 [[package]]
 name = "serde"
@@ -3263,6 +3503,22 @@ name = "simd-adler32"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
+
+[[package]]
+name = "simd_cesu8"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "11031e251abf8611c80f460e19dbdeb54a66db918e49c65a7065b46ac7aec520"
+dependencies = [
+ "rustc_version",
+ "simdutf8",
+]
+
+[[package]]
+name = "simdutf8"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
 
 [[package]]
 name = "simple_asn1"
@@ -3805,8 +4061,8 @@ dependencies = [
  "env_logger",
  "futures 0.3.33",
  "glob",
- "gluon 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "gluon_codegen 0.18.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gluon_codegen 0.18.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "gluon_crates_io",
  "gluon_master",
  "home",
@@ -3816,7 +4072,7 @@ dependencies = [
  "lambda_runtime",
  "log",
  "native-tls",
- "reqwest 0.12.28",
+ "reqwest 0.13.4",
  "serde",
  "serde_derive",
  "serde_json",
@@ -4020,6 +4276,25 @@ checksum = "8622dcb61c0bcc9fffa6938bed81210af2da9a7e4a1a834b2e37a59b6dfb6141"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "web-time"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "webpki-root-certs"
+version = "1.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b96554aa2acc8ccdb7e1c9a58a7a68dd5d13bccc69cd124cb09406db612a1c9b"
+dependencies = [
+ "rustls-pki-types",
 ]
 
 [[package]]
