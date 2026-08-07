@@ -64,6 +64,7 @@ jobs:
       - name: Install mdbook
         if: steps.cache-mdbook.outputs.cache-hit != 'true'
         run: curl -fsSL https://github.com/rust-lang/mdBook/releases/download/v0.5.4/mdbook-v0.5.4-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C ~/.cargo/bin
+      - uses: hashicorp/setup-terraform@v4
 
       - name: Build Frontend
         run: npm ci && npm run build
@@ -73,6 +74,11 @@ jobs:
 
       - name: Build server
         run: cargo lambda build --bin try_gluon --release --all-features --output-format zip
+
+      - name: Terraform init
+        working-directory: ./terraform
+        run: terraform init
+
 
       - name: Run Terraform deploy
         run: ./scripts/terraform_apply.sh
